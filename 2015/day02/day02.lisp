@@ -3,8 +3,9 @@
 ;;;; Leo Laporte, 24 Sept 2022
 
 (defpackage :day02
-  (:import-from :fiveam :test :is) ; testing
-  (:use :cl))
+  (:use #:cl
+	#:fiveam
+	#:str))
 
 (in-package :day02)
 
@@ -70,26 +71,28 @@ total volume of the gift)"
 ;; this is the only difficult part of the whole problem: massaging the data into a form I can use
 (defun parse-input (file)
   "Turn input file into a list of a list of dimensions stored as '(### ### ###) - sorted from low to high"
-  (mapcar (lambda (x) (sort x #'<))                           ; sort the dims from lowest to highest
-	  (mapcar (lambda (x) (mapcar #'parse-integer x))     ; turn the dim strs into numbers
-		  (mapcar (lambda (x) (uiop:split-string x :separator "x"))  ; split the dims on 'x'
-			  (str:words                          ; separate the string into a list of dim str
+  (mapcar #'(lambda (x) (sort x #'<))                         ; sort the dims from lowest to highest
+	  (mapcar #'(lambda (x) (mapcar #'parse-integer x))   ; turn the dim strs into numbers
+		  (mapcar #'(lambda (x) (uiop:split-string x :separator "x"))  ; split the dims on 'x'
+			  (str:words                 ; separate the string into a list of dim str
 			   (uiop:read-file-string file))))))  ; get the input as a big string
 
-(defvar data (parse-input "input.txt"))
+(defvar data (parse-input "~/cl/AOC/2015/day02/input.txt"))
 (time (format t "The answer to AOC 2015 Day 2 Part 1 is ~a" (day2-1 data)))
 (time (format t "The answer to AOC 2015 Day 2 Part 2 is ~a" (day2-2 data)))
+
+;; Timings on M2 Macbook Air with 24GB RAM
 
 ;; The answer to AOC 2015 Day 2 Part 1 is 1586300
 ;; Evaluation took:
 ;; 0.000 seconds of real time
-;; 0.000050 seconds of total run time (0.000046 user, 0.000004 system)
+;; 0.000059 seconds of total run time (0.000046 user, 0.000013 system)
 ;; 100.00% CPU
-;; 0 bytes consed
+;; 65,024 bytes consed
 
 ;; The answer to AOC 2015 Day 2 Part 2 is 3737498
 ;; Evaluation took:
 ;; 0.000 seconds of real time
-;; 0.000040 seconds of total run time (0.000035 user, 0.000005 system)
+;; 0.000033 seconds of total run time (0.000031 user, 0.000002 system)
 ;; 100.00% CPU
-;; 65,024 bytes consed
+;; 0 bytes consed

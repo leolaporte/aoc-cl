@@ -3,8 +3,8 @@
 ;;;; Leo Laporte, 29 Sept 2022
 
 (defpackage :day03
-  (:use :cl
-   :fiveam))  ; for testing, since these are all small programs I do the testing inline
+  (:use #:cl
+	#:fiveam))  ; for testing, since these are all small programs I do the testing inline
 
 (in-package :day03)
 
@@ -13,8 +13,8 @@
 #|
 --- Part One ---
 ...
-Moves are always exactly one house to the north (^), south (v), east (>), or west (<). 
-After each move, he delivers another present to the house at his new location. How many 
+Moves are always exactly one house to the north (^), south (v), east (>), or west (<).
+After each move, he delivers another present to the house at his new location. How many
 houses receive at least one present?
 ...
 |#
@@ -38,9 +38,9 @@ houses receive at least one present?
       ;; note: I can't use house in the cons because it conses the reference not the value
       ((= i (length dirs))                       ; terminate when we've processed all dirs
        (length (remove-duplicates visited        ; return number of distinct houses visited
-				  :test (lambda (x y)
-					  (and (= (car x) (car y))
-					       (= (cdr x) (cdr y)))))))))
+				  :test #'(lambda (x y)
+					    (and (= (car x) (car y))
+						 (= (cdr x) (cdr y)))))))))
 
 (test 3-1 ; tests provided by AoC
   (is (= 2 (day3-1 ">")))
@@ -50,22 +50,23 @@ houses receive at least one present?
 #|
 --- Part Two ---
 ...
-Santa and Robo-Santa start at the same location (delivering two presents to the same 
+Santa and Robo-Santa start at the same location (delivering two presents to the same
 starting house), then take turns. How many houses receive at least one present?
 ...
 |#
 
 (defun day3-2 (dirs)
   "calculate the number of houses visited given the directions"
-  (do ((i 0 (1+ i))							; index into dirs string
+  (do ((i 0 (1+ i))				       	; index into dirs string
        (santa-house (cons 0 0))				; Santa starts at (0.0)
        (robo-house (cons 0 0))				; Robo-Santa starts at (0.0)
+       (h '())                                          ; the current house (Santa or Robo)
        (visited '((0 . 0))))				; list of visited houses
-      ((= i (length dirs)) 					; terminate when we've processed all dirs
-       (length (remove-duplicates visited	; return number of distinct houses visited
-				  :test (lambda (x y)
-					  (and (= (car x) (car y))
-					       (= (cdr x) (cdr y)))))))
+      ((= i (length dirs)) 			       	; terminate when we've processed all dirs
+       (length (remove-duplicates visited	        ; return number of distinct houses visited
+				  :test #'(lambda (x y)
+					    (and (= (car x) (car y))
+						 (= (cdr x) (cdr y)))))))
     ;; body, repeat until all dirs are processed
     (progn
       (if (oddp i)  ; alternate visitations
@@ -83,28 +84,18 @@ starting house), then take turns. How many houses receive at least one present?
 (time (format t "The answer to AOC 2015 Day 3 Part 1 is ~a" (day3-1 data)))
 (time (format t "The answer to AOC 2015 Day 3 Part 2 is ~a" (day3-2 data)))
 
-;; Running test 3-1 ...
-;; Did 3 checks.
-;; Pass: 3 (100%)
-;; Skip: 0 ( 0%)
-;; Fail: 0 ( 0%)
+;; Timings with M2 Macbook Air
 
-;; Running test 3-2 ...
-;; Did 3 checks.
-;; Pass: 3 (100%)
-;; Skip: 0 ( 0%)
-;; Fail: 0 ( 0%)
-
-;; The answer to AOC 2015 Day 3 Part 1 is 2081
+;; The answer to AOC 2015 Day 3 Part 1 is 372
 ;; Evaluation took:
-;; 0.101 seconds of real time
-;; 0.101970 seconds of total run time (0.101367 user, 0.000603 system)
-;; 100.99% CPU
-;; 387,984 bytes consed
+;; 0.007 seconds of real time
+;; 0.007102 seconds of total run time (0.007065 user, 0.000037 system)
+;; 100.00% CPU
+;; 195,072 bytes consed
 
-;; The answer to AOC 2015 Day 3 Part 2 is 2341
+;; The answer to AOC 2015 Day 3 Part 2 is 363
 ;; Evaluation took:
-;; 0.112 seconds of real time
-;; 0.112800 seconds of total run time (0.112243 user, 0.000557 system)
-;; 100.89% CPU
-;; 325,120 bytes consed
+;; 0.006 seconds of real time
+;; 0.006557 seconds of total run time (0.006526 user, 0.000031 system)
+;; 116.67% CPU
+;; 195,072 bytes consed

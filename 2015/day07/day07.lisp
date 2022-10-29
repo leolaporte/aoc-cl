@@ -5,10 +5,9 @@
 (ql:quickload '(:fiveam :cl-ppcre :trivia))
 
 (defpackage day07
-  (:use
-   :cl
-   :fiveam     ; testing
-   :cl-ppcre)) ; regex
+  (:use #:cl
+	#:fiveam     ; testing
+	#:cl-ppcre)) ; regex
 
 (in-package :day07)
 
@@ -72,36 +71,47 @@ So to start, I'll create a hash table of all the wires and the
 calculations that lead to them.
 |#
 
-(defparameter *aoc-data* (uiop:read-file-lines "input.txt"))    ; the problem data set
+(defparameter *aoc-data* (uiop:read-file-lines "~/cl/AOC/2015/day07/input.txt")
+  "the problem data set as a list of strings")
 
 ;; pre-compile some regexp for efficiency
-(defparameter *command-regex* (create-scanner "(.+) -> (.+)"))  ; the regex to build a hash
-(defparameter *numeric* (create-scanner "^-?[0-9]+$"))            ; a regex to find number strings
+(defparameter *command-regex* (create-scanner "(.+) -> (.+)")
+  "precompiled regex to build a hash - signal -> wire")
+
+(defparameter *numeric* (create-scanner "^-?[0-9]+$")
+  "precompiled regex to find number strings")
+
+(defparameter *wire* (create-scanner"^[a-z]+$")
+  "precompiled regex for wires")
 
 (defun make-signal-hash (signals)
   "takes a list of wires and signals and returns a hash keyed
  on wire names"
   (let ((signal-hash
 	  (make-hash-table :test 'equal :size (length signals))))
-    (mapcar (lambda (x) (register-groups-bind (op wire)
-			    (*command-regex* x)
-
-			  (setf (gethash wire signal-hash) op)))
+    (mapcar #'(lambda (x) (register-groups-bind (op wire)
+			      (*command-regex* x)
+			    (setf (gethash wire signal-hash) op)))
 	    signals)
     ;; don't care about the list created by mapcar - just the hash
     signal-hash))
 
 (defun print-signal-hash (h)
   "utility function to print the hash key value pairs"
-  (maphash (lambda (key val) (format t "~a: ~a~&" key val)) h))
+  (maphash #'(lambda (key val) (format t "~a: ~a~&" key val)) h))
 
 (defun number-str-p (s)
   "returns true if a string contains a number"
   (scan *numeric* s))
 
+(defun wire-p (s)
+  "returns true if a string is a wire"
+  (scan *wire* s))
+
 (defun build-op-tree (wire signal-hash)
   "builds an expression starting with the given wire and using the operations from the signal-hash"
   (let ((op (uiop:split-string (gethash wire signal-hash)))) ; turn string into a list of strings
+
     (cond
       ;; the signal is a bare number (a leaf node) return it alone
       ((and (= (length op) 1) (number-str-p (first op)))
@@ -127,7 +137,7 @@ calculations that lead to them.
       ;; it's an LSHIFT
       ((equalp "LSHIFT" (second op))
        (if (number-str-p (first op))
-	   (list 'ash (parse-integer (first op)) (-(parse-integer (third op))))
+	   (list 'ash (parse-integer (first op)) (parse-integer (third op)))
 	   (cons 'ash (list (build-op-tree (first op) signal-hash) (parse-integer (third op))))))
 
       ;; it's an OR, cons logior and recurse both operands
@@ -153,20 +163,26 @@ calculations that lead to them.
 
       (t (error "Malformed entry ~a" op)))))
 
-  (test build-op-tree-test
-    (let ((test-hash  ;; from my notes above
-	    (make-signal-hash
-	     (list "20 -> a" "40 -> b" "60 -> c" "a RSHIFT 1 -> d" "NOT b -> e" "c RSHIFT 1 -> f" "d LSHIFT 1 -> g" "e OR f -> h" "g AND h -> i"))))
+(test build-op-tree-test
+  (is (= 30 (eval (build-op-tree "a" (make-signal-hash (list "10 OR 20 -> a"))))))
+  (is (= 0 (eval (build-op-tree "a" (make-signal-hash (list "10 AND 20 -> a"))))))
+  (is (= 30 (eval (build-op-tree "a" (make-signal-hash (list "20 OR b -> a" "10 -> b"))))))
+  (is (= 0 (eval (build-op-tree "a" (make-signal-hash (list "20 AND b -> a" "10 -> b"))))))
+  (is (= 0 (eval (build-op-tree "a" (make-signal-hash (list "NOT -1 -> a"))))))
+  (is (= -11 (eval (build-op-tree "a" (make-signal-hash (list "NOT b -> a" "10 -> b"))))))
+  (is (= 5 (eval (build-op-tree "a" (make-signal-hash (list "b RSHIFT 2 -> a" "20 -> b"))))))
+  (is (= 80 (eval (build-op-tree "a" (make-signal-hash (list "b LSHIFT 2 -> a" "20 -> b"))))))
+  (is (= 20 (eval (build-op-tree "a" (make-signal-hash (list "20 -> a"))))))
+  (is (= 10 (eval (build-op-tree "a" (make-signal-hash (list "b -> a" "10 -> b"))))))
 
-      (is (= 30 (eval (build-op-tree "a" (make-signal-hash (list "10 OR 20 -> a"))))))
-      (is (= 0 (eval (build-op-tree "a" (make-signal-hash (list "10 AND 20 -> a"))))))
-      (is (= 0 (eval (build-op-tree "a" (make-signal-hash (list "NOT -1 -> a"))))))
-      (is (= 5 (eval (build-op-tree "a" (make-signal-hash (list "b RSHIFT 2 -> a" "20 -> b"))))))
-      (is (= 80 (eval (build-op-tree "a" (make-signal-hash (list "b LSHIFT 2 -> a" "20 -> b"))))))
-      (is (= 20 (eval (build-op-tree "a" (make-signal-hash (list "20 -> a"))))))
-      (is (= 10 (eval (build-op-tree "a" (make-signal-hash (list "b -> a" "10 -> b"))))))
-      (is (= 20 (eval (build-op-tree "i" test-hash))))))
+  (let ((test-hash  ;; from my notes above
+	  (make-signal-hash
+	   (list "20 -> a" "40 -> b" "60 -> c" "a RSHIFT 1 -> d" "NOT b -> e" "c RSHIFT 1 -> f" "d LSHIFT 1 -> g" "e OR f -> h" "g AND h -> i"))))
+    (is (= 20 (eval (build-op-tree "i" test-hash))))))
 
+(defun day07-1 (wire input-data)
+  "given a list of circuit wirings and a  wire return the value of the wire"
+  (eval (build-op-tree wire (make-signal-hash input-data))))
 
 #|
 --- Part Two ---
@@ -176,5 +192,5 @@ calculations that lead to them.
 
 
 
-;; (time (format t "The answer to AOC 2015 Day 07 Part 1 is ~a" (day07-1 data)))
-;; (time (format t "The answer to AOC 2015 Day 07 Part 2 is ~a" (day07-2 data)))
+;; (time (for-mat t "The answer to AOC 2015 Day 07 Part 1 is ~a" (day07-1 "a" *aoc-data*)))
+;; (time (format t "The answer to AOC 2015 Day 07 Part 2 is ~a" (day07-2 *aoc-data*)))

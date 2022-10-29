@@ -5,10 +5,9 @@
 (ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day06
-  (:use
-   :cl
-   :cl-ppcre  ; for regex
-   :fiveam))  ; for testing, since these are all small programs I do the testing inline
+  (:use #:cl
+	#:cl-ppcre  ; for regex
+	#:fiveam))  ; for testing, since these are all small programs I do the testing inline
 
 (in-package :day06)
 
