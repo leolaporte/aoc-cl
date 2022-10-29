@@ -2,12 +2,13 @@
 ;;;; 2015 AOC Day 7 solution
 ;;;; Leo Laporte, Oct 2022
 
-(ql:quickload '(:fiveam :cl-ppcre :trivia))
+(ql:quickload '(:fiveam :cl-ppcre :trivia :function-cache))
 
 (defpackage day07
   (:use #:cl
-	#:fiveam     ; testing
-	#:cl-ppcre)) ; regex
+	#:fiveam         ; testing
+	#:function-cache ; memoization
+	#:cl-ppcre))     ; regex
 
 (in-package :day07)
 
@@ -108,8 +109,16 @@ calculations that lead to them.
   "returns true if a string is a wire"
   (scan *wire* s))
 
-(defun build-op-tree (wire signal-hash)
-  "builds an expression starting with the given wire and using the operations from the signal-hash"
+;; UGH this crashes Emacs - the full tree is too huge (sub trees like "s" work fine so it's not
+;; the logic). First I'll try memoizaion using DEFCACHED just to speed it up.
+
+;; ok using DEFCACHED does make a big difference in speed and memory:
+;; (time (run-all-tests)) without it takes .837 seconds with 276M bytes consed
+;; using DEFCACHED it takes .102 secs with 35MB consed. That's 8X better
+;; So it works. But the tree is still too damn big.
+
+(defcached (build-op-tree) (wire signal-hash)
+  "recursively builds an expression starting with the given wire and using the operations from the signal-hash"
   (let ((op (uiop:split-string (gethash wire signal-hash)))) ; turn string into a list of strings
 
     (cond
@@ -175,13 +184,21 @@ calculations that lead to them.
   (is (= 20 (eval (build-op-tree "a" (make-signal-hash (list "20 -> a"))))))
   (is (= 10 (eval (build-op-tree "a" (make-signal-hash (list "b -> a" "10 -> b"))))))
 
-  (let ((test-hash  ;; from my notes above
+  ;; now using subsets of the provided data
+  (is (= -515 (eval (build-op-tree "q" (make-signal-hash *aoc-data*)))))
+  (is (= 0 (eval (build-op-tree "s" (make-signal-hash *aoc-data*)))))
+  (is (= 14146 (eval (build-op-tree "b" (make-signal-hash *aoc-data*)))))
+  (is (=  (eval (build-op-tree "x" (make-signal-hash *aoc-data*)))))
+  (is (= -171 (eval (build-op-tree "bx" (make-signal-hash *aoc-data*)))))
+
+  ;; finally from my notes above
+  (let ((test-hash
 	  (make-signal-hash
 	   (list "20 -> a" "40 -> b" "60 -> c" "a RSHIFT 1 -> d" "NOT b -> e" "c RSHIFT 1 -> f" "d LSHIFT 1 -> g" "e OR f -> h" "g AND h -> i"))))
     (is (= 20 (eval (build-op-tree "i" test-hash))))))
 
 (defun day07-1 (wire input-data)
-  "given a list of circuit wirings and a  wire return the value of the wire"
+  "given a list of circuit wirings and a wire return the value of the wire"
   (eval (build-op-tree wire (make-signal-hash input-data))))
 
 #|
@@ -189,8 +206,5 @@ calculations that lead to them.
 
 |#
 
-
-
-
-;; (time (for-mat t "The answer to AOC 2015 Day 07 Part 1 is ~a" (day07-1 "a" *aoc-data*)))
+;; (time (format t "The answer to AOC 2015 Day 07 Part 1 is ~a" (day07-1 "a" *aoc-data*)))
 ;; (time (format t "The answer to AOC 2015 Day 07 Part 2 is ~a" (day07-2 *aoc-data*)))
