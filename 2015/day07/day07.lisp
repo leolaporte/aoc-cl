@@ -113,15 +113,11 @@ calculations that lead to them.
   "returns true if a string is a wire (one or two lower case letters)"
   (scan *wire* s))
 
-;; UGH my first attempt crashes Emacs - the full tree is too huge (sub trees
-;; like "s" work fine so it's not the logic). First I'll try memoizaion using
-;; DEFCACHED just to speed it up.
+;; UGH my first attempt crashes Emacs. That's, I think, because I'm deferring
+;; reducing the function until the end. The full tree is too huge (sub trees
+;; like "s" work fine so it's not the logic).
 
-;; ok using DEFCACHED does make a big difference in speed and memory
-;; So it works. But the tree is still too damn big. It's crashing on the full
-;; data set.
-
-;; next step - try building the expression in chunks. Whenever I can I'll solve the
+;; What if I solve the expressions as I go instead. Whenever I can I'll solve the
 ;; signal chain and store the numeric value on that wire (it's basically manual
 ;; memoization). There will be recursion but it will be limited and the expression
 ;; will reduce whenever it's able. With luck the tree will never get too big for
@@ -216,29 +212,29 @@ calculations that lead to them.
   (gethash wire signal-hash)) ; return the final INTEGER value of specified wire
 
 (test psh-test
-  ;; first some simple one and two branch trees
-  (is (= 30 (parse-signal-hash "a" (make-signal-hash (list "10 OR 20 -> a")))))
-  (is (= 0 (parse-signal-hash "a" (make-signal-hash (list "10 AND 20 -> a")))))
-  (is (= 30 (parse-signal-hash "a" (make-signal-hash (list "20 OR b -> a" "10 -> b")))))
-  (is (= 0 (parse-signal-hash "a" (make-signal-hash (list "20 AND b -> a" "10 -> b")))))
-  (is (= 0 (parse-signal-hash "a" (make-signal-hash (list "NOT -1 -> a")))))
-  (is (= -11 (parse-signal-hash "a" (make-signal-hash (list "NOT b -> a" "10 -> b")))))
-  (is (= 5 (parse-signal-hash "a" (make-signal-hash (list "b RSHIFT 2 -> a" "20 -> b")))))
-  (is (= 80 (parse-signal-hash "a" (make-signal-hash (list "b LSHIFT 2 -> a" "20 -> b")))))
-  (is (= 20 (parse-signal-hash "a" (make-signal-hash (list "20 -> a")))))
-  (is (= 10 (parse-signal-hash "a" (make-signal-hash (list "b -> a" "10 -> b")))))
+      ;; first some simple one and two branch trees
+      (is (= 30 (parse-signal-hash "a" (make-signal-hash (list "10 OR 20 -> a")))))
+      (is (= 0 (parse-signal-hash "a" (make-signal-hash (list "10 AND 20 -> a")))))
+      (is (= 30 (parse-signal-hash "a" (make-signal-hash (list "20 OR b -> a" "10 -> b")))))
+      (is (= 0 (parse-signal-hash "a" (make-signal-hash (list "20 AND b -> a" "10 -> b")))))
+      (is (= 0 (parse-signal-hash "a" (make-signal-hash (list "NOT -1 -> a")))))
+      (is (= -11 (parse-signal-hash "a" (make-signal-hash (list "NOT b -> a" "10 -> b")))))
+      (is (= 5 (parse-signal-hash "a" (make-signal-hash (list "b RSHIFT 2 -> a" "20 -> b")))))
+      (is (= 80 (parse-signal-hash "a" (make-signal-hash (list "b LSHIFT 2 -> a" "20 -> b")))))
+      (is (= 20 (parse-signal-hash "a" (make-signal-hash (list "20 -> a")))))
+      (is (= 10 (parse-signal-hash "a" (make-signal-hash (list "b -> a" "10 -> b")))))
 
-  ;; now using subsets of the provided data
-  (is (= -515 (parse-signal-hash "q" (make-signal-hash *aoc-data*))))
-  (is (= 0 (parse-signal-hash "s" (make-signal-hash *aoc-data*))))
-  (is (= 14146 (parse-signal-hash "b" (make-signal-hash *aoc-data*))))
-  (is (= -171 (parse-signal-hash "bx" (make-signal-hash *aoc-data*))))
+      ;; now using subsets of the provided data
+      (is (= -515 (parse-signal-hash "q" (make-signal-hash *aoc-data*))))
+      (is (= 0 (parse-signal-hash "s" (make-signal-hash *aoc-data*))))
+      (is (= 14146 (parse-signal-hash "b" (make-signal-hash *aoc-data*))))
+      (is (= -171 (parse-signal-hash "bx" (make-signal-hash *aoc-data*))))
 
-  ;; finally from my notes above
-  (let ((test-hash
-	  (make-signal-hash
-	   (list "20 -> a" "40 -> b" "60 -> c" "a RSHIFT 1 -> d" "NOT b -> e" "c RSHIFT 1 -> f" "d LSHIFT 1 -> g" "e OR f -> h" "g AND h -> i"))))
-    (is (= 20  (parse-signal-hash "i" test-hash)))))
+      ;; finally from my notes above
+      (let ((test-hash
+	      (make-signal-hash
+	       (list "20 -> a" "40 -> b" "60 -> c" "a RSHIFT 1 -> d" "NOT b -> e" "c RSHIFT 1 -> f" "d LSHIFT 1 -> g" "e OR f -> h" "g AND h -> i"))))
+	(is (= 20  (parse-signal-hash "i" test-hash)))))
 
 (defun day07-1 (wire signals)
   (parse-signal-hash wire (make-signal-hash signals)))
