@@ -131,7 +131,7 @@ It contains at least one letter which repeats with exactly one letter between th
 (defun day05-2 (input)
   (length (remove-if-not #'nice2-p input)))
 
-(defvar data (uiop:read-file-lines "input.txt"))
+(defvar data (uiop:read-file-lines "~/cl/AOC/2015/day05/input.txt"))
 
 (time (format t "The answer to AOC 2015 Day 005 Part 1 is ~a" (day05-1 data)))
 (time (format t "The answer to AOC 2015 Day 005 Part 2 is ~a" (day05-2 data)))
