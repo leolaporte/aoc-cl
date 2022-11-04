@@ -209,7 +209,9 @@ calculations that lead to them.
 		       (t (error "unknown op ~a on AND" op))))))
 
 	(t (error "Malformed entry ~a" op)))))
-  (gethash wire signal-hash)) ; return the final INTEGER value of specified wire
+  ;; (print-signal-hash signal-hash)      ; in case you're interested in the intermediate vals
+  ;; (format t "-------------------~&")   ; separate iterations
+  (gethash wire signal-hash)) ; return the  value of specified wire (ends wheen it's an INTEGER)
 
 (test psh-test
       ;; first some simple one and two branch trees
@@ -248,8 +250,8 @@ Now, take the signal you got on wire a, override wire b to that signal, and rese
 |#
 
 (defun day07-2 (wire signals)
-  (let* ((new-hash (make-signal-hash signals))
-	 (previous-result (day07-1 "a" *aoc-data*)))
+  (let ((new-hash (make-signal-hash signals))
+	(previous-result (day07-1 "a" *aoc-data*)))
     (setf (gethash "b" new-hash) previous-result)
     (parse-signal-hash wire new-hash)))
 
