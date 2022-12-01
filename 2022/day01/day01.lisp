@@ -46,9 +46,11 @@ return the list of total calories carried by each elf"
 (test calorie-totals-test
   (is (= 24000 (apply #'max (calorie-totals *test-data*)))))
 
-(defun day01-1 (data)
-  (let ((cal-list (uiop:read-file-lines *data-file*)))  ; read in data file
-    (apply #'max (calorie-totals cal-list))))           ; find maximum calorie total
+(defun day01-1 (f)
+  "given a data file containing a list of integer string groups separated by empty strings return
+the the highest group total"
+  (let ((cal-list (uiop:read-file-lines f)))     ; read in data file as a list of lines
+    (apply #'max (calorie-totals cal-list))))    ; find maximum calorie total
 
 
 #|
@@ -58,8 +60,9 @@ To avoid this unacceptable situation, the Elves would instead like to know the t
 
 |#
 
-(defun day01-2 (data)
-  (let* ((cal-list (uiop:read-file-lines *data-file*))          ; read in data file
+(defun day01-2 (f)
+  "returns the three highest calorie totals from a list of calorie counts"
+  (let* ((cal-list (uiop:read-file-lines f))                    ; read in data file as list of lines
 	 (sorted-totals (sort (calorie-totals cal-list) #'>)))  ; calculate totals and sort
     (+ (first sorted-totals) (second sorted-totals) (third sorted-totals)))) ; add the top three
 
