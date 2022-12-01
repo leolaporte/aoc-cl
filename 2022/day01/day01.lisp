@@ -1,6 +1,6 @@
 ;;;; Day01.lisp
 ;;;; 2022 AOC Day 01 solution
-;;;; Leo Laporte, Dec 2022
+;;;; Leo Laporte, 1 Dec 2022
 
 (ql:quickload '(:fiveam :cl-ppcre :alexandria))
 
@@ -26,16 +26,16 @@ Find the Elf carrying the most Calories. How many total Calories is that Elf car
 
 (defun calorie-totals (cals-carried)
   "given a list of calories carried by each elf, separated by an empty string,
-return the max calories carried by any single elf"
-  (do ((data cals-carried (rest data))
-       (elf-cals 0)
-       (totals nil))
-      ((equal data nil) totals)
+return the list of total calories carried by each elf"
+  (do ((data cals-carried (rest data))  ; the input data, a list of calorie strings
+       (elf-cals 0)                     ; total cals per elf
+       (totals nil))                    ; list of totals for each elf
+      ((equal data nil) totals)         ; parsed all the data? return the list of totals
     (cond
-      ((equal (first data) "")
-       (push elf-cals totals)
-       (setf elf-cals 0))
-      (t (incf elf-cals (parse-integer (first data)))))))
+      ((equal (first data) "")          ; inter-elf separator reached
+       (push elf-cals totals)           ; save the total to the totals list
+       (setf elf-cals 0))               ; and clear the tote for the next elf
+      (t (incf elf-cals (parse-integer (first data)))))))  ; add this calorie count to elf's total
 
 (defparameter *test-data* '("1000" "2000" "3000" ""
 			    "4000" ""
@@ -46,10 +46,9 @@ return the max calories carried by any single elf"
 (test calorie-totals-test
   (is (= 24000 (apply #'max (calorie-totals *test-data*)))))
 
-
 (defun day01-1 (data)
-  (let ((cal-list (uiop:read-file-lines *data-file*)))
-    (apply #'max (calorie-totals cal-list))))
+  (let ((cal-list (uiop:read-file-lines *data-file*)))  ; read in data file
+    (apply #'max (calorie-totals cal-list))))           ; find maximum calorie total
 
 
 #|
@@ -60,9 +59,9 @@ To avoid this unacceptable situation, the Elves would instead like to know the t
 |#
 
 (defun day01-2 (data)
-  (let* ((cal-list (uiop:read-file-lines *data-file*))
-	 (sorted-totals (sort (calorie-totals cal-list) #'>)))
-    (+ (first sorted-totals) (second sorted-totals) (third sorted-totals))))
+  (let* ((cal-list (uiop:read-file-lines *data-file*))          ; read in data file
+	 (sorted-totals (sort (calorie-totals cal-list) #'>)))  ; calculate totals and sort
+    (+ (first sorted-totals) (second sorted-totals) (third sorted-totals)))) ; add the top three
 
 (time (format t "The answer to AOC 2022 Day 01 Part 1 is ~a" (day01-1 *data-file*)))
 (time (format t "The answer to AOC 2022 Day 01 Part 2 is ~a" (day01-2 *data-file*)))
@@ -80,3 +79,8 @@ To avoid this unacceptable situation, the Elves would instead like to know the t
 ;; 0.000398 seconds of total run time (0.000345 user, 0.000053 system)
 ;; 100.00% CPU
 ;; 196,080 bytes consed
+
+
+;; --------Part 1--------   --------Part 2--------
+;; Day       Time   Rank  Score       Time   Rank  Score
+;; 1   00:36:07  10562      0   00:46:09  10629      0
