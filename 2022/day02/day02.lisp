@@ -1,15 +1,13 @@
 ;;;; Day02.lisp
 ;;;; 2022 AOC Day 02 solution
 
-;;;; Leo Laporte, Dec 2022
+;;;; Leo Laporte, 2 Dec 2022
 
-(ql:quickload '(:fiveam :cl-ppcre :alexandria))
+(ql:quickload '(:fiveam))
 
 (defpackage :day02
   (:use #:cl
-	#:fiveam       ; for inline testing
-	#:cl-ppcre     ; regex
-	#:alexandria)) ; lil utilities
+	#:fiveam))       ; for inline testing
 
 (in-package :day02)
 
@@ -23,28 +21,34 @@
 
 --- Part One ---
 
-What would your total score be if everything goes exactly according to your strategy guide?
+"What would your total score be if everything goes exactly according
+to your strategy guide?"
 
 NOTES: Well this might be inelegant but I'm going to create a two-dimensional
-array of possible outcomes in rock paper scissors.
+array of possible outcomes in rock paper scissors. Could there be some
+mathematical formula that would represent all outcomes? (Turns out there is but
+it's crazy and I doubt it's as fast as the lookup.)
+
+See the bottom for the calculation versions as one-liners. And they are faster!
 |#
 
 (defun play (move-list)
   "given a list of moves, calculate the total score after all moves are played"
   (let ((score 0))            ; this will be the total score
     (dolist (m move-list)     ; work through the list of moves one by one
-      (incf score (move m)))  ; score() does the work here, add it to the total
+      (incf score (move m)))  ; move() does the work here, add it to the total
     score))                   ; return the final tally
 
 (defun move (the-move)
-  "returns the score after opp and me are played"
-  (let* ((m (convert the-move))
+  "returns the score after opp and me play our moves"
+  (let* ((m (convert the-move)) ; turn letters into numeric indices
+
 	 ;; this is the array I was talking about - did this by hand
 	 (scoring (make-array '(3 3) :initial-contents '((3 6 0)
 							 (0 3 6)
 							 (6 0 3)))))
 
-    (+ (1+ (cdr m))                       ; the points for the move I played
+    (+ (1+ (cdr m))                       ; the points for the move I played (index + 1)
        (aref scoring (car m) (cdr m)))))  ; and addressing into the array for the score
 
 (test move-test
@@ -54,15 +58,9 @@ array of possible outcomes in rock paper scissors.
 
 (defun convert (move)
   "converts letter moves into a cons of naturals for accessing the score array"
-  (let ((opp (subseq move 0 1))
-	(me (subseq move 2 3)))
-    (cons
-     (cond ((equalp opp "A") 0)
-	   ((equalp opp "B") 1)
-	   ((equalp opp "C") 2))
-     (cond ((equalp me "X") 0)
-	   ((equalp me "Y") 1)
-	   ((equalp me "Z") 2)))))
+  (cons
+   (- (char-code (char move 0)) (char-code #\A))    ; opponents move
+   (- (char-code (char move 2)) (char-code #\X))))  ; my move
 
 (test convert-test
   (is (equal (cons 0 0) (convert "A X")))
@@ -78,7 +76,9 @@ array of possible outcomes in rock paper scissors.
 #|
 --- Part Two ---
 
-The Elf finishes helping with the tent and sneaks back over to you. "Anyway, the second column says how the round needs to end: X means you need to lose, Y means you need to end the round in a draw, and Z means you need to win. Good luck!"
+"The Elf finishes helping with the tent and sneaks back over to you. "Anyway,
+the second column says how the round needs to end: X means you need to lose,
+Y means you need to end the round in a draw, and Z means you need to win. Good luck!""
 
 NOTES: I just have to add a step before scoring: convert the instruction into the
 appropriate move. Looks like I'll be making another array, this time of moves I
@@ -137,3 +137,58 @@ play to achieve the desired outcome"
 ;; Day       Time   Rank  Score       Time   Rank  Score
 ;; 2   01:25:57  19891      0   01:57:08  20821      0
 ;; 1   00:36:07  10562      0   00:46:09  10629      0
+
+#|
+OK now howsabout a one-liner?
+|#
+
+;; Fron Reddit - the formula for part 1 is:
+;; (j - i + 1) % 3 * 3 + j + 1
+;; in lisp
+;; (1+ (+ j (* (mod (1+ (- j i)) 3) 3)))
+;; For part 2:
+;; j * 3 + (i + j + 2) % 3 + 1
+;; in lisp
+;; (+ (* i 3) (1+ (mod (+ i j 2) 3)))
+
+(defun part1 (f)
+  (apply #'+                    ; add scores up
+	 (mapcar #'(lambda (x)  ; covert moves into a list of scores
+		     (1+ (+ (cdr x) (* (mod (1+ (- (cdr x) (car x))) 3) 3))))
+		 (mapcar #'(lambda (s) ; convert strings (e.g. "A X") into cons (e.g. (0 . 0))
+			     (cons
+			      (- (char-code (char s 0)) (char-code #\A))    ; CAR = opponents move
+			      (- (char-code (char s 2)) (char-code #\X))))  ; CDR = my move
+			 (uiop:read-file-lines f)))))  ; get list of moves as strings (e.g. "X Y")
+
+
+(defun part2 (f)
+  (apply #'+                    ; add scores up
+	 (mapcar #'(lambda (x)  ; covert moves into a list of scores
+		     (+ (* (cdr x) 3) (1+ (mod (+ (car x) (cdr x) 2) 3))))
+		 (mapcar #'(lambda (s) ; convert strings (e.g. "A X") into cons (e.g. (0 . 0))
+			     (cons
+			      (- (char-code (char s 0)) (char-code #\A))    ; opponents move
+			      (- (char-code (char s 2)) (char-code #\X))))  ; my move
+			 (uiop:read-file-lines f)))))  ; get list of moves as strings (e.g. "X Y")
+
+
+(Time (format t "The one-liner answer to AOC 2022 Day 02 Part 1 is ~a" (part1 *data-file*)))
+(time (format t "The one-liner answer to AOC 2022 Day 02 Part 2 is ~a" (part2 *data-file*)))
+
+;; The one-liner answer to AOC 2022 Day 02 Part 1 is 14264
+;; Evaluation took:
+;; 0.000 seconds of real time
+;; 0.000473 seconds of total run time (0.000426 user, 0.000047 system)
+;; 100.00% CPU
+;; 260,592 bytes consed
+
+;; The one-liner answer to AOC 2022 Day 02 Part 2 is 12382
+;; Evaluation took:
+;; 0.000 seconds of real time
+;; 0.000526 seconds of total run time (0.000426 user, 0.000100 system)
+;; 100.00% CPU
+;; 260,608 bytes consed
+
+
+;; The calculation version is FASTER than the lookup. Hunh.
