@@ -25,7 +25,8 @@ sum of the priorities of those item types?
 
 |#
 
-(defparameter *test1* "vJrwpWtwJgWrhcsFMMfFFhFp" "provided AOC examples")
+(defparameter *test1* "vJrwpWtwJgWrhcsFMMfFFhFp"
+  "provided AOC examples")
 (defparameter *test2* "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL")
 (defparameter *test3* "PmmdzqPrVvPwwTWBwg")
 (defparameter *test4* "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn")
@@ -34,11 +35,11 @@ sum of the priorities of those item types?
 (defparameter *test-all* (list *test1* *test2* *test3* *test4* *test5* *test6*))
 
 (defun common-item (str)
-  "return the single character common to both halves of a string"
-  (let* ((half (/ (length str) 2))                        ; find middle of string
-	 (left (concatenate 'list (subseq str 0 half)))   ; split into left and right...
-	 (right (concatenate 'list (subseq str half))))   ; and convert into a list of char
-    (car (intersection left right))))                     ; get the single char in both left and right
+  "return the single character common to both halves of a string - assume there's exactly one"
+  (let* ((half (/ (length str) 2))                    ; find middle of string
+	 (left (coerce (subseq str 0 half) 'list))    ; split into left and right...
+	 (right (coerce (subseq str half) 'list)))    ; ...and coerce into a list of char
+    (car (intersection left right))))                 ; get the single char in both left and right
 
 (test common-item-test
   (is (equal #\p (common-item *test1*)))
@@ -84,14 +85,13 @@ What is the sum of the priorities of those item types?
       ((null r) total)                               ; done? return total
 
     ;; body of do loop
-    (let ((r1 (concatenate 'list (first r)))         ; convert each of the next three rucksacks
-	  (r2 (concatenate 'list (second r)))        ; into lists of chars
-	  (r3 (concatenate 'list (third r))))
+    (let ((r1 (coerce (first r) 'list))         ; convert each of the next three rucksacks
+	  (r2 (coerce (second r) 'list))        ; into lists of chars
+	  (r3 (coerce (third r) 'list)))
       (incf total (priority (car (intersection (intersection r1 r2) r3)))))))
 
 (test day03-2-test
   (is (= 70 (day03-2 *test-all*))))
-
 
 (time (format t "The answer to AOC 2022 Day 03 Part 1 is ~a" (day03-1 (uiop:read-file-lines *data-file*))))
 
