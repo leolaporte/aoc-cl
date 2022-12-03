@@ -2,12 +2,11 @@
 ;;;; 2022 AOC Day 03 solution
 ;;;; Leo Laporte, 3 Dec 2022
 
-(ql:quickload '(:fiveam :cl-ppcre))
+(ql:quickload '(:fiveam))
 
 (defpackage :day03
   (:use #:cl
-	#:fiveam         ; for inline testing
-	#:cl-ppcre))     ; regex
+	#:fiveam))         ; for inline testing
 
 (in-package :day03)
 
@@ -26,6 +25,14 @@ sum of the priorities of those item types?
 
 |#
 
+(defparameter *test1* "vJrwpWtwJgWrhcsFMMfFFhFp" "provided AOC examples")
+(defparameter *test2* "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL")
+(defparameter *test3* "PmmdzqPrVvPwwTWBwg")
+(defparameter *test4* "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn")
+(defparameter *test5* "ttgJtRGJQctTZtZT")
+(defparameter *test6* "CrZsJsPPZsGzwwsLwLmpwMDw")
+(defparameter *test-all* (list *test1* *test2* *test3* *test4* *test5* *test6*))
+
 (defun common-item (str)
   "return the single character common to both halves of a string"
   (let* ((half (/ (length str) 2))                        ; find middle of string
@@ -34,12 +41,12 @@ sum of the priorities of those item types?
     (car (intersection left right))))                     ; get the single char in both left and right
 
 (test common-item-test
-  (is (equal #\p (common-item "vJrwpWtwJgWrhcsFMMfFFhFp")))
-  (is (equal #\L (common-item "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL")))
-  (is (equal #\P (common-item "PmmdzqPrVvPwwTWBwg")))
-  (is (equal #\v (common-item "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn")))
-  (is (equal #\t (common-item "ttgJtRGJQctTZtZT")))
-  (is (equal #\s (common-item "CrZsJsPPZsGzwwsLwLmpwMDw"))))
+  (is (equal #\p (common-item *test1*)))
+  (is (equal #\L (common-item *test2*)))
+  (is (equal #\P (common-item *test3*)))
+  (is (equal #\v (common-item *test4*)))
+  (is (equal #\t (common-item *test5*)))
+  (is (equal #\s (common-item *test6*))))
 
 (defun priority (c)
   "return the priority of the given character"
@@ -57,21 +64,10 @@ sum of the priorities of those item types?
 
 (defun day03-1 (rucksacks)
   "given a list of rucksacks return the total priority"
-  (let ((priorities 0))
-    (dolist (r rucksacks)
-      (incf priorities (priority (common-item r))))
-    priorities))
-
-(defparameter *test-data*
-  '("vJrwpWtwJgWrhcsFMMfFFhFp"
-    "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
-    "PmmdzqPrVvPwwTWBwg"
-    "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn"
-    "ttgJtRGJQctTZtZT"
-    "CrZsJsPPZsGzwwsLwLmpwMDw"))
+  (reduce #'+ (mapcar #'priority (mapcar #'common-item rucksacks))))
 
 (test day03-1-test
-  (is (= 157 (day03-1 *test-data*))))
+  (is (= 157 (day03-1 *test-all*))))
 
 #|
 --- Part Two ---
@@ -94,14 +90,11 @@ What is the sum of the priorities of those item types?
       (incf total (priority (car (intersection (intersection r1 r2) r3)))))))
 
 (test day03-2-test
-  (is (= 70 (day03-2 '("vJrwpWtwJgWrhcsFMMfFFhFp"
-		       "jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL"
-		       "PmmdzqPrVvPwwTWBwg"
-		       "wMqvLMZHhHMvwLHjbvcjnnSBnvTQFn"
-		       "ttgJtRGJQctTZtZT"
-		       "CrZsJsPPZsGzwwsLwLmpwMDw")))))
+  (is (= 70 (day03-2 *test-all*))))
+
 
 (time (format t "The answer to AOC 2022 Day 03 Part 1 is ~a" (day03-1 (uiop:read-file-lines *data-file*))))
+
 (time (format t "The answer to AOC 2022 Day 03 Part 2 is ~a" (day03-2 (uiop:read-file-lines *data-file*))))
 
 ;; The answer to AOC 2022 Day 03 Part 1 is 8109

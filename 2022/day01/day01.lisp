@@ -38,7 +38,7 @@ return the list of total calories carried by each elf sorted from greatest to lo
        (totals nil))                      ; list of totals for each elf
 
       ;; termination condition (empty loc)
-      ((equal loc nil) (sort totals #'>)) ; done? return the sorted list of totals
+      ((null loc) (sort totals #'>)) ; done? return the sorted list of totals
 
     ;; body of DO loop
     (if (equal (first loc) "")            ; inter-elf separator reached
@@ -73,7 +73,7 @@ if one of those Elves runs out of snacks, they still have two backups.
 
 (defun day01-2 (f)
   "returns the three highest calorie totals from a list of calorie counts"
-  (apply #'+ (subseq (calorie-totals (uiop:read-file-lines f)) 0 3))) ; add the top three
+  (reduce  #'+ (calorie-totals (uiop:read-file-lines f)) :end 3)) ; add the top three
 
 (time (format t "The answer to AOC 2022 Day 01 Part 1 is ~a" (day01-1 *data-file*)))
 (time (format t "The answer to AOC 2022 Day 01 Part 2 is ~a" (day01-2 *data-file*)))
