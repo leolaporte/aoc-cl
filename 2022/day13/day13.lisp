@@ -2,6 +2,7 @@
 ;;;; 2022 AOC Day ### solution
 ;;;; Leo Laporte, Dec 2022
 
+;; Prologue code for setup - same every day
 (ql:quickload '(:fiveam :cl-ppcre :alexandria))
 
 (defpackage :day###

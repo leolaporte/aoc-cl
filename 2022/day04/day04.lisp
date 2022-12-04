@@ -117,6 +117,8 @@ of SET-DIFFERENCE
 	      (day04-2 (uiop:read-file-lines *data-file*))))
 
 ;; --------------------------------------------------------------------------------
+;; Timings on M2 MacBook Air with 24GB RAM
+;; --------------------------------------------------------------------------------
 ;; The answer to AOC 2022 Day 04 Part 1 is 513
 ;; Evaluation took:
 ;; 0.012 seconds of real time
