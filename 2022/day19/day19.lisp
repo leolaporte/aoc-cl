@@ -29,6 +29,13 @@
 
 |#
 
+;; now solve the puzzle!
+;; (time (format t "The answer to AOC 2022 Day ### Part 1 is ~a"
+;;	      (day###-1 (uiop:read-file-lines *data-file*))))
 
-;; (time (format t "The answer to AOC 2022 Day ### Part 1 is ~a" (day###-1 *data-file*)))
-;; (time (format t "The answer to AOC 2022 Day ### Part 2 is ~a" (day###-2 *data-file*)))
+;; (time (format t "The answer to AOC 2022 Day ### Part 2 is ~a"
+;;	      (day###-2 (uiop:read-file-lines *data-file*))))
+
+;; --------------------------------------------------------------------------------
+;; Timings on M2 MacBook Air with 24GB RAM
+;; --------------------------------------------------------------------------------
