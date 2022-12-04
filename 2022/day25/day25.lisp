@@ -38,5 +38,5 @@
 ;;	      (day###-2 (uiop:read-file-lines *data-file*))))
 
 ;; --------------------------------------------------------------------------------
-;; Timings with SBCL on  M2 MacBook Air with 24GB RAM
+;; Timings with SBCL on M2 MacBook Air with 24GB RAM
 ;; --------------------------------------------------------------------------------
