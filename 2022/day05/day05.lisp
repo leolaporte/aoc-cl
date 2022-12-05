@@ -148,7 +148,7 @@ the move instructions to the stacks of letters"
 	      (day05-2 (uiop:read-file-lines *data-file*))))
 
 ;; --------------------------------------------------------------------------------
-;; Timings with SBCL on M2 MacBook Air with 24GB RAM
+;; Timings with SBCL on Mac Studio M1 Max with 32GB RAM
 ;; --------------------------------------------------------------------------------
 
 ;; The answer to AOC 2022 Day 05 Part 1 is (J C M H L V G M G)
