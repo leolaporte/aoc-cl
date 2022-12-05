@@ -2,15 +2,15 @@
 ;;;; 2022 AOC Day 04 solution
 ;;;; Leo Laporte, 4 Dec 2022
 
+;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code - just to set up the environment
-
-(ql:quickload '(:fiveam :cl-ppcre :alexandria))
+;; ----------------------------------------------------------------------------------------------------
+(ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day04
   (:use #:cl
 	#:fiveam       ; for inline testing
-	#:cl-ppcre     ; regex
-	#:alexandria)) ; lil utilities (unused today)
+	#:cl-ppcre))   ; regex
 
 (in-package :day04)
 
@@ -19,7 +19,7 @@
 
 (defparameter *data-file* "~/cl/AOC/2022/day04/input.txt")  ; supplied data from AoC
 
-#|
+#| ----------------------------------------------------------------------------------------------------
 
 --- Day 4: Camp Cleanup ---
 
@@ -29,7 +29,7 @@ In how many assignment pairs does one range fully contain the other?
 
 NOTES: this one is surprisingly straightforward using regex and sets
 
-|#
+---------------------------------------------------------------------------------------------------- |#
 
 ;; I always do this first - for two reasons. It's useful to see what data I'll be
 ;; working with, and it really helps me to test along the way so I don't go too
@@ -57,7 +57,7 @@ NOTES: this one is surprisingly straightforward using regex and sets
 
     ;; now that i've got the start and end points of each range, make them into lists
     (let ((range1 (loop for i from start1 upto end1 collect i))  ; I hate loop but..
-	  (range2 (loop for i from start2 upto end2 collect i))) ; ...it's clear and easy
+	  (range2 (loop for i from start2 upto end2 collect i))) ; ...it's clear and easy here
       (or (null (set-difference range1 range2))       ; does 2 fit into 1?
 	  (null (set-difference range2 range1))))))   ; or 1 fit into 2?
 
@@ -74,7 +74,7 @@ NOTES: this one is surprisingly straightforward using regex and sets
 (test day04-1-tst
   (is (= 2 (day04-1 *tst-all*))))
 
-#|
+#| ----------------------------------------------------------------------------------------------------
 --- Part Two ---
 
 In how many assignment pairs do the ranges overlap?
@@ -82,7 +82,7 @@ In how many assignment pairs do the ranges overlap?
 NOTES: Just change the test to use INTERSECTION instead
 of SET-DIFFERENCE
 
-|#
+----------------------------------------------------------------------------------------------------|#
 
 (defun overlap? (pair)
   "returns true if the ranges in the pair overlap at all"
@@ -116,9 +116,9 @@ of SET-DIFFERENCE
 (time (format t "The answer to AOC 2022 Day 04 Part 2 is ~a"
 	      (day04-2 (uiop:read-file-lines *data-file*))))
 
-;; --------------------------------------------------------------------------------
+;; ----------------------------------------------------------------------------------------------------
 ;; Timings on M2 MacBook Air with 24GB RAM
-;; --------------------------------------------------------------------------------
+;; ----------------------------------------------------------------------------------------------------
 ;; The answer to AOC 2022 Day 04 Part 1 is 513
 ;; Evaluation took:
 ;; 0.012 seconds of real time
