@@ -68,7 +68,6 @@ instructions"
 	      (subseq (reverse (second stack-strings)) 1 3))) ; how many stacks? (assume 1 digit? TK)
 	(stack-array (make-array dim :element-type 'list
 				     :initial-element nil))   ; create empty stack array
-	(letter "")                                           ; this will be the stack string
 	(ss (rest (rest stack-strings)) (rest ss)))           ; walk through stack strings
        ((null ss) stack-array)                                ; all done, return the array
 
