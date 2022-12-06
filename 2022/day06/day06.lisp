@@ -23,7 +23,10 @@
 
 --- Part One ---
 
-The device will send your subroutine a datastream buffer (your puzzle input); your subroutine needs to identify the first position where the four most recently received characters were all different. Specifically, it needs to report the number of characters from the beginning of the buffer to the end of the first such four-character marker.
+The device will send your subroutine a datastream buffer (your puzzle input); your
+subroutine needs to identify the first position where the four most recently received
+characters were all different. Specifically, it needs to report the number of characters
+from the beginning of the buffer to the end of the first such four-character marker.
 
 How many characters need to be processed before the first start-of-packet marker is detected?
 
@@ -64,9 +67,11 @@ Well that seems awfully easy.
 #|
 --- Part Two ---
 
-A start-of-message marker is just like a start-of-packet marker, except it consists of 14 distinct characters rather than 4.
+A start-of-message marker is just like a start-of-packet marker, except it consists
+of 14 distinct characters rather than 4.
 
-How many characters need to be processed before the first start-of-message marker is detected?
+How many characters need to be processed before the first start-of-message marker
+is detected?
 
 |#
 
@@ -74,7 +79,6 @@ How many characters need to be processed before the first start-of-message marke
   (dotimes (i (length s))
     (when (not (doubled? (subseq s i (+ i 14)))) ; same thing, bigger chunk
       (return (+ 14 i)))))                       ; don't forget to add the message length
-
 
 (test find-message-test
   (is (= 19 (find-message *tst0*)))
