@@ -41,19 +41,34 @@ Well that seems awfully easy.
 (defparameter *tst4* "zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw") ; first marker after character 11
 
 
-(defun doubled? (s)
-  "returns true if any characters in s are doubled"
+(defun duped? (s)
+  "returns true if any characters in string s are duplicated - iterative version"
   (do* ((l (coerce s 'list))      ; easier to do this with a list
 	(c l (rest c)))           ; the character in the list to check
        ((null c) nil)             ; never found a dupe? False
     (when (find (first c) (remove (first c) l :count 1)) ; remove one occurrence of the char first
       (return t))))              ; found a dupe!
 
+(defun recursive-duped? (s)
+  "returns true if any characters in string s are duplicated - recursive version"
+  (let ((list-from-string (coerce s 'list)))
+    (labels ((walk-list (c lst)  ; internal recursive function to walk through the list
+	       (cond ((null c) nil)  ; walked entire list with no dupes, return false
+		     ((find (first c) (remove (first c) lst :count 1)) t) ; duped? return t
+		     (t (walk-list (rest c) lst)))))                      ; nope, keep going
+      (walk-list list-from-string list-from-string))))   ; trampoline into recursion
+
+(test duped?-test
+  (is-true (duped? "abcb"))
+  (is-false (duped? "abcd"))
+  (is-true (recursive-duped? "fgfe"))
+  (is-false (recursive-duped? "fghi")))
+
 (defun find-marker (s)
   "returns the total number of characters that have to be read in string s to find the
 first group of four letters that aren't duplicated in the group"
   (dotimes (i (length s))        ; step through the string
-    (when (not (doubled? (subseq s i (+ i 4)))) ; taking a four character chunk at a time
+    (when (not (recursive-duped? (subseq s i (+ i 4)))) ; taking a four character chunk at a time
       (return (+ 4 i)))))        ; total characters read
 
 (test find-marker-test
@@ -81,7 +96,7 @@ is detected?
   "returns the total number of characters that have to be read in string s to find the
 first group of fourteen letters that aren't duplicated in the group"
   (dotimes (i (length s))
-    (when (not (doubled? (subseq s i (+ i 14)))) ; same thing, bigger chunk
+    (when (not (recursive-duped? (subseq s i (+ i 14)))) ; same thing, bigger chunk
       (return (+ 14 i)))))                       ; don't forget to add the message length
 
 (test find-message-test
