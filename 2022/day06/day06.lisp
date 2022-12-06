@@ -50,6 +50,8 @@ Well that seems awfully easy.
       (return t))))              ; found a dupe!
 
 (defun find-marker (s)
+  "returns the total number of characters that have to be read in string s to find the
+first group of four letters that aren't duplicated in the group"
   (dotimes (i (length s))        ; step through the string
     (when (not (doubled? (subseq s i (+ i 4)))) ; taking a four character chunk at a time
       (return (+ 4 i)))))        ; total characters read
@@ -76,6 +78,8 @@ is detected?
 |#
 
 (defun find-message (s)
+  "returns the total number of characters that have to be read in string s to find the
+first group of fourteen letters that aren't duplicated in the group"
   (dotimes (i (length s))
     (when (not (doubled? (subseq s i (+ i 14)))) ; same thing, bigger chunk
       (return (+ 14 i)))))                       ; don't forget to add the message length
