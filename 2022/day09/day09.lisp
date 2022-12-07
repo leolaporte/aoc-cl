@@ -1,15 +1,16 @@
 ;;;; Day###.lisp
 ;;;; 2022 AOC Day ### solution
-;;;; Leo Laporte, Dec 2022
+;;;; Leo Laporte, ### Dec 2022
 
 ;; Prologue code for setup - same every day
-(ql:quickload '(:fiveam :cl-ppcre :alexandria))
+(ql:quickload '(:fiveam :cl-ppcre :str :serapeum))
 
 (defpackage :day###
-  (:use #:cl
-	#:fiveam       ; for inline testing
-	#:cl-ppcre     ; regex
-	#:alexandria)) ; lil utilities
+  (:use #:cl)
+  (:local-nicknames
+   (:ax :alexandria)
+   (:re :cl-ppcre)
+   (:se :serapeum)))
 
 (in-package :day###)
 
