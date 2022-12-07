@@ -45,7 +45,7 @@ Well that seems awfully easy.
   "returns true if any characters in string s are duplicated - iterative version"
   (do* ((l (coerce s 'list))      ; easier to do this with a list
 	(c l (rest c)))           ; the character in the list to check
-       ((null c) nil)             ; never found a dupe? False
+       ((null (rest c)) nil)      ; at last char and no dupe? Return False
     (when (find (first c) (remove (first c) l :count 1)) ; remove one occurrence of the char first
       (return t))))              ; found a dupe!
 
@@ -53,7 +53,7 @@ Well that seems awfully easy.
   "returns true if any characters in string s are duplicated - recursive version"
   (let ((list-from-string (coerce s 'list)))
     (labels ((walk-list (c lst)  ; internal recursive function to walk through the list
-	       (cond ((null c) nil)  ; walked entire list with no dupes, return false
+	       (cond ((null (rest c)) nil)  ; only one char left with no dupe? return false
 		     ((find (first c) (remove (first c) lst :count 1)) t) ; duped? return t
 		     (t (walk-list (rest c) lst)))))                      ; nope, keep going
       (walk-list list-from-string list-from-string))))   ; trampoline into recursion
