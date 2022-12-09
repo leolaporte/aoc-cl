@@ -39,6 +39,11 @@ list includes name, size, and a list of sub-dirs. I don't have to keep track of 
 their sizes. Or better yet, add each file to the dir size directly. This should do for part 1.
 I can use the normal list manipulation tools to process the command list, then recursively sum all
 the sizes into a hash table of dir->size. Let's go.
+
+OK all the samples worked but the final solution was too high. Thanks to Tom Ribben in our
+TWiT Discord I learned that I made a faulty assumption: short dir names are NOT unique, only
+the fully qualified path is unique. So I have to adjust my code to name all dirs with
+the FQP instead of the short name. Worked. On to part 2.
 ---------------------------------------------------------------------------------------------------- |#
 
 (defparameter *test-data* ; provided in the problem description
@@ -150,8 +155,8 @@ and add it to the tree while updating cwd's sub-dirs list, returns the updated t
 (defun process-cmds (commands)
   "return a directory tree created by interpreting the list of commands"
 
-  (let ((tree (list '("/" 0 nil)))   ; the root directory tree - the starting point
-	(cwd (list "/")))       ; a stack of directories, (first cwd) is the current working directory
+  (let ((tree '(("/" 0 nil)))   ; the root directory tree - the starting point
+	(cwd (list "/")))       ; a stack of directory paths, top is current working dir
 
     (dolist (cmd commands tree) ; for every cmd in commands do the following, return tree
       (let ((c (re:split " " cmd)))             ; make list of words in command
@@ -161,11 +166,18 @@ and add it to the tree while updating cwd's sub-dirs list, returns the updated t
 		 (pop cwd))                     ; go up a dir by popping off the most recent dir
 
 		((equalp (second c) "cd")       ; cmd is cd dir
-		 (push (third c) cwd))          ; make dir the current dir
+		 (if (equalp (third c) "/")
+		     (setf cwd (list "/"))
+		     (push
+		      (str:concat (first cwd) (third c) "/") ; the fully qualified path name
+		      cwd)))
 
 		((equalp (first c) "dir")  ; cmd is "dir x"
 		 ;; add the new dir to the tree
-		 (setf tree (dir-add (second c) (first cwd) tree)))
+		 (setf tree (dir-add
+			     (str:concat (first cwd) (second c) "/")
+			     (first cwd)
+			     tree)))
 
 		(t ; otherwise it must be a file
 		 ;; add the file's size to the directory size
@@ -173,12 +185,13 @@ and add it to the tree while updating cwd's sub-dirs list, returns the updated t
 
 (5a:test dir-size-test
   (let ((tt (process-cmds *test-data*)))   ; tree generated from AoC provided instructions
-    (5a:is (= 584 (branch-size (dir-find "e" tt) tt)))  ; ditto answers
-    (5a:is (= 94853 (branch-size (dir-find "a" tt) tt)))
-    (5a:is (= 24933642 (branch-size (dir-find "d" tt) tt)))
+    (5a:is (= 584 (branch-size (dir-find "/a/e/" tt) tt)))  ; ditto answers
+    (5a:is (= 94853 (branch-size (dir-find "/a/" tt) tt)))
+    (5a:is (= 24933642 (branch-size (dir-find "/d/" tt) tt)))
     (5a:is (= 48381165 (branch-size (dir-find "/" tt) tt)))))
 
-(defun sum-dir-sizes (tree)
+
+(Defun sum-dir-sizes (tree)
   "given a tree return the sums of all the directory sizes <= 100,000"
   (reduce #'+                                      ; add up remaining dirs
 	  (remove-if #'(lambda (x) (> x 100000))   ; prune dirs > 100000K
@@ -199,21 +212,48 @@ and add it to the tree while updating cwd's sub-dirs list, returns the updated t
    (process-cmds instruction-list)))
 
 (5a:test day07-1-test
-  (5a:is (= 95437 (day07-1 *test-data*))))
+  (5a:is (= 95437 (day07-2 *test-data*))))
 
 
 #|
 --- Part Two ---
 
+"The total disk space available to the filesystem is 70,000,000. To run the update,
+you need unused space of at least 30,000,000. Find the smallest directory that, if
+deleted, would free up enough space on the filesystem to run the update. What is
+the total size of that directory?"
+
 |#
+
+(defparameter *disk-space*   70000000)   ; available disk space
+(defparameter *space-needed* 30000000) ; free space needed
+
+(defun find-smallest-dir-to-detete (tree)
+  "given a tree return the smallest directory size to subtract to free up 30,000,000 from
+a total of 70,000,000"
+  (let* ((dir-sizes (mapcar #'(lambda (branch) (branch-size branch tree)) tree)) ; list of dir sizes
+	 (used (branch-size (dir-find "/" tree) tree))  ; how much of the drive is used
+	 (unused (- *disk-space* used))      ; how much is unused
+	 (needed (- *space-needed* unused))) ; the minimum we need to delete
+    (first ; first entry is the smallest of the drives to get the job done
+     (sort ; sort remaining dirs from smallest to largest
+      (remove-if #'(lambda (size) (< size needed)) dir-sizes) #'<)))) ; remove dirs too small
+
+(defun day07-2 (instruction-list)
+  (find-smallest-dir-to-detete
+   (process-cmds instruction-list)))
+
+(5a:test day07-2-test
+  (5a:is (= 24933642 (day07-2 *test-data*))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2022 Day 07 Part 1 is ~a"
 	      (day07-1 (uiop:read-file-lines *data-file*))))
 
 
-;; (time (format t "The answer to AOC 2022 Day 07 Part 2 is ~a"
-;;	      (day07-2 (uiop:read-file-lines *data-file*))))
+(time (format t "The answer to AOC 2022 Day 07 Part 2 is ~a"
+	      (day07-2 (uiop:read-file-lines *data-file*))))
+
 
 ;; --------------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
