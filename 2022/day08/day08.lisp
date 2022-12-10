@@ -168,6 +168,10 @@ the four directions.
 
 Consider each tree on your map. What is the highest scenic score possible for any tree?
 
+NOTES: this took longer than it should have for two reasons: I didn't preserve the order
+of the trees in part 1 because I didn't have to. In part two the order of the trees is
+obviously critical. And two, I keep trying to use t as a variable name. D'oh!
+
 |#
 
 (defun scenic-score (pt grid)
@@ -186,13 +190,12 @@ multiplied together"
      (measure-view (above pt grid))            ; how many trees can we see above us?
      (measure-view (right pt grid))            ; ditto to the right
      (measure-view (left pt grid))             ; and left
-     (measure-view (below pt grid)))))        ; and down
+     (measure-view (below pt grid)))))         ; and down
 
 (5a:test scenic-score-test
   (let ((grid (make-grid *test-data*)))
     (5a:is (= 4 (scenic-score (make-pt :x 2 :y 1) grid)))
     (5a:is (= 8 (scenic-score (make-pt :x 2 :y 3) grid)))))
-
 
 (defun make-scenic-score-list (grid)
   "make a list of all the scenic scores"
@@ -201,7 +204,7 @@ multiplied together"
 		     collect (scenic-score (make-pt :x x :y y) grid))))
 
 (defun day08-2 (input-strings)
-  (apply #'max (make-scenic-score-list (make-grid input-strings))))
+  (apply #'max (make-scenic-score-list (make-grid input-strings)))) ; return the best scenic score
 
 (5a:test day08-2-test
   (5a:is (= 8 (day08-2 *test-data*))))
