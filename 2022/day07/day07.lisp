@@ -258,3 +258,26 @@ a total of 70,000,000"
 ;; --------------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
 ;; --------------------------------------------------------------------------------
+;; The answer to AOC 2022 Day 07 Part 1 is 1454188
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002474 seconds of total run time (0.002284 user, 0.000190 system)
+;; 100.00% CPU
+;; 1,172,368 bytes consed
+
+;; The answer to AOC 2022 Day 07 Part 2 is 4183246
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002605 seconds of total run time (0.002472 user, 0.000133 system)
+;; 150.00% CPU
+;; 1,106,928 bytes consed
+
+;; --------Part 1--------   --------Part 2--------
+;; Day       Time   Rank  Score       Time   Rank  Score
+;; 7       >24h  79100      0       >24h  77516      0
+;; 6   01:02:38  19233      0   01:07:16  18804      0
+;; 5   03:01:38  23370      0   03:55:49  26420      0
+;; 4   01:01:11  15964      0   01:16:38  16172      0
+;; 3   00:42:32  12585      0   01:17:33  13957      0
+;; 2   01:25:57  19891      0   01:57:08  20821      0
+;; 1   00:36:07  10562      0   00:46:09  10629      0
