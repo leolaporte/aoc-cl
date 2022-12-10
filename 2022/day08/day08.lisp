@@ -1,6 +1,6 @@
 ;;;; Day08.lisp
 ;;;; 2022 AOC Day 08 solution
-;;;; Leo Laporte, 08 Dec 2022
+;;;; Leo Laporte, 09 Dec 2022
 
 ;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
