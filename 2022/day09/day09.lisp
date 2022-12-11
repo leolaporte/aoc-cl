@@ -1,6 +1,6 @@
 ;;;; Day09.lisp
 ;;;; 2022 AOC Day 09 solution
-;;;; Leo Laporte, 09 Dec 2022
+;;;; Leo Laporte, 10 Dec 2022
 
 ;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -22,7 +22,9 @@
 
 (defparameter *data-file* "~/cl/AOC/2022/day09/input.txt")  ; supplied data from AoC
 
-#|
+#| ----------------------------------------------------------------------------------------------------
+--- Day 9: Rope Bridge ---
+
 --- Part One ---
 
 "Consider a rope with a knot at each end; these knots mark the head and the tail of the rope.
@@ -56,7 +58,7 @@ First thing I'm going to do is unroll the move list - it will be much easier to
 analyze and act on one move at a time. It's run-length encoding. So R 4 is really
 RRRR.
 
-|#
+---------------------------------------------------------------------------------------------------- |#
 
 (defparameter *test-data*
   '("R 4"
@@ -68,10 +70,9 @@ RRRR.
     "L 5"
     "R 2"))
 
-(defparameter *locs* nil
-  "theade list of locations TAIL headas visited GLOBAL!")
-
 (defstruct pt x y)  ; a point on a grid
+
+;; ----------------------------------------------------------------------------------------------------
 
 (defun expand-move (str)
   "expands a command from R 4 into four Rs"
@@ -90,18 +91,7 @@ RRRR.
 	    "L" "L" "L" "R" "R")
 	  (expand-moves *test-data*))))
 
-(defun play (moves)
-  "given a list of moves move HEAD and TAIL on a grid, return the list of unique points
-TAIL visited"
-  (do ((m moves (rest m))
-       (locs nil)                  ; a list of positions visted by tail
-       (head (make-pt :x 0 :y 0))  ; theade current position of theade HEADEAD
-       (tail (make-pt :x 0 :y 0))) ; theade current position of theade TAIL
-      ((null m)                    ; done withead moves? return unique list of positions
-       (length (remove-duplicates locs :test #'equalp)))
-    (setf (values head tail) (make-move (first m) head tail))
-    (push tail locs)))
-
+;; the logic for making the HEAD and TAIL move
 (defun make-move (m head tail )
   "given a move and the current position of head and tail, move the head, adjust
  the tail as needed, then return the new positions of head and tail"
@@ -131,8 +121,9 @@ TAIL visited"
 	 (unless (adjacent? head tail)
 	   (if (in-line? head tail)
 	       (setf tail (make-pt :x (1+ (pt-x tail)) :y (pt-y tail)))      ; chase
-	       (setf tail (make-pt :x (1+ (pt-x tail)) :y (pt-y head)))))))   ; diag
-  (values head tail))
+	       (setf tail (make-pt :x (1+ (pt-x tail)) :y (pt-y head)))))))  ; diag
+
+  (values head tail)) ;; return the new positions of HEAD and TAIL
 
 (defun adjacent? (head tail)
   "returns true if head and t are adjacent or overlapping"
@@ -161,6 +152,20 @@ TAIL visited"
   (5a:is-false (in-line? (make-pt :x 1 :y 1) (make-pt :x 3 :y 2)))
   (5a:is-false (in-line? (make-pt :x 1 :y 1) (make-pt :x 2 :y 2))))
 
+;; this is the workhorse function - a factory that processes the moves
+;; keeps track of the points TAIL visits and returns the final answer
+(defun play (moves)
+  "given a list of moves, move HEAD and TAIL on a grid, return the list of unique points
+TAIL visited"
+  (do ((m moves (rest m))                                     ; loop through the moves
+       (locs nil)                                             ; a list of positions visted by tail
+       (head (make-pt :x 0 :y 0))                             ; starting position of HEAD
+       (tail (make-pt :x 0 :y 0)))                            ; starting position of TAIL
+      ((null m)                                               ; done with moves?
+       (length (remove-duplicates locs :test #'equalp)))      ; return unique list of positions
+    (setf (values head tail) (make-move (first m) head tail)) ; make the move, record posns
+    (push tail locs)))                                        ; add TAIL's posn to the visited list
+
 (defun day09-1 (moves)
   (play (expand-moves moves)))
 
@@ -169,6 +174,8 @@ TAIL visited"
 
 #|
 --- Part Two ---
+
+Simulate your complete series of motions on a larger rope with ten knots. How many positions does the tail of the rope visit at least once?
 
 |#
 
