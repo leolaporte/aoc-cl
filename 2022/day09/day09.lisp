@@ -6,7 +6,7 @@
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :cl-ppcre :str :trivia :serapeum))
+(ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day09
   (:use #:cl)
@@ -14,17 +14,15 @@
    (:5a :fiveam)
    (:re :cl-ppcre)))
 
-
 (in-package :day09)
 
 (setf fiveam:*run-test-when-defined* t) ; test when compiling test code (for quick iteration)
 (declaim (optimize (debug 3)))          ; max debugging info
 
-(defparameter *data-file* "~/cl/AOC/2022/day09/input.txt")  ; supplied data from AoC
+(defparameter *file* "~/cl/AOC/2022/day09/input.txt")  ; supplied data from AoC
 
 #| ----------------------------------------------------------------------------------------------------
 --- Day 9: Rope Bridge ---
-
 --- Part One ---
 
 "Consider a rope with a knot at each end; these knots mark the head and the tail of the rope.
@@ -70,16 +68,34 @@ RRRR.
     "L 5"
     "R 2"))
 
-(defstruct pt x y)  ; a point on a grid
+(defparameter *test-data-pt2*
+  '("R 5"
+    "U 8"
+    "L 8"
+    "D 3"
+    "R 17"
+    "D 10"
+    "L 25"
+    "U 20"))
 
+;; ----------------------------------------------------------------------------------------------------
+;; PARSE DATA
 ;; ----------------------------------------------------------------------------------------------------
 
 (defun expand-move (str)
   "expands a command from R 4 into four Rs"
-  (let* ((s (re:split " " str))  ; split theade string on space "R 3" > '("R" "3")
-	 (dir (first s))
-	 (cnt (parse-integer (second s))))
-    (loop for i below cnt collect dir))) ; expand into list
+  (let* ((s (re:split " " str))              ; split the string on space "R 3" > '("R" "3")
+	 (dir (move-to-dir (uiop:first-char (first s))))  ; turn the letter string into cons
+	 (cnt (parse-integer (second s))))   ; turn the number string into an integer
+    (loop for i below cnt collect dir)))     ; expand into list
+
+(defun move-to-dir (move)
+  "converts the move instructions into directions"
+  (ecase move
+    (#\U (cons 0 -1))
+    (#\D (cons 0 1))
+    (#\L (cons -1 0))
+    (#\R (cons 1 0))))
 
 (defun expand-moves (los)
   "expands a list of command strings into a single list of individual commands"
@@ -87,84 +103,120 @@ RRRR.
 
 (5a:test expand-moves-test
   (5a:is (equal
-	  '("R" "R" "R" "R" "U" "U" "U" "U" "L" "L" "L" "D" "R" "R" "R" "R" "D" "L" "L"
-	    "L" "L" "L" "R" "R")
+	  '((1 . 0) (1 . 0) (1 . 0) (1 . 0) (0 . -1) (0 . -1) (0 . -1) (0 . -1) (-1 . 0)
+	    (-1 . 0) (-1 . 0) (0 . 1) (1 . 0) (1 . 0) (1 . 0) (1 . 0) (0 . 1) (-1 . 0)
+	    (-1 . 0) (-1 . 0) (-1 . 0) (-1 . 0) (1 . 0) (1 . 0))
 	  (expand-moves *test-data*))))
 
-;; the logic for making the HEAD and TAIL move
-(defun make-move (m head tail )
-  "given a move and the current position of head and tail, move the head, adjust
- the tail as needed, then return the new positions of head and tail"
-  (cond ((equalp m "U")
-	 (setf head (make-pt :x (pt-x head) :y (1- (pt-y head))))
-	 (unless (adjacent? head tail) ; if they're adjacent there's no move necessary
-	   (if (in-line? head tail)
-	       (setf tail (make-pt :x (pt-x tail) :y (1- (pt-y tail))))    ; chase
-	       (setf tail (make-pt :x (pt-x head) :y (1- (pt-y tail))))))) ; diag
+;; ----------------------------------------------------------------------------------------------------
+;; MOVE PRIMITIVES
+;; ----------------------------------------------------------------------------------------------------
 
-	((equalp m "D")
-	 (setf head (make-pt :x (pt-x head) :y (1+ (pt-y head))))
-	 (unless (adjacent? head tail)
-	   (if (in-line? head tail)
-	       (setf tail (make-pt :x (pt-x tail) :y (1+ (pt-y tail))))     ; chase
-	       (setf tail (make-pt :x (pt-x head) :y (1+ (pt-y tail)))))))  ; diag
+;; a point on the grid is a dotted pair: (x . y)
 
-	((equalp m "L")
-	 (setf head (make-pt :x (1- (pt-x head)) :y (pt-y head)))
-	 (unless (adjacent? head tail)
-	   (if (in-line? head tail)
-	       (setf tail (make-pt :x (1- (pt-x tail)) :y (pt-y tail)))    ; chase
-	       (setf tail (make-pt :x (1- (pt-x tail)) :y (pt-y head)))))) ; diag
+(defun x (point)
+  "returns the x value of a point"
+  (car point))
 
-	((equalp m "R")
-	 (setf head (make-pt :x (1+ (pt-x head)) :y (pt-y head)))
-	 (unless (adjacent? head tail)
-	   (if (in-line? head tail)
-	       (setf tail (make-pt :x (1+ (pt-x tail)) :y (pt-y tail)))      ; chase
-	       (setf tail (make-pt :x (1+ (pt-x tail)) :y (pt-y head)))))))  ; diag
-
-  (values head tail)) ;; return the new positions of HEAD and TAIL
+(defun y (point)
+  "returns the y value of a point"
+  (cdr point))
 
 (defun adjacent? (head tail)
   "returns true if head and t are adjacent or overlapping"
-  (or (and (<= (abs (- (pt-x head) (pt-x tail))) 1)         ; left or right 1? or overlapping?
-	   (<= (abs (- (pt-y head) (pt-y tail))) 1))         ; up or down 1? or overlapping?
-      (and (= (abs (- (pt-x head) (pt-x tail))) 1)
-	   (= (abs (- (pt-y head) (pt-y tail))) 1))))  ; one step away diagonally
+  (or (and (<= (abs (- (x head) (x tail))) 1)         ; left or right 1? or overlapping?
+	   (<= (abs (- (y head) (y tail))) 1))        ; up or down 1? or overlapping?
+      (and (= (abs (- (x head) (x tail))) 1)          ; one step away diagonally
+	   (= (abs (- (y head) (y tail))) 1))))
 
 (5a:test adjacent?-test
-  (5a:is-true (adjacent? (make-pt :x 1 :y 1) (make-pt :x 2 :y 1)))  ; right
-  (5a:is-false (adjacent? (make-pt :x 5 :y 1) (make-pt :x 1 :y 1))) ; off by 4
-  (5a:is-true (adjacent? (make-pt :x 1 :y 1) (make-pt :x 2 :y 2)))  ; diagonal
-  (5a:is-false (adjacent? (make-pt :x 1 :y 1) (make-pt :x 2 :y 3))) ; far away
-  (5a:is-true (adjacent? (make-pt :x 1 :y 2) (make-pt :x 1 :y 2)))  ; overlapping
-  (5a:is-false (adjacent? (make-pt :x 1 :y 1) (make-pt :x 2 :y 3))) ; nope
-  (5a:is-true (adjacent? (make-pt :x 3 :y 3) (make-pt :x 2 :y 2))))  ; diagonal
+  (5a:is-true (adjacent? (cons 1 1) (cons 2 1)))  ; right
+  (5a:is-false (adjacent? (cons 5 1) (cons 1 1))) ; off by 4
+  (5a:is-true (adjacent? (cons 1 1) (cons 2 2)))  ; diagonal
+  (5a:is-false (adjacent? (cons 1 1) (cons 2 3))) ; far away
+  (5a:is-true (adjacent? (cons 1 2) (cons 1 2)))  ; overlapping
+  (5a:is-false (adjacent? (cons 1 1) (cons 2 3))) ; nope
+  (5a:is-true (adjacent? (cons 3 3) (cons 2 2))))  ; diagonal
 
-(defun in-line? (head tail)
-  "returns true if the two points are on the same row or column"
-  (or (= (pt-x head) (pt-x tail))
-      (= (pt-y head) (pt-y tail))))
+;; prep done, now the actual move functions
+(defun move-leader (point dir)
+  "moves the HEAD one unit in the direction dir"
+  (cons (+ (x point) (x dir))
+	(+ (y point) (y dir))))
 
-(5a:test in-line?-test
-  (5a:is-true (in-line? (make-pt :x 1 :y 2) (make-pt :x 3 :y 2)))
-  (5a:is-true (in-line? (make-pt :x 1 :y 2) (make-pt :x 1 :y 3)))
-  (5a:is-false (in-line? (make-pt :x 1 :y 1) (make-pt :x 3 :y 2)))
-  (5a:is-false (in-line? (make-pt :x 1 :y 1) (make-pt :x 2 :y 2))))
+(5a:test move-leader-test
+  (5a:is (equal (cons 5 4) (move-leader (cons 5 5) (cons 0 -1))))
+  (5a:is (equal (cons 5 6) (move-leader (cons 5 5) (cons 0 1))))
+  (5a:is (equal (cons 4 5) (move-leader (cons 5 5) (cons -1 0))))
+  (5a:is (equal (cons 6 5) (move-leader (cons 5 5) (cons 1 0)))))
+
+;; a little bit magical - try to follow along
+(defun move-follower (leader follower)
+  "returns new follower position, by moving a following segment toward the leader
+according to the rules"
+  (cond  ((adjacent? leader follower) follower)    ; if they're adjacent there's no move necessary
+
+	 ((= (x leader) (x follower))                        ; both on the x-xis
+	  (cons (x follower)                                 ; stay on the x-axis
+		(+ (y follower)
+		   (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axix
+
+	 ((= (y leader) (y follower))                        ; both on the y-axis
+	  (cons (+ (x follower)
+		   (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
+		(y follower)))                               ; stay on the y-axis
+
+	 ((> (abs (- (x leader) (x follower))) 1)            ; diagonal on the x axis
+	  (cons (+ (x follower)                              ; bump one closer on the x axis
+		   (if (> (x leader) (x follower)) 1 -1))
+		(y leader)))                                 ; jump over to the leader's y axis
+
+	 ((> (abs (- (y leader) (y follower))) 1)            ; diagonal on the y axis
+	  (cons (x leader)                                   ; jump over to the leader's x axis
+		(+ (y follower)
+		   (if (> (y leader) (y follower)) 1 -1))))  ; and move 1 closer
+
+	 ((and (> (abs (- (x leader) (x follower))) 1)       ; pathological case only possible
+	       (> (abs (- (y leader) (y follower))) 1))      ; with a longer rope (pt 2)
+	  (cons (+ (x follower)                              ;
+		   (if (> (x leader) (x follower)) 1 -1))
+		(+ (y follower)
+		   (if (> (y leader) (y follower)) 1 -1))))
+
+	 (t (error "can't get here"))))
+
+(5a:test move-follower-test
+  (5a:is (equal (cons 0 0) (move-follower (cons 0 1) (cons 0 0))))     ; adj  (mine)
+  (5a:is (equal (cons 0 1) (move-follower (cons 0 2) (cons 0 0))))     ; in-line (mine)
+  (5a:is (equal (cons 2 -2) (move-follower (cons 1 -2) (cons 3 -2))))  ; in-line (AoC)
+  (5a:is (equal (cons -1 -1) (move-follower (cons -1 -2) (cons 0 0)))) ; diag (AoC)
+  (5a:is (equal (cons 4 -1) (move-follower (cons 4 -2) (cons 3 0))))   ; diag (AoC)
+  (5a:is (equal (cons 3 -4) (move-follower (cons 2 -4) (cons 4 -3))))  ; diag (AoC)
+  (5a:is (equal (cons 4 -3) (move-follower (cons 3 -4) (cons 4 -3))))  ; adj (AoC)
+  (5a:is (equal (cons 3 -3) (move-follower (cons 4 -3) (cons 2 -4))))  ; diag (AoC)
+  (5a:is (equal (cons 3 -2) (move-follower (cons 2 -2) (cons 4 -3))))) ; diag (AoC)
+
+;; ----------------------------------------------------------------------------------------------------
 
 ;; this is the workhorse function - a factory that processes the moves
 ;; keeps track of the points TAIL visits and returns the final answer
 (defun play (moves)
   "given a list of moves, move HEAD and TAIL on a grid, return the list of unique points
 TAIL visited"
-  (do ((m moves (rest m))                                     ; loop through the moves
-       (locs nil)                                             ; a list of positions visted by tail
-       (head (make-pt :x 0 :y 0))                             ; starting position of HEAD
-       (tail (make-pt :x 0 :y 0)))                            ; starting position of TAIL
-      ((null m)                                               ; done with moves?
-       (length (remove-duplicates locs :test #'equalp)))      ; return unique list of positions
-    (setf (values head tail) (make-move (first m) head tail)) ; make the move, record posns
-    (push tail locs)))                                        ; add TAIL's posn to the visited list
+  (do
+   ;; set up local variables
+   ((m moves (rest m))                                     ; loop through the moves
+    (head (cons 0 0))                                      ; starting position of HEAD
+    (tail (cons 0 0))                                      ; starting position of TAIL
+    (visited nil (push tail visited)))                     ; a list of positions visted by tail
+
+   ;; finally
+   ((null m)                                               ; done with moves?
+    (length (remove-duplicates visited :test #'equal)))    ; return unique list of positions
+
+    ;; repeat body
+    (setf head (move-leader head (first m)))               ; move head
+    (setf tail (move-follower head tail))))                ; move tail
 
 (defun day09-1 (moves)
   (play (expand-moves moves)))
@@ -172,20 +224,55 @@ TAIL visited"
 (5a:test day09-1-test
   (5a:is (= 13 (day09-1 *test-data*))))
 
-#|
---- Part Two ---
+#| ----------------------------------------------------------------------------------------------------
+                                             --- Part Two ---
 
 Simulate your complete series of motions on a larger rope with ten knots. How many positions does the tail of the rope visit at least once?
 
-|#
+NOTES: Same rules different game. Instead of HEAD and TAIL we have a snake of 10 segments. I can use
+the same move algorithm I just have to move the head (once) then move the 9 followers sequentially,
+then save the TAIL position. Same move rules though, right? So re-write PLAY as PLAY-SNAKE.
 
-;; now solve theade puzzle!
-(time (format t "Theade answer to AOC 2022 Day 09 Part 1 is ~a"
-	      (day09-1 (uiop:read-file-lines *data-file*))))
+---------------------------------------------------------------------------------------------------- |#
 
-;; (time (format t "Theade answer to AOC 2022 Day 09 Part 2 is ~a"
-;;	      (day09-2 (uiop:read-file-lines *data-file*))))
+(defparameter *segs* 10) ; number of segments in the new rope (call it a snake, shall we?)
+
+(defun play-snake (moves)
+  "given a list of moves, move each segment in a snake sequentially, return the list of unique points
+the last segment of the snake visited"
+  (do
+   ;; set up local variables
+   ((m moves (rest m))                                  ; for m in moves (updates each loop)
+    (snake                                              ; make a snake of SEGS segments
+     (loop for s below *segs* collect (cons 0 0)))      ; with all segs at (0,0)
+    (visited '()))                                      ; a list of points visted by the tail
+
+   ;; finally
+   ((null m)                                            ; out of moves to process?
+    (length (remove-duplicates visited :test #'equal))) ; return number of unique points visited
+
+    ;; repeat body - make each move in loop
+    (setf (first snake)
+	  (move-leader (first snake) (first m))) ; set the leader (there's only one)
+
+    (dotimes (s (1- *segs*))                            ; set all the followers
+      (setf (elt snake (1+ s)) (move-follower (elt snake s) (elt snake (1+ s)))))
+
+    (setf visited (cons (elt snake (1- *segs*)) visited))))
+
+(defun day09-2 (moves)
+  (play-snake (expand-moves moves)))
+
+(5a:test day09-2-test
+  (5a:is (= 36 (day09-2 *test-data-pt2*))))
+
+;; now solve the puzzle!
+(time (format t "The answer to AOC 2022 Day 09 Part 1 is ~a"
+	      (day09-1 (uiop:read-file-lines *file*))))
+
+(time (format t "The answer to AOC 2022 Day 09 Part 2 is ~a"
+	      (day09-2 (uiop:read-file-lines *file*))))
 
 ;; --------------------------------------------------------------------------------
-;; Timings withead SBCL on M2 MacBook Air withead 24GB RAM
+;; Timings with SBCL on M2 MacBook Air with 24GB RAM
 ;; --------------------------------------------------------------------------------
