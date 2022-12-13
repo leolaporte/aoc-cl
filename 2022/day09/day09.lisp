@@ -1,6 +1,6 @@
 ;;;; Day09.lisp
 ;;;; 2022 AOC Day 09 solution
-;;;; Leo Laporte, 10 Dec 2022
+;;;; Leo Laporte, 12 Dec 2022
 
 ;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -150,7 +150,7 @@ RRRR.
   (5a:is (equal (cons 4 5) (move-leader (cons 5 5) (cons -1 0))))
   (5a:is (equal (cons 6 5) (move-leader (cons 5 5) (cons 1 0)))))
 
-;; a little bit magical - try to follow along
+;; a little bit magical - my brain hurts
 (defun move-follower (leader follower)
   "returns new follower position, by moving a following segment toward the leader
 according to the rules"
@@ -159,12 +159,24 @@ according to the rules"
 	 ((= (x leader) (x follower))                        ; both on the x-xis
 	  (cons (x follower)                                 ; stay on the x-axis
 		(+ (y follower)
-		   (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axix
+		   (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axis
 
 	 ((= (y leader) (y follower))                        ; both on the y-axis
 	  (cons (+ (x follower)
 		   (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
 		(y follower)))                               ; stay on the y-axis
+
+	 ;; this is the cond I didn't need in part 1
+	 ;; but since there are multiple tails in part
+	 ;; two I have to consider the situation where
+	 ;; a follower is x + 2 and y + 2 away requiring
+	 ;; a diagnonal move to catch up
+	 ((and (> (abs (- (x leader) (x follower))) 1)       ; we need to move diagonally
+	       (> (abs (- (y leader) (y follower))) 1))      ; (this ony happens in pt 2)
+	  (cons (+ (x follower)
+		   (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
+		(+ (y follower)
+		   (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axis
 
 	 ((> (abs (- (x leader) (x follower))) 1)            ; diagonal on the x axis
 	  (cons (+ (x follower)                              ; bump one closer on the x axis
@@ -175,13 +187,6 @@ according to the rules"
 	  (cons (x leader)                                   ; jump over to the leader's x axis
 		(+ (y follower)
 		   (if (> (y leader) (y follower)) 1 -1))))  ; and move 1 closer
-
-	 ((and (> (abs (- (x leader) (x follower))) 1)       ; pathological case only possible
-	       (> (abs (- (y leader) (y follower))) 1))      ; with a longer rope (pt 2)
-	  (cons (+ (x follower)                              ;
-		   (if (> (x leader) (x follower)) 1 -1))
-		(+ (y follower)
-		   (if (> (y leader) (y follower)) 1 -1))))
 
 	 (t (error "can't get here"))))
 
@@ -225,13 +230,21 @@ TAIL visited"
   (5a:is (= 13 (day09-1 *test-data*))))
 
 #| ----------------------------------------------------------------------------------------------------
-                                             --- Part Two ---
+--- Part Two ---
 
 Simulate your complete series of motions on a larger rope with ten knots. How many positions does the tail of the rope visit at least once?
 
 NOTES: Same rules different game. Instead of HEAD and TAIL we have a snake of 10 segments. I can use
 the same move algorithm I just have to move the head (once) then move the 9 followers sequentially,
 then save the TAIL position. Same move rules though, right? So re-write PLAY as PLAY-SNAKE.
+
+Something's wrong - the rules from part 1 work with the test data in part two but the answer
+is wrong. And Eric warned us in the description of part 2.
+
+" be careful: more types of motion are possible than before, so you might want to visually compare your simulated rope to the one above."
+
+So I guess I'd better write a visualization. sigh. Ah I had a cnversation with Cyphase in the
+TWiT Discord and he pointed out the one additional case I have to test for here.
 
 ---------------------------------------------------------------------------------------------------- |#
 
@@ -258,12 +271,13 @@ the last segment of the snake visited"
     (dotimes (s (1- *segs*))                            ; set all the followers
       (setf (elt snake (1+ s)) (move-follower (elt snake s) (elt snake (1+ s)))))
 
-    (setf visited (cons (elt snake (1- *segs*)) visited))))
+    (setf visited (cons (elt snake (1- *segs*)) visited))))  ; save the tail pos
 
 (defun day09-2 (moves)
   (play-snake (expand-moves moves)))
 
 (5a:test day09-2-test
+  (5a:is (= 1 (day09-2 *test-data*)))
   (5a:is (= 36 (day09-2 *test-data-pt2*))))
 
 ;; now solve the puzzle!
@@ -276,3 +290,29 @@ the last segment of the snake visited"
 ;; --------------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
 ;; --------------------------------------------------------------------------------
+
+;; The answer to AOC 2022 Day 09 Part 1 is 6563
+;; Evaluation took:
+;; 0.003 seconds of real time
+;; 0.002940 seconds of total run time (0.002557 user, 0.000383 system)
+;; 100.00% CPU
+;; 1,858,544 bytes consed
+
+;; The answer to AOC 2022 Day 09 Part 2 is 2653
+;; Evaluation took:
+;; 0.009 seconds of real time
+;; 0.009832 seconds of total run time (0.009446 user, 0.000386 system)
+;; 111.11% CPU
+;; 2,396,192 bytes consed
+
+;; --------Part 1--------   --------Part 2--------
+;; Day       Time   Rank  Score       Time   Rank  Score
+;; 9       >24h  62565      0       >24h  61541      0
+;; 8       >24h  75284      0       >24h  69823      0
+;; 7       >24h  79100      0       >24h  77516      0
+;; 6   01:02:38  19233      0   01:07:16  18804      0
+;; 5   03:01:38  23370      0   03:55:49  26420      0
+;; 4   01:01:11  15964      0   01:16:38  16172      0
+;; 3   00:42:32  12585      0   01:17:33  13957      0
+;; 2   01:25:57  19891      0   01:57:08  20821      0
+;; 1   00:36:07  10562      0   00:46:09  10629      0
