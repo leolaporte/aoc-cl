@@ -154,41 +154,44 @@ RRRR.
 (defun move-follower (leader follower)
   "returns new follower position, by moving a following segment toward the leader
 according to the rules"
-  (cond  ((adjacent? leader follower) follower)    ; if they're adjacent there's no move necessary
+  (labels (direction (leader follower)
+		     (if (> (y leader) (y follower)) 1 -1))
 
-	 ((= (x leader) (x follower))                        ; both on the x-xis
-	  (cons (x follower)                                 ; stay on the x-axis
-		(+ (y follower)
-		   (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axis
+    (cond  ((adjacent? leader follower) follower)    ; if they're adjacent there's no move necessary
 
-	 ((= (y leader) (y follower))                        ; both on the y-axis
-	  (cons (+ (x follower)
-		   (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
-		(y follower)))                               ; stay on the y-axis
+	   ((= (x leader) (x follower))                        ; both on the x-xis
+	    (cons (x follower)                                 ; stay on the x-axis
+		  (+ (y follower)
+		     (direction leader follower)))))           ; which way to move
 
-	 ;; this is the cond I didn't need in part 1
-	 ;; but since there are multiple tails in part
-	 ;; two I have to consider the situation where
-	 ;; a follower is x + 2 and y + 2 away requiring
-	 ;; a diagnonal move to catch up
-	 ((and (> (abs (- (x leader) (x follower))) 1)       ; we need to move diagonally
-	       (> (abs (- (y leader) (y follower))) 1))      ; (this ony happens in pt 2)
-	  (cons (+ (x follower)
-		   (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
-		(+ (y follower)
-		   (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axis
+    ((= (y leader) (y follower))                        ; both on the y-axis
+     (cons (+ (x follower)
+	      (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
+	   (y follower)))                               ; stay on the y-axis
 
-	 ((> (abs (- (x leader) (x follower))) 1)            ; diagonal on the x axis
-	  (cons (+ (x follower)                              ; bump one closer on the x axis
-		   (if (> (x leader) (x follower)) 1 -1))
-		(y leader)))                                 ; jump over to the leader's y axis
+    ;; this is the cond I didn't need in part 1
+    ;; but since there are multiple tails in part
+    ;; two I have to consider the situation where
+    ;; a follower is x + 2 and y + 2 away requiring
+    ;; a diagnonal move to catch up
+    ((and (> (abs (- (x leader) (x follower))) 1)       ; we need to move diagonally
+	  (> (abs (- (y leader) (y follower))) 1))      ; (this ony happens in pt 2)
+     (cons (+ (x follower)
+	      (if (> (x leader) (x follower)) 1 -1))    ; move +-1 on the x axis
+	   (+ (y follower)
+	      (if (> (y leader) (y follower)) 1 -1))))  ; move +-1 on the y axis
 
-	 ((> (abs (- (y leader) (y follower))) 1)            ; diagonal on the y axis
-	  (cons (x leader)                                   ; jump over to the leader's x axis
-		(+ (y follower)
-		   (if (> (y leader) (y follower)) 1 -1))))  ; and move 1 closer
+    ((> (abs (- (x leader) (x follower))) 1)            ; diagonal on the x axis
+     (cons (+ (x follower)                              ; bump one closer on the x axis
+	      (if (> (x leader) (x follower)) 1 -1))
+	   (y leader)))                                 ; jump over to the leader's y axis
 
-	 (t (error "can't get here"))))
+    ((> (abs (- (y leader) (y follower))) 1)            ; diagonal on the y axis
+     (cons (x leader)                                   ; jump over to the leader's x axis
+	   (+ (y follower)
+	      (if (> (y leader) (y follower)) 1 -1))))  ; and move 1 closer
+
+    (t (error "can't get here"))))
 
 (5a:test move-follower-test
   (5a:is (equal (cons 0 0) (move-follower (cons 0 1) (cons 0 0))))     ; adj  (mine)
