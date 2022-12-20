@@ -1,6 +1,6 @@
 ;;;; Day11.lisp
 ;;;; 2022 AOC Day 11 solution
-;;;; Leo Laporte, 11 Dec 2022
+;;;; Leo Laporte, 19 Dec 2022
 
 ;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -171,21 +171,22 @@ number of inspections performed (monkey-business), return the updated monkey lis
 
     ;; loop body
     (let*
-	((new-item                                       ; new item value
+	((new-item                                       ; what to throw
 	   (floor
-	    (mod (cond                                   ; square or multiply/add operand
-		   ((zerop operand) (* item item))       ; square item
-		   ((equal #\* op) (* item operand))     ; multiply item
-		   ((equal #\+ op) (+ item operand)))
-		 LCM)                                    ; mod item value by LCM to keep it small
-	    worry))                                      ; divide by 3 pt 1, 1 pt 2
+	    (mod
+	     (cond                                       ; choose the operation to apply
+	       ((zerop operand) (* item item))           ; square item
+	       ((equal #\* op) (* item operand))         ; multiply
+	       ((equal #\+ op) (+ item operand)))        ; add
+	     LCM)                                        ; mod item value by LCM to keep it small
+	    worry))                                      ; floor divide by 3 pt 1, 1 pt 2
 
-	 (dest (if (zerop (mod new-item worry-test))     ; do the test
-		   (find-monkey if-true monkeys)         ; find the monkey to throw to
+	 (dest (if (zerop (mod new-item worry-test))     ; where to throw
+		   (find-monkey if-true monkeys)
 		   (find-monkey if-false monkeys))))
 
-      (setf dest (catch-item new-item dest))             ; and throw to dest monkey
-      (setf (monkey-items monk) (rest items)))           ; take off top of list
+      (setf dest (catch-item new-item dest))             ; throw to dest monkey
+      (setf (monkey-items monk) (rest items)))           ; next item
     (incf (monkey-business monk))))                      ; keep track of monkey business
 
 ;; some short utility functions
@@ -226,15 +227,16 @@ Unfortunately, that relief was all that was keeping your worry levels from reach
 
 At this rate, you might be putting up with these monkeys for a very long time - possibly 10000 rounds!
 
-NOTES: The problem here is that the numbers get unmanageable large. The problem is, how do I
+NOTES: The problem here is that the numbers get unmanageable large. The question is, how do I
 preserve the key information without using such big numbers). Such an early appearance of the
 Chinese Remainder Theorem:
 
-From Wikipedia: "The Chinese remainder theorem is widely used for computing with large integers, as it allows replacing a computation for which one knows a bound on the size of the result by several similar computations on small integers."
+Because the mod values are all primes, the least common multiiple of them is calculated by multiplying
+them all together.
 
-In other words (mod (* 1234 5678) 23) == (* (mod 1234 23) (mod 134 23))
-
-For future reference, if you ever see mod 23 in a problem, it's probably the CRT.
+And, as it turns out, the value of (mod x n) is the same as (mod (mod x lcm) n). So I can solve
+the problem of these values getting too big by using the modulus LCM of the value. This doesn't
+affect part 1 so I modified throw-monkey-items to do this in both parts.
 ---------------------------------------------------------------------------------------------------- |#
 
 (defun day11-2 (monkeys)
@@ -247,10 +249,38 @@ For future reference, if you ever see mod 23 in a problem, it's probably the CRT
 (time (format t "The answer to AOC 2022 Day 11 Part 1 is ~a"
 	      (day11-1 (parse-monkeys (uiop:read-file-lines *data-file*)))))
 
-
 (time (format t "The answer to AOC 2022 Day 11 Part 2 is ~a"
 	      (day11-2 (parse-monkeys (uiop:read-file-lines *data-file*)))))
 
 ;; ----------------------------------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
 ;; ----------------------------------------------------------------------------------------------------
+
+;; The answer to AOC 2022 Day 11 Part 1 is 54253
+;; Evaluation took:
+;; 0.001 seconds of real time
+;; 0.000647 seconds of total run time (0.000365 user, 0.000282 system)
+;; 100.00% CPU
+;; 325,632 bytes consed
+
+;; The answer to AOC 2022 Day 11 Part 2 is 13119526120
+;; Evaluation took:
+;; 0.121 seconds of real time
+;; 0.122957 seconds of total run time (0.107726 user, 0.015231 system)
+;; [ Run times consist of 0.005 seconds GC time, and 0.118 seconds non-GC time. ]
+;; 101.65% CPU
+;; 122,115,072 bytes consed
+
+;; --------Part 1--------   --------Part 2--------
+;; Day     Time   Rank  Score       Time   Rank  Score
+;; 11      >24h  64682      0       >24h  57349      0
+;; 10      >24h  65590      0       >24h  64371      0
+;; 9       >24h  62565      0       >24h  61541      0
+;; 8       >24h  75284      0       >24h  69823      0
+;; 7       >24h  79100      0       >24h  77516      0
+;; 6   01:02:38  19233      0   01:07:16  18804      0
+;; 5   03:01:38  23370      0   03:55:49  26420      0
+;; 4   01:01:11  15964      0   01:16:38  16172      0
+;; 3   00:42:32  12585      0   01:17:33  13957      0
+;; 2   01:25:57  19891      0   01:57:08  20821      0
+;; 1   00:36:07  10562      0   00:46:09  10629      0
