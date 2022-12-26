@@ -5,12 +5,11 @@
 ;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------------------------------
-(ql:quickload '(:fiveam :cl-ppcre :alexandria :str))
+(ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day11
   (:use #:cl)
   (:local-nicknames
-   (:ax :alexandria)
    (:re :cl-ppcre)
    (:5a :fiveam)))
 
@@ -228,8 +227,8 @@ Unfortunately, that relief was all that was keeping your worry levels from reach
 At this rate, you might be putting up with these monkeys for a very long time - possibly 10000 rounds!
 
 NOTES: The problem here is that the numbers get unmanageable large. The question is, how do I
-preserve the key information without using such big numbers). Such an early appearance of the
-Chinese Remainder Theorem:
+preserve the key information without using such big numbers. Such an early appearance of the
+Chinese Remainder Theorem,
 
 Because the mod values are all primes, the least common multiiple of them is calculated by multiplying
 them all together.
