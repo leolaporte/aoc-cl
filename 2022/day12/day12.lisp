@@ -5,17 +5,15 @@
 ;; -----------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
 ;; -----------------------------------------------------------------------------------
-(ql:quickload '(:fiveam :cl-ppcre))
+(ql:quickload '(:fiveam))
 
 (defpackage :day12
   (:use #:cl)
   (:local-nicknames
-   (:re :cl-ppcre)
-   (:5a :fiveam)))
+   (:5a :fiveam)))  ; for tests
 
 (in-package :day12)
 
-(setf fiveam:*run-test-when-defined* t) ; test when compiling test code
 (declaim (optimize (debug 3)))          ; max debugging info
 
 #| -----------------------------------------------------------------------------------
@@ -74,7 +72,7 @@ I'll do everything row/col.
 by subtracting the char-code of #\a, a is 0, b is 1, S and E are special values"
   (let* ((col-dim (length (first los)))           ; each string is COL wide
 	 (row-dim (length los))                   ; there are as many strings as ROW
-	 (arr (make-array (list row-dim col-dim))))
+	 (arr (make-array (list row-dim col-dim)))) ; create 2D array
     (dotimes (row row-dim)                        ; now go through all the rows
       (dotimes (col col-dim)                      ; and cols pupulating the array
 	(setf (aref arr row col)
@@ -137,7 +135,7 @@ by subtracting the char-code of #\a, a is 0, b is 1, S and E are special values"
   (5a:is (equal (find-val test +END+) (cons 2 5))))
 
 (defun list-surrounds (grid pt)
-  "given a point on a grid returns a list of surrounding points we can move to
+  "given a point on a grid returns a list of valid surrounding points we can move to
 in UP DOWN LEFT RIGHT order"
   (labels ((add-points (p1 p2)
 	     (cons (+ (row p1) (row p2)) (+ (col p1) (col p2))))
@@ -185,7 +183,7 @@ returns the distance"
      ((equal curr-pos end) distance)  ; return distance traveled
 
       ;; body of do loop
-      ;; first, check all the neighbors of the current position
+      ;; first, check all the not yet visited neighbors of the current position
       (dolist (neighbor (remove-if #'(lambda (pt) (find pt visited)) ; if unvisited
 				   (list-surrounds grid curr-pos)))  ; get neighbors
 
@@ -200,7 +198,7 @@ returns the distance"
       (let ((next-nearest (pop q)))            ; point with the lowest distance so far
 	(setf curr-pos (car next-nearest))     ; make it the current point
 	(setf distance (cdr next-nearest))     ; the distance to the nearest point
-	(push curr-pos visited)))))            ; add the point to the visited list
+	(push curr-pos visited)))))            ; add the point to the visited list and loop
 
 (defun day12-1 (grid)
   "returns the shortest path from +START+ to +END+ on grid"
@@ -240,7 +238,7 @@ are dead ends. Maybe I could speed this up by short-circuiting those paths?
   (let* ((end (find-val grid +END+))
 	 (routes (loop for start in (find-a-pts grid)
 		       collect (find-shortest-path start end grid))))
-    (reduce #'min (push (day12-1 grid) routes)))) ; add dist fron +START+ just in case
+    (reduce #'min (push (day12-1 grid) routes)))) ; add dist from +START+ in case it's shortest
 
 (5a:test day12-2-test
   (5a:is (= 29 (day12-2 test))))
