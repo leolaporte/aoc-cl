@@ -48,14 +48,6 @@ reject routes that get out of hand. In other words, Dijkstra.
 
 Also, just a note to myself Array addresses are row,col - not x y. So
 I'll do everything row/col.
-
-From last year (Day 15): Dijkstra spreads by starting at start, set distance to 0,
-examine the (up to) four surrounding nodes, if none of them are the end point,
-calculate the distance from start, and if it's lower than the node-dist replace
-node-dist. Once you've completed that for all the surrounding points, remove
-start from the unvisited queue and pop the next point (the queue auto-sorts
-so that the next point is always the one with the lowest node-dist). Repeat.
-
 ----------------------------------------------------------------------------------- |#
 
 ;; -----------------------------------------------------------------------------------
@@ -70,7 +62,7 @@ so that the next point is always the one with the lowest node-dist). Repeat.
     "abcryxxl"
     "accszExk"
     "acctuvwj"
-    "abdefghi")) ; slightly modified with a at end for Pt 2
+    "abdefghi"))
 
 (defconstant +START+ -1)  ; value of start position
 (defconstant +END+ 26)    ; value of end position
@@ -220,7 +212,7 @@ returns the distance"
 #| -----------------------------------------------------------------------------------
 --- Part Two ---
 
-"Find the shortest path from any square at elevation a to the square marked E."
+"Find the shortest path from ANY square at elevation a to the square marked E."
 
 NOTES: This is simple. Make a list of all squares with elevation "a" then
 run FIND-SHORTEST-PATH on each and return the smallest.
