@@ -14,7 +14,7 @@
 
 (in-package :day12)
 
-(declaim (optimize (debug 3)))          ; max debugging info
+(declaim (optimize (speed 3) (safety 0)))  ; maximize for speed
 
 #| -----------------------------------------------------------------------------------
 
@@ -137,6 +137,7 @@ by subtracting the char-code of #\a, a is 0, b is 1, S and E are special values"
 (defun list-surrounds (grid pt)
   "given a point on a grid returns a list of valid surrounding points we can move to
 in UP DOWN LEFT RIGHT order"
+
   (labels ((add-points (p1 p2)
 	     (cons (+ (row p1) (row p2)) (+ (col p1) (col p2))))
 
@@ -267,3 +268,19 @@ are dead ends. Maybe I could speed this up by short-circuiting those paths?
 ;; [ Run times consist of 0.013 seconds GC time, and 10.964 seconds non-GC time. ]
 ;; 100.03% CPU
 ;; 271,699,280 bytes consed
+
+;; with (optimize (speed 3) (sefety 0))
+;; The answer to AOC 2022 Day 12 Part 1 is 361
+;; Evaluation took:
+;; 0.155 seconds of real time
+;; 0.154194 seconds of total run time (0.152598 user, 0.001596 system)
+;; 99.35% CPU
+;; 2,233,744 bytes consed
+
+;; The answer to AOC 2022 Day 12 Part 2 is 354
+;; Evaluation took:
+;; 6.808 seconds of real time
+;; 6.810449 seconds of total run time (6.685948 user, 0.124501 system)
+;; [ Run times consist of 0.051 seconds GC time, and 6.760 seconds non-GC time. ]
+;; 100.03% CPU
+;; 271,689,936 bytes consed
