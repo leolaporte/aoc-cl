@@ -1,6 +1,6 @@
 ;;;; Day14.lisp
 ;;;; 2022 AOC Day 14 solution
-;;;; Leo Laporte, 14 Dec 2022
+;;;; Leo Laporte, 6 Jan 2022
 
 ;; ----------------------------------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
