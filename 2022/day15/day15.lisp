@@ -200,7 +200,9 @@ To isolate the distress beacon's signal, you need to determine its tuning freque
 which can be found by multiplying its x coordinate by 4000000 and then adding its y
 coordinate.
 
-NOTES: I could just do part one 4 million times. Hmm. That's pretty slow.
+NOTES: I could just do part one 4 million times. Hmm. That's pretty slow. The folks
+in the Club TWiT Discord suggest looking at points 1 unit outside the perimeter
+described by each scanner. OK. Gotta be faster than scanning 4 million lines!
 --------------------------------------------------------------------------------------- |#
 
 (defparameter *width* 4000001)
