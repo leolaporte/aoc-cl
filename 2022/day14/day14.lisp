@@ -55,7 +55,6 @@ Also important, the supplied data is in col - row order.
 
 OK list takes too long - about 8 seconds for part 1 - I'm going to try a hash table instead.
 OK yeah it's literally 666 times faster. Hash Tables FTW!
-
 ---------------------------------------------------------------------------------------------------- |#
 
 ;; sample data for tests
