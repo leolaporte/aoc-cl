@@ -11,18 +11,17 @@
 
 (in-package :day02)
 
-(setf fiveam:*run-test-when-defined* t) ; test when compiling test code (for quick iteration)
+(setf fiveam:*run-test-when-defined* t) ; test as we go
 (declaim (optimize (debug 3)))          ; max debugging info
 
-(defparameter *data-file* "~/cl/AOC/2022/day02/input.txt")  ; supplied data from AoC
+(defparameter *data-file* "~/cl/AOC/2022/day02/input.txt")  ; AoC input
 
-#|
---- Day 2: Rock Paper Scissors ---
+#| ------------------------ Day 2: Rock Paper Scissors -------------------------
 
 --- Part One ---
 
-"What would your total score be if everything goes exactly according
-to your strategy guide?"
+"What would your total score be if everything goes exactly according to your
+strategy guide?"
 
 NOTES: Well this might be inelegant but I'm going to create a two-dimensional
 array of possible outcomes in rock paper scissors. Could there be some
@@ -30,7 +29,7 @@ mathematical formula that would represent all outcomes? (Turns out there is but
 it's crazy and I doubt it's as fast as the lookup.)
 
 See the bottom for the calculation versions as one-liners. And they are faster!
-|#
+----------------------------------------------------------------------------- |#
 
 (defun play (move-list)
   "given a list of moves, calculate the total score after all moves are played"
@@ -48,8 +47,8 @@ See the bottom for the calculation versions as one-liners. And they are faster!
 							 (0 3 6)
 							 (6 0 3)))))
 
-    (+ (1+ (cdr m))                       ; the points for the move I played (index + 1)
-       (aref scoring (car m) (cdr m)))))  ; and addressing into the array for the score
+    (+ (1+ (cdr m))                       ; the points for my move (index + 1)
+       (aref scoring (car m) (cdr m)))))  ; find the score
 
 (test move-test
   (is (= 8 (move "A Y")))
@@ -73,38 +72,42 @@ See the bottom for the calculation versions as one-liners. And they are faster!
 (defun day02-1 (f)
   (play (uiop:read-file-lines f)))
 
-#|
+#| -----------------------------------------------------------------------------
 --- Part Two ---
 
 "The Elf finishes helping with the tent and sneaks back over to you. "Anyway,
-the second column says how the round needs to end: X means you need to lose,
-Y means you need to end the round in a draw, and Z means you need to win. Good luck!""
+the second column says how the round needs to end: X means you need to lose, Y
+means you need to end the round in a draw, and Z means you need to win. Good
+luck!""
 
-NOTES: I just have to add a step before scoring: convert the instruction into the
-appropriate move. Looks like I'll be making another array, this time of moves I
-should play according to the instructions. I can use the rest of the code above
-for the actual scoring.
+NOTES: I just have to add a step before scoring: convert the instruction into
+the appropriate move. Looks like I'll be making another array, this time of
+moves I should play according to the instructions. I can use the rest of the
+code above for the actual scoring.
 
-|#
+----------------------------------------------------------------------------- |#
 
 (defun play2 (move-list)
-  "given a list of moves, calculate the total score after all moves are played (this time adjusting for the second instruction being an outcome instead of a move)"
+  "given a list of moves, calculate the total score after all moves are
+played (this time adjusting for the second instruction being an outcome instead
+of a move)"
   (let ((score 0))
     (dolist (m move-list)
       (incf score (move (choose-move m))))  ; choose move based on desired outcome
     score))
 
 (defun choose-move (the-move)
-  "given a move in the form of a string with two letters, return the move that I must
-play to achieve the desired outcome"
+  "given a move in the form of a string with two letters, return the move that I
+must play to achieve the desired outcome"
   (let ((mv (convert the-move))        ; turn the letters into array indices
 	(opp (subseq the-move 0 1))    ; I'll still need the letter for my opp's move
 
 	;; and now another array with the moves to be made for the desired result
 	(which-move (make-array '(3 3)
-				:initial-contents '(("Z" "X" "Y")       ; rock: lose/draw/win
-						    ("X" "Y" "Z")       ; paper: l/d/w
-						    ("Y" "Z" "X")))))   ;scissors: l/d/w
+				:initial-contents '(("Z" "X" "Y")     ; rock
+						    ("X" "Y" "Z")     ; paper
+						    ("Y" "Z" "X"))))) ; scissors
+
     ;; rebuild the move with with my actual response
     (concatenate 'string opp " " (aref which-move (car mv) (cdr mv)))))
 
@@ -116,27 +119,37 @@ play to achieve the desired outcome"
 (defun day02-2 (f)
   (play2 (uiop:read-file-lines f)))
 
-(time (format t "The answer to AOC 2022 Day 02 Part 1 is ~a" (day02-1 *data-file*)))
-(time (format t "The answer to AOC 2022 Day 02 Part 2 is ~a" (day02-2 *data-file*)))
+;; Now solve the problem!
 
-;; The answer to AOC 2022 Day 02 Part 1 is 14264
-;; Evaluation took:
-;; 0.000 seconds of real time
-;; 0.000812 seconds of total run time (0.000642 user, 0.000170 system)
-;; 100.00% CPU
-;; 850,800 bytes consed
+(time (format t "The answer to AOC 2022 Day 02 Part 1 is ~a"
+	      (day02-1 *data-file*)))
 
-;; The answer to AOC 2022 Day 02 Part 2 is 12382
-;; Evaluation took:
-;; 0.001 seconds of real time
-;; 0.001315 seconds of total run time (0.001092 user, 0.000223 system)
-;; 100.00% CPU
-;; 1,570,992 bytes consed
+(time (format t "The answer to AOC 2022 Day 02 Part 2 is ~a"
+	      (day02-2 *data-file*)))
+
+#| -----------------------------------------------------------------------------
+Timings
+--------------------------------------------------------------------------------
+The answer to AOC 2022 Day 02 Part 1 is 14264
+Evaluation took:
+0.000 seconds of real time
+0.000812 seconds of total run time (0.000642 user, 0.000170 system)
+100.00% CPU
+850,800 bytes consed
+
+The answer to AOC 2022 Day 02 Part 2 is 12382
+Evaluation took:
+0.001 seconds of real time
+0.001315 seconds of total run time (0.001092 user, 0.000223 system)
+100.00% CPU
+1,570,992 bytes consed
 
 ;; --------Part 1--------   --------Part 2--------
 ;; Day       Time   Rank  Score       Time   Rank  Score
 ;; 2   01:25:57  19891      0   01:57:08  20821      0
 ;; 1   00:36:07  10562      0   00:46:09  10629      0
+
+----------------------------------------------------------------------------- |#
 
 #|
 OK now howsabout a one-liner?
@@ -155,26 +168,29 @@ OK now howsabout a one-liner?
   (apply #'+                    ; add scores up
 	 (mapcar #'(lambda (x)  ; covert moves into a list of scores
 		     (1+ (+ (cdr x) (* (mod (1+ (- (cdr x) (car x))) 3) 3))))
-		 (mapcar #'(lambda (s) ; convert strings (e.g. "A X") into cons (e.g. (0 . 0))
-			     (cons
-			      (- (char-code (char s 0)) (char-code #\A))    ; CAR = opponents move
-			      (- (char-code (char s 2)) (char-code #\X))))  ; CDR = my move
-			 (uiop:read-file-lines f)))))  ; get list of moves as strings (e.g. "X Y")
+
+		 ;; convert strings into cons
+		 (mapcar
+		  #'(lambda (s (- (char-code (char s 0)) (char-code #\A)) ; me
+			     (- (char-code (char s 2)) (char-code #\X)))) ; opp
+		  (uiop:read-file-lines f)))))
 
 
 (defun part2 (f)
   (apply #'+                    ; add scores up
 	 (mapcar #'(lambda (x)  ; covert moves into a list of scores
 		     (+ (* (cdr x) 3) (1+ (mod (+ (car x) (cdr x) 2) 3))))
-		 (mapcar #'(lambda (s) ; convert strings (e.g. "A X") into cons (e.g. (0 . 0))
+		 (mapcar #'(lambda (s)
 			     (cons
-			      (- (char-code (char s 0)) (char-code #\A))    ; opponents move
-			      (- (char-code (char s 2)) (char-code #\X))))  ; my move
-			 (uiop:read-file-lines f)))))  ; get list of moves as strings (e.g. "X Y")
+			      (- (char-code (char s 0)) (char-code #\A))
+			      (- (char-code (char s 2)) (char-code #\X))))
+			 (uiop:read-file-lines f)))))
 
+(Time (format t "The one-liner answer to AOC 2022 Day 02 Part 1 is ~a"
+	      (part1 *data-file*)))
 
-(Time (format t "The one-liner answer to AOC 2022 Day 02 Part 1 is ~a" (part1 *data-file*)))
-(time (format t "The one-liner answer to AOC 2022 Day 02 Part 2 is ~a" (part2 *data-file*)))
+(time (format t "The one-liner answer to AOC 2022 Day 02 Part 2 is ~a"
+	      (part2 *data-file*)))
 
 ;; The one-liner answer to AOC 2022 Day 02 Part 1 is 14264
 ;; Evaluation took:
@@ -189,6 +205,5 @@ OK now howsabout a one-liner?
 ;; 0.000526 seconds of total run time (0.000426 user, 0.000100 system)
 ;; 100.00% CPU
 ;; 260,608 bytes consed
-
 
 ;; The calculation version is FASTER than the lookup. Hunh.
