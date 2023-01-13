@@ -5,12 +5,11 @@
 ;; -------------------------------------------------------------------
 ;; Prologue code for setup - same every day
 ;; -------------------------------------------------------------------
-(ql:quickload '(:fiveam :cl-ppcre :cl-tui))
+(ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day15
   (:use #:cl)
   (:local-nicknames
-   (:tui :cl-tui)
    (:re :cl-ppcre)
    (:5a :fiveam)))
 
@@ -68,7 +67,7 @@ subtract that number from the total points I can see. Erg.
 ----------------------------------------------------------------------- |#
 
 (defparameter *sample-data*
-  '("Sensor at x=2, y=18: closest beacon is at x=-2, y=15"
+  '("Sensor at x=2, y=18: closest beacon is at x=-2, y=15"  ; note negative!
     "Sensor at x=9, y=16: closest beacon is at x=10, y=16"
     "Sensor at x=13, y=2: closest beacon is at x=15, y=3"
     "Sensor at x=12, y=14: closest beacon is at x=10, y=16"
@@ -90,7 +89,7 @@ subtract that number from the total points I can see. Erg.
 (defparameter *input-loi* 2000000
   "line of interest for the AoC input")
 
-(defparameter *digits* (re:create-scanner "(\\d)+")
+(defparameter *digits* (re:create-scanner "(-?\\d)+")
   "the regex to find digits in a string")
 
 (defstruct scnr
@@ -98,9 +97,9 @@ subtract that number from the total points I can see. Erg.
 points on loi that it can see"
   (loc (cons 0 0) :type cons)      ; x y position stored as (cons x y)
   (beacon (cons 0 0) :type cons)   ; x y position of beacon
-  (range 0 :type integer)          ; range
-  (dist-to-loi 0 :type integer)    ; distance to the line of interest
-  (visible '() :type list))        ; x posns visible on the loi
+  (range 0 :type fixnum)          ; range
+  (dist-to-loi 0 :type fixnum)    ; distance to the line of interest
+  (visible #() :type vector))        ; x posns visible on the loi
 
 (defun col (p)
   "a mnemonic for the column data in a point stored as (cons x y)"
@@ -237,11 +236,9 @@ of four or more scanners I can then (quickly?) see which of those
 points is invisible to all the scanners.
 
 The only flaw in this logic is that a point in the corners of the grid
-may only be bordered by one scanner. I'm going to ASSUME that the
-invisible beacon is not in a corner. If it is, this won't work. If it
-doesn't I guess I can search all the points in all the invisible
-permieters but that will take much more time. Let's hope Eric is a
-kind wizard.
+might only be bordered by one scanner. Points on the edge can be
+bounded by as few as two scanners. So for completeness, I'll check
+for these "edge cases" as well.
 ------------------------------------------------------------------- |#
 
 (defparameter *width* 4000001)    ; "no larger than 4,000,000"
@@ -289,17 +286,17 @@ the perimeter just beyond the scanners view"
 	 (left  (cons (- (col loc) invisible) (row loc))))
 
     (setf (scnr-visible s)
-	  (append
-	   (diagonal-points top right)            ; get points on diagonal working down
-	   (rest (diagonal-points right bottom))  ; trim right (we got it previously)
-	   (rest (diagonal-points top left))      ; trim top
-	   (rest (diagonal-points left bottom)))) ; trim left
+	  (concatenate 'vector
+		       (diagonal-points top right)
+		       (rest (diagonal-points right bottom))
+		       (rest (diagonal-points top left))      ; trim top
+		       (rest (diagonal-points left bottom)))) ; trim left
     s))
 
 (defun set-all-scanners-invisibles (scanners)
   "given a list of scanners, return the list populated with the blind
 spots for each scanner"
-  (mapcar #'set-scanner-invisibles scanners))
+  (map 'vector #'set-scanner-invisibles scanners))
 
 (defun see-it? (p scanner)
   "given a point and a scanner, return true if the scanner can see the
@@ -310,8 +307,8 @@ point"
 (5a:test see-it?-test
   (let ((ss (set-all-scanners-invisibles (make-scanner-list *sample-data*))))
     (5a:is-true (see-it? (cons 2 18) (first ss)))
-    (5a:is-false (see-it? (cons -2 18) (first ss)))
-    (5a:is-false (see-it? (cons 2 22) (first ss)))
+    (5a:is-false (see-it? (cons -2 26) (first ss)))
+    (5a:is-false (see-it? (cons -9 18) (first ss)))
     (5a:is-true (see-it? (cons 2 21) (first ss)))))
 
 (defun invisible? (p scanners)
@@ -355,19 +352,39 @@ specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
   (5a:is-true (outside-grid? (cons 22 22) *sample-height* *sample-width*))
   (5a:is-false (outside-grid? (cons 12 12) *sample-height* *sample-width*)))
 
+(defun edge-case? (pt h w)
+  "returns true if the point is in the corner of the grid or along its
+edge"
+  (or (= (col pt) 0)
+      (= (col pt) (1- w))
+      (= (row pt) 0)
+      (= (row pt) (1- h))))
+
+(5a:test edge-case?-test
+  (5a:is-true (edge-case? (cons 0 1) 21 21))
+  (5a:is-true (edge-case? (cons 20 1) 21 21))
+  (5a:is-true (edge-case? (cons 11 0) 21 21))
+  (5a:is-true (edge-case? (cons 0 20) 21 21)))
+
 (defun day15-2 (los h w)
   (let* (;; build the scanner list with invisibles set
 	 (scanners (set-all-scanners-invisibles (make-scanner-list los)))
-	 ;; make a flat list of all the permimeter points inside the grid
-	 (visibles (remove-if #'(lambda (pt) (outside-grid? pt h w))
+
+	 ;; make a flat list of all the permimeter invisibles inside the grid
+	 (visibles (remove-if #'(lambda (pt) (outside-grid? pt h w)) ;
 			      (reduce #'append
 				      (loop for s in scanners
-					    collect (scnr-visible s))))))
+					    collect (scnr-visible s)))))
+
+	 ;; now reduce the list to edge cases and points appearing four or more times
+	 (candidates (append (remove-if-not ; add in the edge cases
+			      #'(lambda (pt) (edge-case? pt h w)) visibles)
+			     (four-or-more visibles))))
 
     ;; go through list of points that appear 4 or more times in the list
     ;; of invisibles and look for a point invisible to all scanners
-    (dolist (pt (four-or-more visibles))
-      (format t "~a~&" pt) ; progress bar
+    (dolist (pt candidates)
+      (format t ".") ; progress bar
       (when (invisible? pt scanners)
 	(return-from day15-2 (freq pt))))
     (error "Could not find the invisible point!")))
@@ -376,11 +393,11 @@ specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
   (5a:is (= 56000011 (day15-2 *sample-data* *sample-height* *sample-width*))))
 
 ;; now solve the puzzle!
-;;(time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
-;; (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
+(time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
+	      (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
 
-;; (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
-;;	      (day15-2 (uiop:read-file-lines *data-file* *height* *width*))))
+(time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+	      (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
 
 ;; ---------------------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
