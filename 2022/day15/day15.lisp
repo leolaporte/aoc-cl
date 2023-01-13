@@ -1,10 +1,10 @@
 ;;;; Day15.lisp
 ;;;; 2022 AOC Day 15 solution
-;;;; Leo Laporte, 15 Dec 2022
+;;;; Leo Laporte, 13 Jan 2022
 
-;; -------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
-;; -------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 (ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day15
@@ -20,51 +20,49 @@
 
 (defparameter *data-file* "~/cl/AOC/2022/day15/input.txt")  ; AoC input
 
-#| ------------------ Day 15: Beacon Exclusion Zone ------------------
+#| ----------------------- Day 15: Beacon Exclusion Zone -----------------------
 
 --- Part One ---
 
-"Sensors and beacons always exist at integer coordinates. Each sensor
-knows its own position and can determine the position of a beacon
-precisely; however, sensors can only lock on to the one beacon closest
-to the sensor as measured by the Manhattan distance.  (There is never
-a tie where two beacons are the same distance to a sensor.)
+"Sensors and beacons always exist at integer coordinates. Each sensor knows its
+own position and can determine the position of a beacon precisely; however,
+sensors can only lock on to the one beacon closest to the sensor as measured by
+the Manhattan distance.  (There is never a tie where two beacons are the same
+distance to a sensor.)
 
-None of the detected beacons seem to be producing the distress signal,
-so you'll need to work out where the distress beacon is by working out
-where it isn't. For now, keep things simple by counting the positions
-where a beacon cannot possibly be along just a single row.
+None of the detected beacons seem to be producing the distress signal, so you'll
+need to work out where the distress beacon is by working out where it isn't. For
+now, keep things simple by counting the positions where a beacon cannot possibly
+be along just a single row.
 
-Consult the report from the sensors you just deployed. In the row
-where y=2000000, how many positions cannot contain a beacon?"
+Consult the report from the sensors you just deployed. In the row where
+y=2000000, how many positions cannot contain a beacon?"
 
-NOTES: So I'm guessing the size of this grid is going to be massive so
-I don't want to calculate more than I have to. But it turns out the
-problem is way simpler than it seems.
+NOTES: So I'm guessing the size of this grid is going to be massive so I don't
+want to calculate more than I have to. But it turns out the problem is way
+simpler than it seems.
 
-For each scanner I know its range (the dist to the associated
-beacon). I can calculate how much it sees of the provided y coordinate
+For each scanner I know its range (the dist to the associated beacon). I can
+calculate how much it sees of the provided y coordinate
 (I'll call it the line of interest (loi).  From there I can generate a
 list of visible points (no need to do points, even, just
 x-coordinates) and count them.
 
-What's the geometry? If the distance to the loi is exactly equal to
-the scanner's range that scanner can see exactly one point on the loi:
+What's the geometry? If the distance to the loi is exactly equal to the
+scanner's range that scanner can see exactly one point on the loi:
 (scanner x loi-y), for every row closer to the loi, add a point left
 and right of the origin.
 
-Those are the visible points. Each scanner will have a set of visible
-points.  Union the sets then count the resulting set to get the
-answer. Done with part 1.
+Those are the visible points. Each scanner will have a set of visible points.
+Union the sets then count the resulting set to get the answer. Done with part 1.
 
-Again I'll represent points as (cons x y) and today it's in col row
-order.
+Again I'll represent points as (cons x y) and today it's in col row order.
 
-UPDATE: So unfortunately according the the example data if a beacon is
-already in the loi that point does not count. I've been ignoring
-beacons, but I guess I can't. I need to count beacons in the loi and
-subtract that number from the total points I can see. Erg.
------------------------------------------------------------------------ |#
+UPDATE: So unfortunately according the the example data if a beacon is already
+in the loi that point does not count. I've been ignoring beacons, but I guess I
+can't. I need to count beacons in the loi and subtract that number from the
+total points I can see. Erg.
+----------------------------------------------------------------------------- |#
 
 (defparameter *sample-data*
   '("Sensor at x=2, y=18: closest beacon is at x=-2, y=15"  ; note negative!
@@ -182,7 +180,7 @@ and returns the new list of scanners"
 (defun get-beacon-points (scanners loi)
   "return a list of the x-coordinates of beacons in the scanner list
 that are on the line of interest"
-  (loop for s across scanners
+  (loop for s in scanners
 	collecting
 	(when (= (row (scnr-beacon s)) loi)
 	  (col (scnr-beacon s)))))
@@ -209,40 +207,36 @@ points covered on the loi by all the scanners"
 (5a:test day15-1-test
   (5a:is (= 26 (day15-1 *sample-data* *sample-loi*))))
 
-#| -------------------------------------------------------------------
+#| -----------------------------------------------------------------------------
 --- Part Two ---
 
-"The distress beacon is not detected by any sensor, but the distress
-beacon must have x and y coordinates each no lower than 0 and no
-larger than 4000000.
+"The distress beacon is not detected by any sensor, but the distress beacon must
+have x and y coordinates each no lower than 0 and no larger than 4000000.
 
-To isolate the distress beacon's signal, you need to determine its
-tuning frequency, which can be found by multiplying its x coordinate
-by 4000000 and then adding its y coordinate."
+To isolate the distress beacon's signal, you need to determine its tuning
+frequency, which can be found by multiplying its x coordinate by 4000000 and
+then adding its y coordinate."
 
-NOTES: I could just do part one 4 million times. Hmm. That's pretty
-slow. Or I guess I could go through all 16,000,008,000,001 points to
-see which one is invisible. That might take a while.
+NOTES: I could just do part one 4 million times. Hmm. That's pretty slow. Or I
+guess I could go through all 16,000,008,000,001 points to see which one is
+invisible. That might take a while.
 
-Can I reduce the set of points I need to look at? Well since there is
-exactly one point in the grid that's invisible, I know it can't be
-more than one point outside the range of all scanners. (If it were
-farther out there'd be more than one invisible point and we're told
-there's exactly one.) In other words, it has to be in the set of
-points represented by the perimeters 1 point outside each scanner's
-range - the invisible perimeter.
+Can I reduce the set of points I need to look at? Well since there is exactly
+one point in the grid that's invisible, I know it can't be more than one point
+outside the range of all scanners. (If it were farther out there'd be more than
+one invisible point and we're told there's exactly one.) In other words, it has
+to be in the set of points represented by the perimeters 1 point outside each
+scanner's range - the invisible perimeter.
 
-Furthermore since it's the only invisible point in the whole grid it
-must occur in the set of all perimeter points at least four times. So
-if I reduce the set of possibles by finding points in the blind spots
-of four or more scanners I can then (quickly?) see which of those
-points is invisible to all the scanners.
+Furthermore since it's the only invisible point in the whole grid it must occur
+in the set of all perimeter points at least four times. So if I reduce the set
+of possibles by finding points in the blind spots of four or more scanners I can
+then (quickly?) see which of those points is invisible to all the scanners.
 
-The only flaw in this logic is that a point in the corners of the grid
-might only be bordered by one scanner. Points on the edge can be
-bounded by as few as two scanners. So for completeness, I'll check for
-these "edge cases" as well.
-------------------------------------------------------------------- |#
+The only flaw in this logic is that a point in the corners of the grid might
+only be bordered by one scanner. Points on the edge can be bounded by as few as
+two scanners. So for completeness, I'll check for these "edge cases" as well.
+----------------------------------------------------------------------------- |#
 
 (defparameter *width* 4000001)    ; "no larger than 4,000,000"
 (defparameter *height* *width*)
@@ -257,8 +251,8 @@ these "edge cases" as well.
   (5a:is (= 56000011 (freq (cons 14 11)))))
 
 ;; now we need a function to calculate the blind spot perimeter of a
-;; scanner. Start by creating a function that gives us the list of
-;; points representing a diagonal line between two x y coordinates
+;; scanner. Start by creating a function that gives us the list of points
+;; representing a diagonal line between two x y coordinates
 (defun diagonal-points (x y)  ; points are (cons col row)
   (cond ((and (< (col x) (col y)) (< (row x) (row y))) ; going down and right
 	 (loop
@@ -379,15 +373,17 @@ edge"
 				      (loop for s in scanners
 					    collect (scnr-visible s)))))
 
-	 ;; now reduce the list to edge cases and points appearing four or more times
-	 (candidates (append (remove-if-not ; add in the edge cases
-			      #'(lambda (pt) (edge-case? pt h w)) visibles)
-			     (four-or-more visibles))))
+	 ;; now reduce the list to edge cases and points appearing four or more
+	 ;; times
+	 (candidates ;; (append
+	   ;; (remove-if-not ; add in the edge cases
+	   ;;  #'(lambda (pt) (edge-case? pt h w)) visibles)
+	   (four-or-more visibles)))
 
-    ;; go through list of points that appear 4 or more times in the list
-    ;; of invisibles and look for a point invisible to all scanners
+    ;; go through list of points that appear 4 or more times in the list of
+    ;; invisibles and look for a point invisible to all scanners
     (dolist (pt candidates)
-      (format t ".") ; progress bar
+      (format t "~%~a " pt) ; progress bar
       (when (invisible? pt scanners)
 	(return-from day15-2 (freq pt))))
     (error "Could not find the invisible point!")))
@@ -399,9 +395,10 @@ edge"
 (time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
 	      (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
 
-(time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
-	      (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
+(defconstant +d+ (uiop:read-file-lines *data-file*))
+;; (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+;;   (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
 
-;; ---------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
-;; ---------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
