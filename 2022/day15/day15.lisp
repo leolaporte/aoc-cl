@@ -97,9 +97,9 @@ subtract that number from the total points I can see. Erg.
 points on loi that it can see"
   (loc (cons 0 0) :type cons)      ; x y position stored as (cons x y)
   (beacon (cons 0 0) :type cons)   ; x y position of beacon
-  (range 0 :type fixnum)          ; range
-  (dist-to-loi 0 :type fixnum)    ; distance to the line of interest
-  (visible #() :type vector))        ; x posns visible on the loi
+  (range 0 :type fixnum)           ; range
+  (dist-to-loi 0 :type fixnum)     ; distance to the line of interest
+  (visible '() :type list))        ; x posns visible on the loi
 
 (defun col (p)
   "a mnemonic for the column data in a point stored as (cons x y)"
@@ -155,20 +155,22 @@ scanner with its distance to loi."
 ;; 'em.
 (defun prune-scanners (scanners)
   "removes any scanners that can't see the line of interest"
-  (remove-if #'(lambda (s) (> (scnr-dist-to-loi s) (scnr-range s))) scanners))
+  (remove-if
+   #'(lambda (s) (> (scnr-dist-to-loi s) (scnr-range s)))
+   scanners))
 
 ;; Now make a list of all the points on the line that each scanner can
 ;; see.
 (defun set-visible-points (scanner)
-  "returns a scanner with the visible field populated with a list of the points on the
-loi it can see"
+  "returns a scanner with the visible field populated with a list of the
+points on the loi it can see"
   (let ((num (- (scnr-range scanner)
 		(scnr-dist-to-loi scanner))) ; how many visible pts
 	(start (col (scnr-loc scanner))))    ; col of first visible point
     (setf (scnr-visible scanner)             ; set visible points
 	  (loop for x from (- start num) upto (+ start num)
-		collect x))              ; working from left to right
-    scanner))                            ; return updated scanner
+		collect x))                  ; working from left to right
+    scanner))                                ; return updated scanner
 
 (defun set-scanners-visible (scanners)
   "given a list of scanners, sets the list of visible points for each
@@ -180,9 +182,10 @@ and returns the new list of scanners"
 (defun get-beacon-points (scanners loi)
   "return a list of the x-coordinates of beacons in the scanner list
 that are on the line of interest"
-  (loop for s in scanners collecting
-			  (when (= (row (scnr-beacon s)) loi)
-			    (col (scnr-beacon s)))))
+  (loop for s across scanners
+	collecting
+	(when (= (row (scnr-beacon s)) loi)
+	  (col (scnr-beacon s)))))
 
 (defun day15-1 (los loi)
   "given a list of strings describing a number of scanner-beacon pairs,
@@ -225,9 +228,9 @@ Can I reduce the set of points I need to look at? Well since there is
 exactly one point in the grid that's invisible, I know it can't be
 more than one point outside the range of all scanners. (If it were
 farther out there'd be more than one invisible point and we're told
-there's exactly one.) In other words, it has to be in the set of points
-represented by the perimeters 1 point outside each scanner's range -
-the invisible perimeter.
+there's exactly one.) In other words, it has to be in the set of
+points represented by the perimeters 1 point outside each scanner's
+range - the invisible perimeter.
 
 Furthermore since it's the only invisible point in the whole grid it
 must occur in the set of all perimeter points at least four times. So
@@ -237,8 +240,8 @@ points is invisible to all the scanners.
 
 The only flaw in this logic is that a point in the corners of the grid
 might only be bordered by one scanner. Points on the edge can be
-bounded by as few as two scanners. So for completeness, I'll check
-for these "edge cases" as well.
+bounded by as few as two scanners. So for completeness, I'll check for
+these "edge cases" as well.
 ------------------------------------------------------------------- |#
 
 (defparameter *width* 4000001)    ; "no larger than 4,000,000"
@@ -286,17 +289,17 @@ the perimeter just beyond the scanners view"
 	 (left  (cons (- (col loc) invisible) (row loc))))
 
     (setf (scnr-visible s)
-	  (concatenate 'vector
-		       (diagonal-points top right)
-		       (rest (diagonal-points right bottom))
-		       (rest (diagonal-points top left))      ; trim top
-		       (rest (diagonal-points left bottom)))) ; trim left
+	  (append
+	   (diagonal-points top right)
+	   (rest (diagonal-points right bottom))
+	   (rest (diagonal-points top left))      ; trim top
+	   (rest (diagonal-points left bottom)))) ; trim left
     s))
 
 (defun set-all-scanners-invisibles (scanners)
   "given a list of scanners, return the list populated with the blind
 spots for each scanner"
-  (map 'vector #'set-scanner-invisibles scanners))
+  (mapcar #'set-scanner-invisibles scanners))
 
 (defun see-it? (p scanner)
   "given a point and a scanner, return true if the scanner can see the
