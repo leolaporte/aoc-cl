@@ -17,6 +17,7 @@
 
 (setf fiveam:*run-test-when-defined* t) ; test as we go
 (declaim (optimize (debug 3)))          ; max debugging info
+;; (declaim (optimize (speed 3) (safety 0) (debug 0))) ; max speed
 
 (defparameter *data-file* "~/cl/AOC/2022/day15/input.txt")  ; AoC input
 
@@ -50,8 +51,8 @@ x-coordinates) and count them.
 
 What's the geometry? If the distance to the loi is exactly equal to the
 scanner's range that scanner can see exactly one point on the loi:
-(scanner x loi-y), for every row closer to the loi, add a point left
-and right of the origin.
+(scanner x loi-y), for every row closer to the loi, add a point left and right
+of the origin.
 
 Those are the visible points. Each scanner will have a set of visible points.
 Union the sets then count the resulting set to get the answer. Done with part 1.
@@ -89,15 +90,6 @@ total points I can see. Erg.
 
 (defparameter *digits* (re:create-scanner "(-?\\d)+")
   "the regex to find digits in a string")
-
-(defstruct scnr
-  "a scanner, with location, range, distance to line of interest and
-points on loi that it can see"
-  (loc (cons 0 0) :type cons)      ; x y position stored as (cons x y)
-  (beacon (cons 0 0) :type cons)   ; x y position of beacon
-  (range 0 :type fixnum)           ; range
-  (dist-to-loi 0 :type fixnum)     ; distance to the line of interest
-  (visible '() :type list))        ; x posns visible on the loi
 
 (defun col (p)
   "a mnemonic for the column data in a point stored as (cons x y)"
@@ -235,7 +227,19 @@ then (quickly?) see which of those points is invisible to all the scanners.
 
 The only flaw in this logic is that a point in the corners of the grid might
 only be bordered by one scanner. Points on the edge can be bounded by as few as
-two scanners. So for completeness, I'll check for these "edge cases" as well.
+two scanners. So for completeness, I'll check for these "edge cases" as well
+if I have to.
+
+New problem: in the provided input, the ranges are SO high (over 1 million in
+the first scanner) that the diagonals are taking forever. I need a better way to
+calculate this.
+
+Would it be faster to go point by point? (There are 16 million of them!) I could
+simply check each point to see if it's invisible. If it is I'm done. Let's hope
+the point is close to the top! OK that's waaay to slow.
+
+Back to square, or should I say line, one. What if I go line by line, but do it
+as efficiently as possible?
 ----------------------------------------------------------------------------- |#
 
 (defparameter *width* 4000001)    ; "no larger than 4,000,000"
@@ -250,154 +254,61 @@ two scanners. So for completeness, I'll check for these "edge cases" as well.
 (5a:test freq-test
   (5a:is (= 56000011 (freq (cons 14 11)))))
 
-;; now we need a function to calculate the blind spot perimeter of a
-;; scanner. Start by creating a function that gives us the list of points
-;; representing a diagonal line between two x y coordinates
-(defun diagonal-points (x y)  ; points are (cons col row)
-  (cond ((and (< (col x) (col y)) (< (row x) (row y))) ; going down and right
-	 (loop
-	   for i from (col x) upto (col y)
-	   for j from (row x) upto (row y)
-	   collect (cons i j)))
+(defun make-scanner-hash (los)
+  "given a list of strings, each describing a scanner and beacon,
+return a hash of scanner position -> scanner range"
+  (let ((sh (make-hash-table :test 'equal :size (length los))))
 
-	((and (> (col x) (col y)) (< (row x) (row y))) ; going down and left
-	 (loop
-	   for i from (col x) downto (col y)
-	   for j from (row x) upto (row y)
-	   collect (cons i j)))))
+    (dolist (str los)
+      (let* ((digits (re:all-matches-as-strings *digits* str))
+	     (s-pos (cons (parse-integer (first digits))
+			  (parse-integer (second digits))))
+	     (b-pos (cons (parse-integer (third digits))
+			  (parse-integer (fourth digits))))
+	     (range (dist s-pos b-pos)))
 
-(5a:test diagonal-points-test
-  (5a:is (equal (diagonal-points (cons 0 0) (cons 3 3))      ; down right
-		(list (cons 0 0) (cons 1 1) (cons 2 2) (cons 3 3))))
-  (5a:is (equal (diagonal-points (cons 0 0) (cons -3 3))    ; down left
-		(list (cons 0 0) (cons -1 1) (cons -2 2) (cons -3 3)))))
+	(setf (gethash s-pos sh) range)))
 
-(defun set-scanner-invisibles (s)
-  "given a scanner and a grid, create a list of points that represent
-the perimeter just beyond the scanners view"
-  (let* ((loc (scnr-loc s))                               ; position of scanner
-	 (invisible (1+ (scnr-range s)))                  ; the scanner's range + 1
-	 (top (cons (col loc) (- (row loc) invisible)))   ; the four corners
-	 (right (cons (+ (col loc) invisible) (row loc)))
-	 (bottom (cons (col loc) (+ (row loc) invisible)))
-	 (left  (cons (- (col loc) invisible) (row loc))))
+    sh))
 
-    (setf (scnr-visible s)
-	  (append
-	   (diagonal-points top right)
-	   (rest (diagonal-points right bottom))
-	   (rest (diagonal-points top left))      ; trim top
-	   (rest (diagonal-points left bottom)))) ; trim left
-    s))
+(defparameter input-hash (make-scanner-hash (uiop:read-file-lines *data-file*)))
+(defparameter sample-hash (make-scanner-hash *sample-data*))
 
-(defun set-all-scanners-invisibles (scanners)
-  "given a list of scanners, return the list populated with the blind
-spots for each scanner"
-  (mapcar #'set-scanner-invisibles scanners))
+(defun print-hash-table (hash)
+  (loop for k being the hash-keys in hash using (hash-value v)
+	do (format t "~A => ~A~&" k v)))
 
-(defun see-it? (p scanner)
-  "given a point and a scanner, return true if the scanner can see the
-point"
-  ;; is the point within the range of the scanner?
-  (<= (dist p (scnr-loc scanner)) (scnr-range scanner)))
-
-(5a:test see-it?-test
-  (let ((ss (set-all-scanners-invisibles (make-scanner-list *sample-data*))))
-    (5a:is-true (see-it? (cons 2 18) (first ss)))
-    (5a:is-false (see-it? (cons -2 26) (first ss)))
-    (5a:is-false (see-it? (cons -9 18) (first ss)))
-    (5a:is-true (see-it? (cons 2 21) (first ss)))))
-
-(defun invisible? (p scanners)
+(defun invisible? (p ranges)
   "returns true if p is invisible to all scanners"
-  (dolist (s scanners)
-    (when (see-it? p s)               ; saw it!
-      (return-from invisible? nil)))  ; so false
-  t)                                  ; no scanner saw it, so true
+  (loop for s being the hash-keys in ranges do
+    (when (<= (dist p s) (gethash s ranges))
+      (return-from invisible? nil)))
+  t)
 
 (5a:test invisible?-test
-  (let ((ss (set-all-scanners-invisibles (make-scanner-list *sample-data*))))
-    (5a:is-false (invisible? (cons 2 18) ss))
-    (5a:is-true (invisible? (cons 14 11) ss))))
-
-(defun four-or-more (lst)
-  "given a list of points return a list of points that appear four or
-more times in the list"
-  (cond ((null lst) nil)
-	((= (count (first lst) lst :test #'equal) 4)
-	 (cons (first lst) (four-or-more (rest lst))))
-	(t (four-or-more (rest lst)))))
-
-(5a:test four-or-more-test
-  (5a:is (equal (four-or-more '(1 1 1 1)) '(1)))
-  (5a:is (equal (four-or-more '(1 2 3 4 1 3 1 3 1)) '(1)))
-  (5a:is (equal (four-or-more '(1 1 2 2 3 3 4 4 1 2 2 3 3 4)) '(2 3)))
-  (5a:is (equal (four-or-more '(1 1 2 2 3 3 1 1 1 2 2 3 3 4)) '(1 2 3)))
-  (5a:is (equal (four-or-more '(1 2 3 4)) '())))
-
-(defun outside-grid? (pt h w)
-  "Just in case, eliminate any perimeter points that are outside the
-specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
-  (or (> 0 (col pt))
-      (> (col pt) w)
-      (> 0 (row pt))
-      (> (row pt) h)))
-
-(5a:test outside-grid?-test
-  (5a:is-true (outside-grid? (cons -1 -1) *sample-height* *sample-width*))
-  (5a:is-false (outside-grid? (cons 1 1) *sample-height* *sample-width*))
-  (5a:is-true (outside-grid? (cons 22 22) *sample-height* *sample-width*))
-  (5a:is-false (outside-grid? (cons 12 12) *sample-height* *sample-width*)))
-
-(defun edge-case? (pt h w)
-  "returns true if the point is in the corner of the grid or along its
-edge"
-  (or (= (col pt) 0)
-      (= (col pt) (1- w))
-      (= (row pt) 0)
-      (= (row pt) (1- h))))
-
-(5a:test edge-case?-test
-  (5a:is-true (edge-case? (cons 0 1) 21 21))
-  (5a:is-true (edge-case? (cons 20 1) 21 21))
-  (5a:is-true (edge-case? (cons 11 0) 21 21))
-  (5a:is-true (edge-case? (cons 0 20) 21 21)))
+  (5a:is-false (invisible? (cons 2 18) sh))
+  (5a:is-true (invisible? (cons 14 11) sh)))
 
 (defun day15-2 (los h w)
-  (let* (;; build the scanner list with invisibles set
-	 (scanners (set-all-scanners-invisibles (make-scanner-list los)))
-
-	 ;; make a flat list of all the permimeter invisibles inside the grid
-	 (visibles (remove-if #'(lambda (pt) (outside-grid? pt h w)) ;
-			      (reduce #'append
-				      (loop for s in scanners
-					    collect (scnr-visible s)))))
-
-	 ;; now reduce the list to edge cases and points appearing four or more
-	 ;; times
-	 (candidates ;; (append
-	   ;; (remove-if-not ; add in the edge cases
-	   ;;  #'(lambda (pt) (edge-case? pt h w)) visibles)
-	   (four-or-more visibles)))
-
-    ;; go through list of points that appear 4 or more times in the list of
-    ;; invisibles and look for a point invisible to all scanners
-    (dolist (pt candidates)
-      (format t "~%~a " pt) ; progress bar
-      (when (invisible? pt scanners)
-	(return-from day15-2 (freq pt))))
-    (error "Could not find the invisible point!")))
+  (let ((ranges (make-scanner-hash los)))
+    (loop for row below h do
+      (loop for col below w do
+	(when (invisible? (cons col row) ranges)
+	  (return-from day15-2 (freq (cons col row))))))))
 
 (5a:test day15-2-test
-  (5a:is (= 56000011 (day15-2 *sample-data* *sample-height* *sample-width*))))
+  (5a:is (= 56000011 (time (day15-2 *sample-data* *sample-height* *sample-width*)))))
+
+;; Crap. This method is WORSE than doing part 1 four million times. The ranges
+;; are so big (the first scanner has a range of 1,192,622) that calculating the
+;; perimeter is prohibitively slow. I need a better algo.
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
 	      (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
 
-(defconstant +d+ (uiop:read-file-lines *data-file*))
-;; (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
-;;   (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
+(time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+	      (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
 
 ;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
