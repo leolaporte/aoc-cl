@@ -91,6 +91,13 @@ total points I can see. Erg.
 (defparameter *digits* (re:create-scanner "(-?\\d)+")
   "the regex to find digits in a string")
 
+(defstruct scnr
+  loc
+  beacon
+  range
+  dist-to-loi
+  visible)
+
 (defun col (p)
   "a mnemonic for the column data in a point stored as (cons x y)"
   (car p))
@@ -234,12 +241,14 @@ New problem: in the provided input, the ranges are SO high (over 1 million in
 the first scanner) that the diagonals are taking forever. I need a better way to
 calculate this.
 
-Would it be faster to go point by point? (There are 16 million of them!) I could
-simply check each point to see if it's invisible. If it is I'm done. Let's hope
-the point is close to the top! OK that's waaay to slow.
+Would it be faster to go point by point? (There are 16 quadrillion of them!) I
+could simply check each point to see if it's invisible. If it is I'm done. Let's
+hope the point is close to the top! OK that's waaay to slow.
 
 Back to square, or should I say line, one. What if I go line by line, but do it
-as efficiently as possible?
+as efficiently as possible? Nope.
+
+One more shot - I can reduce the set of possible points by only checking the points one outside the range of each scanner: the invisible perimeter. Generating the entire set of possibles takes way too long, too. Possibly if I do it one scanner at a time and pray?
 ----------------------------------------------------------------------------- |#
 
 (defparameter *width* 4000001)    ; "no larger than 4,000,000"
@@ -257,7 +266,7 @@ as efficiently as possible?
 (defun make-scanner-hash (los)
   "given a list of strings, each describing a scanner and beacon,
 return a hash of scanner position -> scanner range"
-  (let ((sh (make-hash-table :test 'equal :size (length los))))
+  (let ((sh (make-hash-table   :test 'equal :size (length los))))
 
     (dolist (str los)
       (let* ((digits (re:all-matches-as-strings *digits* str))
@@ -274,41 +283,87 @@ return a hash of scanner position -> scanner range"
 (defparameter input-hash (make-scanner-hash (uiop:read-file-lines *data-file*)))
 (defparameter sample-hash (make-scanner-hash *sample-data*))
 
-(defun print-hash-table (hash)
+(defun pht (hash)
+  "little utility for printing the contents of a hash"
   (loop for k being the hash-keys in hash using (hash-value v)
 	do (format t "~A => ~A~&" k v)))
+
+(defun outside-grid? (pt h w)
+  "eliminate any perimeter points that are outside the
+specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
+  (or (> 0 (col pt))
+      (> (col pt) w)
+      (> 0 (row pt))
+      (> (row pt) h)))
+
+(5a:test outside-grid?-test
+  (5a:is-true (outside-grid? (cons -1 -1) *sample-height* *sample-width*))
+  (5a:is-false (outside-grid? (cons 1 1) *sample-height* *sample-width*))
+  (5a:is-true (outside-grid? (cons 22 22) *sample-height* *sample-width*))
+  (5a:is-false (outside-grid? (cons 12 12) *sample-height* *sample-width*)))
 
 (defun invisible? (p ranges)
   "returns true if p is invisible to all scanners"
   (loop for s being the hash-keys in ranges do
-    (when (<= (dist p s) (gethash s ranges))
-      (return-from invisible? nil)))
-  t)
+    (when (<= (dist p s) (gethash s ranges)) ; point is inside scanner's range
+      (return-from invisible? nil)))         ; so we can see it
+  t)                                         ; checked every scanner and nope!
 
 (5a:test invisible?-test
-  (5a:is-false (invisible? (cons 2 18) sh))
-  (5a:is-true (invisible? (cons 14 11) sh)))
+  (5a:is-false (invisible? (cons 2 18) sample-hash))
+  (5a:is-true (invisible? (cons 14 11) sample-hash)))
+
+(defun get-scanner-perimeter (pt range h w)
+  "given a scanner return a list of points that represent
+the perimeter just beyond the scanners view"
+  (flet ((down-right (x y)
+	   (loop
+	     for i from (col x) upto (col y)
+	     for j from (row x) upto (row y)
+	     collect (cons i j)))
+
+	 (down-left (x y)
+	   (loop
+	     for i from (col x) downto (col y)
+	     for j from (row x) upto (row y)
+	     collect (cons i j))))
+
+    (let* ((invisible (1+ range))
+	   ;; the four corner points
+	   (top (cons (col pt) (- (row pt) invisible)))
+	   (right (cons (+ (col pt) invisible) (row pt)))
+	   (bottom (cons (col pt) (+ (row pt) invisible)))
+	   (left  (cons (- (col pt) invisible) (row pt))))
+
+      (remove-if #'(lambda (p) (outside-grid? p h w))
+		 (append
+		  (down-right top right)                         ; start at top
+		  (rest (down-left right bottom))                ; trim right
+		  (rest (down-left top left))                    ; trim top
+		  (butlast (rest (down-right left bottom)))))))) ; trim left
 
 (defun day15-2 (los h w)
-  (let ((ranges (make-scanner-hash los)))
-    (loop for row below h do
-      (loop for col below w do
-	(when (invisible? (cons col row) ranges)
-	  (return-from day15-2 (freq (cons col row))))))))
+  "given a list of scanner/beacon locations find the single point that
+cannot be sceen by any of the scanners"
+  (let ((s-hash (make-scanner-hash los)))
+    ;; for every scanner in the hash
+    (loop for s being the hash-keys in s-hash using (hash-value range)
+	  ;; for every perimeter point of that scanner
+	  do (loop for pt in (get-scanner-perimeter s range h w)
+		   ;; check to see if it's invisible
+			     (when (invisible? pt ranges)
+			       (return-from day15-2 (freq (cons col row))))))))
 
 (5a:test day15-2-test
-  (5a:is (= 56000011 (time (day15-2 *sample-data* *sample-height* *sample-width*)))))
-
-;; Crap. This method is WORSE than doing part 1 four million times. The ranges
-;; are so big (the first scanner has a range of 1,192,622) that calculating the
-;; perimeter is prohibitively slow. I need a better algo.
+  (5a:is (= 56000011
+	    (day15-2 *sample-data* *sample-height* *sample-width*))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
 	      (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
 
-(time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
-	      (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
+;; (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+;;   (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
 
 ;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
