@@ -16,9 +16,9 @@
 
 (in-package :day###)
 
-(setf fiveam:*run-test-when-defined* t) ; test as we go
-(declaim (optimize (debug 3)))          ; max debugging info
-;; (declaim (optimize (debug 0) (speed 3) (safety 0))) ; max speed if needed
+(setf 5a:*run-test-when-defined* t)  ; test as we go
+(declaim (optimize (debug 3)))       ; max debugging info
+;; (declaim (optimize (speed 3))     ; max speed if needed
 
 (defparameter *data-file* "~/cl/AOC/2022/day###/input.txt")  ;  data from AoC
 
