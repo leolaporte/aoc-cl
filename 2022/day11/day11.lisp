@@ -2,9 +2,9 @@
 ;;;; 2022 AOC Day 11 solution
 ;;;; Leo Laporte, 19 Dec 2022
 
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 (ql:quickload '(:fiveam :cl-ppcre))
 
 (defpackage :day11
@@ -20,19 +20,27 @@
 
 (defparameter *data-file* "~/cl/AOC/2022/day11/input.txt")  ; supplied data from AoC
 
-#| ----------------------------------------------------------------------------------------------------
---- Day 11: Monkey in the Middle ---
+#| ---------------------------- Day 11: Monkey in the Middle -------------------
 
 --- Part One ---
 
-You take some notes (your puzzle input) on the items each monkey currently has, how worried you are
-about those items, and how the monkey makes decisions based on your worry level.
+You take some notes (your puzzle input) on the items each monkey currently has,
+how worried you are about those items, and how the monkey makes decisions based
+on your worry level.
 
-After each monkey inspects an item but before it tests your worry level, your relief that the monkey's inspection didn't damage the item causes your worry level to be divided by three and rounded down to the nearest integer.
+After each monkey inspects an item but before it tests your worry level, your
+relief that the monkey's inspection didn't damage the itemcauses your worry level to be divided by three and rounded down to the nearest integer.
 
-The monkeys take turns inspecting and throwing items. On a single monkey's turn, it inspects and throws all of the items it is holding one at a time and in the order listed. Monkey 0 goes first, then monkey 1, and so on until each monkey has had one turn. The process of each monkey taking a single turn is called a round.
+The monkeys take turns inspecting and throwing items. On a single monkey's turn,
+it inspects and throws all of the items it is holding one at a time and in the
+order listed. Monkey 0 goes first, then monkey 1, and so on until each monkey
+has had one turn. The process of each monkey taking a single turn is called a
+round.
 
-When a monkey throws an item to another monkey, the item goes on the end of the recipient monkey's list. A monkey that starts a round with no items could end up inspecting and throwing many items by the time its turn comes around. If a monkey is holding no items at the start of its turn, its turn ends.
+When a monkey throws an item to another monkey, the item goes on the end of the
+recipient monkey's list. A monkey that starts a round with no items could end up
+inspecting and throwing many items by the time its turn comes around. If a
+monkey is holding no items at the start of its turn, its turn ends.
 
 Count the total number of times each monkey inspects items over 20 rounds:
 
@@ -41,15 +49,19 @@ Monkey 1 inspected items 95 times.
 Monkey 2 inspected items 7 times.
 Monkey 3 inspected items 105 times.
 
-In this example, the two most active monkeys inspected items 101 and 105 times. The level of monkey business in this situation can be found by multiplying these together: 10605.
+In this example, the two most active monkeys inspected items 101 and 105
+times. The level of monkey business in this situation can be found by
+multiplying these together: 10605.
 
-Figure out which monkeys to chase by counting how many items they inspect over 20 rounds. What is the level of monkey business after 20 rounds of stuff-slinging simian shenanigans?
+Figure out which monkeys to chase by counting how many items they inspect over
+20 rounds. What is the level of monkey business after 20 rounds of
+stuff-slinging simian shenanigans?
 
----------------------------------------------------------------------------------------------------- |#
+----------------------------------------------------------------------------- |#
 
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; DATA
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 ;; First set up the data parsing
 (defparameter *tst0*  ; provided example monkey list
@@ -135,9 +147,9 @@ as strings"
   "given a list of monkeys return a list of monkey structs"
   (mapcar #'parse-monkey (make-monkeys mlist)))  ; turn monkey strings into monkey structs
 
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; MAIN
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 ;; play all the rounds
 (defun play-the-monkey-game (rounds monkeys worry)
@@ -217,26 +229,32 @@ number of inspections performed (monkey-business), return the updated monkey lis
   (5a:is (= 10605 (day11-1 (parse-monkeys *tst0*)))))
 
 
-#| ----------------------------------------------------------------------------------------------------
+#| -----------------------------------------------------------------------------
 --- Part Two ---
 
-You're worried you might not ever get your items back. So worried, in fact, that your relief that a monkey's inspection didn't damage an item no longer causes your worry level to be divided by three.
+You're worried you might not ever get your items back. So worried, in fact, that
+your relief that a monkey's inspection didn't damage an item no longer causes
+your worry level to be divided by three.
 
-Unfortunately, that relief was all that was keeping your worry levels from reaching ridiculous levels. You'll need to find another way to keep your worry levels manageable.
+Unfortunately, that relief was all that was keeping your worry levels from
+reaching ridiculous levels. You'll need to find another way to keep your worry
+levels manageable.
 
-At this rate, you might be putting up with these monkeys for a very long time - possibly 10000 rounds!
+At this rate, you might be putting up with these monkeys for a very long time -
+possibly 10000 rounds!
 
-NOTES: The problem here is that the numbers get unmanageable large. The question is, how do I
-preserve the key information without using such big numbers. Such an early appearance of the
-Chinese Remainder Theorem,
+NOTES: The problem here is that the numbers get unmanageable large. The question
+is, how do I preserve the key information without using such big numbers. Such
+an early appearance of the Chinese Remainder Theorem,
 
-Because the mod values are all primes, the least common multiiple of them is calculated by multiplying
-them all together.
+Because the mod values are all primes, the least common multiiple of them is
+calculated by multiplying them all together.
 
-And, as it turns out, the value of (mod x n) is the same as (mod (mod x lcm) n). So I can solve
-the problem of these values getting too big by using the modulus LCM of the value. This doesn't
-affect part 1 so I modified throw-monkey-items to do this in both parts.
----------------------------------------------------------------------------------------------------- |#
+And, as it turns out, the value of (mod x n) is the same as (mod (mod x lcm)
+n). So I can solve the problem of these values getting too big by using the
+modulus LCM of the value. This doesn't affect part 1 so I modified
+throw-monkey-items to do this in both parts.
+----------------------------------------------------------------------------- |#
 
 (defun day11-2 (monkeys)
   (collect-monkey-business (play-the-monkey-game 10000 monkeys 1))) ; 10000 rounds,  worry level 1
@@ -251,9 +269,9 @@ affect part 1 so I modified throw-monkey-items to do this in both parts.
 (time (format t "The answer to AOC 2022 Day 11 Part 2 is ~a"
 	      (day11-2 (parse-monkeys (uiop:read-file-lines *data-file*)))))
 
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 ;; The answer to AOC 2022 Day 11 Part 1 is 54253
 ;; Evaluation took:
