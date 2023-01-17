@@ -2,9 +2,9 @@
 ;;;; 2022 AOC Day 14 solution
 ;;;; Leo Laporte, 6 Jan 2022
 
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 (ql:quickload '(:fiveam :cl-ppcre :str))
 
 (defpackage :day14
@@ -15,47 +15,53 @@
 
 (in-package :day14)
 
-(setf fiveam:*run-test-when-defined* t) ; test when compiling test code (for quick iteration)
+(setf fiveam:*run-test-when-defined* t) ; test when compiling
 (declaim (optimize (debug 3)))          ; max debugging info
 
-(defparameter *data-file* "~/cl/AOC/2022/day14/input.txt")  ; supplied data from AoC
+(defparameter *data-file* "~/cl/AOC/2022/day14/input.txt")  ; AoC input file
 
-#| ----------------------------------------------------------------------------------------------------
---- Day 14: Regolith Reservoir ---
+#| ------------------------ Day 14: Regolith Reservoir -------------------------
 --- Part One ---
 
-Your scan traces the path of each solid rock structure and reports the x,y coordinates that form the
-shape of the path, where x represents distance to the right and y represents distance down. Each path
-appears as a single line of text in your scan. After the first point of each path, each point
-indicates the end of a straight horizontal or vertical line to be drawn from the previous point.
+Your scan traces the path of each solid rock structure and reports the x,y
+coordinates that form the shape of the path, where x represents distance to the
+right and y represents distance down. Each path appears as a single line of text
+in your scan. After the first point of each path, each point indicates the end
+of a straight horizontal or vertical line to be drawn from the previous point.
 
 The sand is pouring into the cave from point 500,0.
 
-Sand is produced one unit at a time, and the next unit of sand is not produced until the previous unit
-of sand comes to rest. A unit of sand is large enough to fill one tile of air in your scan.
+Sand is produced one unit at a time, and the next unit of sand is not produced
+until the previous unit of sand comes to rest. A unit of sand is large enough to
+fill one tile of air in your scan.
 
-A unit of sand always falls down one step if possible. If the tile immediately below is blocked (by
-rock or sand), the unit of sand attempts to instead move diagonally one step down and to the left. If
-that tile is blocked, the unit of sand attempts to instead move diagonally one step down and to the
-right. Sand keeps moving as long as it is able to do so, at each step trying to move down, then down
--left, then down-right. If all three possible destinations are blocked, the unit of sand comes to rest
-and no longer moves, at which point the next unit of sand is created back at the source.
+A unit of sand always falls down one step if possible. If the tile immediately
+below is blocked (by rock or sand), the unit of sand attempts to instead move
+diagonally one step down and to the left. If that tile is blocked, the unit of
+sand attempts to instead move diagonally one step down and to the right. Sand
+keeps moving as long as it is able to do so, at each step trying to move down,
+then down -left, then down-right. If all three possible destinations are
+blocked, the unit of sand comes to rest and no longer moves, at which point the
+next unit of sand is created back at the source.
 
-Using your scan, simulate the falling sand. How many units of sand come to rest before sand starts
-flowing into the abyss below?
+Using your scan, simulate the falling sand. How many units of sand come to rest
+before sand starts flowing into the abyss below?
 
-NOTES: Seems simple enough. Create a list of rock points, then drop sand along a trajectory
-that "flows" around the rock until it gets to a point below the rock
+NOTES:
+
+Seems simple enough. Create a list of rock points, then drop sand along a
+trajectory that "flows" around the rock until it gets to a point below the rock
 (aka "the abyss"). Return the number of iterations it took to get there.
 
-I think I don't actually have to create a grid. A list of rock points will be sufficient. Then
-a function that creates the path of the sand. When the sand stops falling, add that point to
-the rock list. I will have to establish the lowest rock point to know when the abyss begins.
-Also important, the supplied data is in col - row order.
+I think I don't actually have to create a grid. A list of rock points will be
+sufficient. Then a function that creates the path of the sand. When the sand
+stops falling, add that point to the rock list. I will have to establish the
+lowest rock point to know when the abyss begins.  Also important, the supplied
+data is in col - row order.
 
-OK list takes too long - about 8 seconds for part 1 - I'm going to try a hash table instead.
-OK yeah it's literally 666 times faster. Hash Tables FTW!
----------------------------------------------------------------------------------------------------- |#
+OK list takes too long - about 8 seconds for part 1 - I'm going to try a hash
+table instead.  OK yeah it's literally 666 times faster. Hash Tables FTW!
+----------------------------------------------------------------------------- |#
 
 ;; sample data for tests
 (defparameter sample '("498,4 -> 498,6 -> 496,6" "503,4 -> 502,4 -> 502,9 -> 494,9")) ; AoC Example
@@ -100,8 +106,9 @@ OK yeah it's literally 666 times faster. Hash Tables FTW!
   (5a:is (equal (string-to-point "-100,-200") (cons -100 -200))))
 
 (defun build-rock (pt1 pt2)
-  "given a pair of points (cons col row) return a list of all the points in-between inclusive,
-we do not know if the points are ordered, ASSUME either row or colum is static"
+  "given a pair of points (cons col row) return a list of all the points
+in-between inclusive, we do not know if the points are ordered, ASSUME either
+row or colum is static"
   (do*
    ;; find the direction we're moving
    ;; is the row increasing? And is it up or down?
@@ -131,9 +138,10 @@ we do not know if the points are ordered, ASSUME either row or colum is static"
     (push (cons col row) points))) ; add a point, repeat until done
 
 (defun rock-pts-list (str)
-  "given a string describing a rock formation, return a list of all points (as (cons col row))
-in that formation - no order is promised, and there will be duplicated points where rocks
-overlap - but it doesn't matter for our purposes"
+  "given a string describing a rock formation, return a list of all
+points (as (cons col row)) in that formation - no order is promised, and there
+will be duplicated points where rocks overlap - but it doesn't matter for our
+purposes"
   (let ((pt-strings (map 'list #'string-to-point  (re:split " -> " str)))
 
 	(points '()))
@@ -154,9 +162,9 @@ points occupied by rock"
 (defparameter form2 (build-formation '("500,0 -> 500,5 -> 505,5" "507,5 -> 509,5 -> 509,0")))
 
 (defun abyss (formation)
-  "given a rock formation find lowest point of rock - the abyss begins anywhere lower
-although because on a grid the HIGHEST row number is the lowest point, we actually
-want the highest row"
+  "given a rock formation find lowest point of rock - the abyss begins anywhere
+lower although because on a grid the HIGHEST row number is the lowest point, we
+actually want the highest row"
   (apply #'max (mapcar #'(lambda (f) (row f))
 		       (loop for key being the hash-keys of formation collect key))))
 
@@ -166,7 +174,8 @@ want the highest row"
 
 ;; Now start dropping sand
 (defun next-location (loc formation)
-  "given the location of a grain of sand, return the next position in its trajectory"
+  "given the location of a grain of sand, return the next position in its
+trajectory"
   (flet  ; some mini functions only used here
       ((pt+ (pt offset) ; adds an offset to a point, returns result
 	 (cons (+ (col pt) (col offset)) (+ (row pt) (row offset))))
@@ -195,8 +204,8 @@ want the highest row"
   (5a:is (equal (next-location (cons 506 4) form2) (cons 506 5))))   ; abyss
 
 (defun drop-grains (start formation)
-  "given a rock formation drop grains of sand from starting point until the sand falls
- into the abyss then return the number of grains that got blocked"
+  "given a rock formation drop grains of sand from starting point until the sand
+ falls into the abyss then return the number of grains that got blocked"
   (let ((loc start)               ; starting point of sand grain
 	(abyss (abyss formation)) ; lowest point of formation, beyond this is the abyss
 	(grains 0))               ; number of grains dropped BEFORE falling through
@@ -213,32 +222,36 @@ want the highest row"
 	  (t (setf loc next)))))))           ; otherwise, keep dropping
 
 (defun day14-1 (list-of-rocks)
-  "given a rock hash, drop grains of sand until they hit the abyss, return
-the number of iterations it took to get there"
+  "given a rock hash, drop grains of sand until they hit the abyss, return the
+number of iterations it took to get there"
   (drop-grains *start* (build-formation list-of-rocks)))
 
 (5a:test day14-1-test
   (5a:is (= 24 (day14-1 sample))))
 
-#| ----------------------------------------------------------------------------------------------------
+#| -----------------------------------------------------------------------------
 --- Part Two ---
 
-assume the floor is an infinite horizontal line with a y coordinate equal to two plus the highest y
-coordinate of any point in your scan.
+assume the floor is an infinite horizontal line with a y coordinate equal to two
+plus the highest y coordinate of any point in your scan.
 
-To find somewhere safe to stand, you'll need to simulate falling sand until a unit of sand comes to
-rest at 500,0, blocking the source entirely and stopping the flow of sand into the cave.
+To find somewhere safe to stand, you'll need to simulate falling sand until a
+unit of sand comes to rest at 500,0, blocking the source entirely and stopping
+the flow of sand into the cave.
 
-NOTES: So now the abyss limit is abyss + 2. And the stopping point is when the grain hits 500,0.
-I think a simple modification of DROP-GRAINS will work. Oh, I also have to change next-location
-to keep grains from going past floor.
+NOTES:
 
-And since hash-tables are so fast I might as well simplify things by adding the floor to the
-rock points.
----------------------------------------------------------------------------------------------------- |#
+So now the abyss limit is abyss + 2. And the stopping point is when the grain
+hits 500,0.  I think a simple modification of DROP-GRAINS will work. Oh, I also
+have to change next-location to keep grains from going past floor.
+
+And since hash-tables are so fast I might as well simplify things by adding the
+floor to the rock points.
+----------------------------------------------------------------------------- |#
 
 (defun next-location2 (loc formation)
-  "given the location of a grain of sand, return the next position in its trajectory"
+  "given the location of a grain of sand, return the next position in its
+trajectory"
   (flet  ; some mini functions only used here
       ((pt+ (pt offset) ; adds an offset to a point, returns result
 	 (cons (+ (col pt) (col offset)) (+ (row pt) (row offset))))
@@ -259,11 +272,12 @@ rock points.
 	    (t loc))))) ;can't move, return original location
 
 (defun fill-cave (start formation)
-  "given a rock formation drop grains of sand from starting point until the sand fills it up and
-blocks the start, return the number of grains it took"
+  "given a rock formation drop grains of sand from starting point until the sand
+fills it up and blocks the start, return the number of grains it took"
   (let ((floor (+ 2 (abyss formation)))) ; point beyond which sand cannot fall
     (dolist (r (rock-pts-list
-		(str:concat "0," (write-to-string floor) " -> 1000," (write-to-string floor))))
+		(str:concat "0," (write-to-string floor) " -> 1000,"
+			    (write-to-string floor))))
       (setf (gethash r formation) :floor)))  ; add a floor structure stretching from 0 to 1000
 
   (let ((loc start)                     ; starting point of sand grain
@@ -297,9 +311,9 @@ the number of grains it took"
 (time (format t "The answer to AOC 2022 Day 14 Part 2 is ~a"
 	      (day14-2 (uiop:read-file-lines *data-file*))))
 
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
-;; ----------------------------------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
 
 ;; The answer to AOC 2022 Day 14 Part 1 is 873
 ;; Evaluation took:
