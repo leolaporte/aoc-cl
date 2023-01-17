@@ -1,0 +1,373 @@
+;;;; Day15.lisp
+;;;; 2022 AOC Day 15 solution
+;;;; Leo Laporte, 13 Jan 2022
+
+;; -----------------------------------------------------------------------------
+;; Prologue code for setup - same every day
+;; -----------------------------------------------------------------------------
+(ql:quickload '(:fiveam :cl-ppcre))
+
+(defpackage :day15
+  (:use #:cl)
+  (:local-nicknames
+   (:re :cl-ppcre)
+   (:5a :fiveam)))
+
+(in-package :day15)
+
+(setf fiveam:*run-test-when-defined* t) ; test as we go
+;;(declaim (optimize (debug 3)))          ; max debugging info
+(declaim (optimize (speed 3) (safety 0) (debug 0))) ; max speed
+
+(defparameter *data-file* "~/cl/AOC/2022/day15/input.txt")  ; AoC input
+
+#| ----------------------- Day 15: Beacon Exclusion Zone -----------------------
+
+--- Part One ---
+
+"Sensors and beacons always exist at integer coordinates. Each sensor knows its
+own position and can determine the position of a beacon precisely; however,
+sensors can only lock on to the one beacon closest to the sensor as measured by
+the Manhattan distance.  (There is never a tie where two beacons are the same
+distance to a sensor.)
+
+None of the detected beacons seem to be producing the distress signal, so you'll
+need to work out where the distress beacon is by working out where it isn't. For
+now, keep things simple by counting the positions where a beacon cannot possibly
+be along just a single row.
+
+Consult the report from the sensors you just deployed. In the row where
+y=2000000, how many positions cannot contain a beacon?"
+
+NOTES: So I'm guessing the size of this grid is going to be massive so I don't
+want to calculate more than I have to. But it turns out the problem is way
+simpler than it seems.
+
+For each scanner I know its range (the dist to the associated beacon). I can
+calculate how much it sees of the provided y coordinate
+(I'll call it the line of interest (loi).  From there I can generate a
+list of visible points (no need to do points, even, just
+x-coordinates) and count them.
+
+What's the geometry? If the distance to the loi is exactly equal to the
+scanner's range that scanner can see exactly one point on the loi:
+(scanner x loi-y), for every row closer to the loi, add a point left and right
+of the origin.
+
+Those are the visible points. Each scanner will have a set of visible points.
+Union the sets then count the resulting set to get the answer. Done with part 1.
+
+Again I'll represent points as (cons x y) and today it's in col row order.
+
+UPDATE: So unfortunately according the the example data if a beacon is already
+in the loi that point does not count. I've been ignoring beacons, but I guess I
+can't. I need to count beacons in the loi and subtract that number from the
+total points I can see. Erg.
+----------------------------------------------------------------------------- |#
+
+(defparameter *sample-data*
+  '("Sensor at x=2, y=18: closest beacon is at x=-2, y=15"  ; note negative!
+    "Sensor at x=9, y=16: closest beacon is at x=10, y=16"
+    "Sensor at x=13, y=2: closest beacon is at x=15, y=3"
+    "Sensor at x=12, y=14: closest beacon is at x=10, y=16"
+    "Sensor at x=10, y=20: closest beacon is at x=10, y=16"
+    "Sensor at x=14, y=17: closest beacon is at x=10, y=16"
+    "Sensor at x=8, y=7: closest beacon is at x=2, y=10"
+    "Sensor at x=2, y=0: closest beacon is at x=2, y=10"
+    "Sensor at x=0, y=11: closest beacon is at x=2, y=10"
+    "Sensor at x=20, y=14: closest beacon is at x=25, y=17"
+    "Sensor at x=17, y=20: closest beacon is at x=21, y=22"
+    "Sensor at x=16, y=7: closest beacon is at x=15, y=3"
+    "Sensor at x=14, y=3: closest beacon is at x=15, y=3"
+    "Sensor at x=20, y=1: closest beacon is at x=15, y=3")
+  "provided AoC example")
+
+(defparameter *sample-loi* 10
+  "line of interest for the sample scans")
+
+(defparameter *input-loi* 2000000
+  "line of interest for the AoC input")
+
+(defparameter *digits* (re:create-scanner "(-?\\d)+")
+  "the regex to find digits in a string")
+
+(defstruct scnr
+  loc
+  beacon
+  range
+  dist-to-loi
+  visible)
+
+(defun col (p)
+  "a mnemonic for the column data in a point stored as (cons x y)"
+  (car p))
+
+(defun row (p)
+  "a mnemonic for the row data in a point stored as (cons x y)"
+  (cdr p))
+
+(defun dist (x y)
+  "return the manhattan distance between two points, x y"
+  (+ (abs (- (col x) (col y))) (abs (- (row x) (row y)))))
+
+(defun make-scanner-list (los)
+  "given a list of strings, each describing a scanner and beacon,
+return a list of scanner structures, each populated with scanner and
+beacon locations and range"
+  (flet ((parse-scanner-string (str)
+	   (let* ((s (make-scnr))   ; create an empty scanner
+		  ;; extract the digits
+		  (digits (re:all-matches-as-strings *digits* str))
+		  ;; first two are scanner position
+		  (s-pos (cons (parse-integer (first digits))
+			       (parse-integer (second digits))))
+		  ;; next two are beacon position
+		  (b-pos (cons (parse-integer (third digits))
+			       (parse-integer (fourth digits)))))
+
+	     (setf (scnr-loc s) s-pos)     ; scanner location
+	     (setf (scnr-beacon s) b-pos)  ; beacon location
+	     (setf (scnr-range s)          ; scanner range is....
+		   (dist s-pos b-pos))     ; ...dist from it to beacon
+	     s)))
+
+    (mapcar #'parse-scanner-string los)))
+
+(defparameter *scanners* (make-scanner-list *sample-data*))
+
+;; OK I've got a list of scanner structures. Now I need to know what
+;; each scanner can see along the line of interest. Start by
+;; calculating each scanner's range
+(defun set-scanners-dist (scanners loi)
+  "given a list of scanners and a line of interest, populate each
+scanner with its distance to loi."
+  (flet ((set-dist-to-loi (s)
+	   (setf (scnr-dist-to-loi s)
+		 (dist (scnr-loc s)
+		       (cons (col (scnr-loc s)) loi))) ; dist to loi
+	   s))
+    (mapcar #'set-dist-to-loi scanners)))
+
+;; No need to keep track of scanners that can't see that far. So prune
+;; 'em.
+(defun prune-scanners (scanners)
+  "removes any scanners that can't see the line of interest"
+  (remove-if
+   #'(lambda (s) (> (scnr-dist-to-loi s) (scnr-range s)))
+   scanners))
+
+;; Now make a list of all the points on the line that each scanner can
+;; see.
+(defun set-visible-points (scanner)
+  "returns a scanner with the visible field populated with a list of the
+points on the loi it can see"
+  (let ((num (- (scnr-range scanner)
+		(scnr-dist-to-loi scanner))) ; how many visible pts
+	(start (col (scnr-loc scanner))))    ; col of first visible point
+    (setf (scnr-visible scanner)             ; set visible points
+	  (loop for x from (- start num) upto (+ start num)
+		collect x))                  ; working from left to right
+    scanner))                                ; return updated scanner
+
+(defun set-scanners-visible (scanners)
+  "given a list of scanners, sets the list of visible points for each
+and returns the new list of scanners"
+  (mapcar #'set-visible-points scanners))
+
+;; Oh but the problem has thrown me a curve. I ALSO have to eliminate
+;; any points which already have a beacon on it. D'oh!
+(defun get-beacon-points (scanners loi)
+  "return a list of the x-coordinates of beacons in the scanner list
+that are on the line of interest"
+  (loop for s in scanners
+	collecting
+	(when (= (row (scnr-beacon s)) loi)
+	  (col (scnr-beacon s)))))
+
+(defun day15-1 (los loi)
+  "given a list of strings describing a number of scanner-beacon pairs,
+and the y-coordinate of a line of interest, return the number of
+points covered on the loi by all the scanners"
+  (let* ((scanners
+	   (set-scanners-visible   ; add list of visible points (col only)
+	    (prune-scanners        ; only scanners that can see the line
+	     (set-scanners-dist    ; distance to line
+	      (make-scanner-list los) loi))))
+
+	 (beacon-points (get-beacon-points scanners loi)) ; beacon col
+
+	 (visible-points           ; cols for visible points on line
+	   (remove-duplicates
+	    (mapcan #'(lambda (s) (scnr-visible s)) scanners))))
+
+    ;; remove beacon-points from visible-points and count the remainder
+    (length (set-difference visible-points beacon-points))))
+
+(5a:test day15-1-test
+  (5a:is (= 26 (day15-1 *sample-data* *sample-loi*))))
+
+#| -----------------------------------------------------------------------------
+--- Part Two ---
+
+"The distress beacon is not detected by any sensor, but the distress beacon must
+have x and y coordinates each no lower than 0 and no larger than 4000000.
+
+To isolate the distress beacon's signal, you need to determine its tuning
+frequency, which can be found by multiplying its x coordinate by 4000000 and
+then adding its y coordinate."
+
+NOTES: I could just do part one 4 million times. Hmm. That's pretty slow. Or I
+guess I could go through all 16,000,008,000,001 points to see which one is
+invisible. That might take a while.
+
+Can I reduce the set of points I need to look at? Well since there is exactly
+one point in the grid that's invisible, I know it can't be more than one point
+outside the range of all scanners. (If it were farther out there'd be more than
+one invisible point and we're told there's exactly one.) In other words, it has
+to be in the set of points represented by the perimeters 1 point outside each
+scanner's range - the invisible perimeter.
+
+Furthermore since it's the only invisible point in the whole grid it must occur
+in the set of all perimeter points at least four times. So if I reduce the set
+of possibles by finding points in the blind spots of four or more scanners I can
+then (quickly?) see which of those points is invisible to all the scanners.
+
+The only flaw in this logic is that a point in the corners of the grid might
+only be bordered by one scanner. Points on the edge can be bounded by as few as
+two scanners. So for completeness, I'll check for these "edge cases" as well if
+I have to.
+
+New problem: in the provided input, the ranges are SO high (over 1 million in
+the first scanner) that the diagonals are taking forever. I need a better way to
+calculate this.
+
+Would it be faster to go point by point? (There are 16 quadrillion of them!) I
+could simply check each point to see if it's invisible. If it is I'm done. Let's
+hope the point is close to the top! OK that's waaay to slow.
+
+Back to square, or should I say line, one. What if I go line by line, but do it
+as efficiently as possible? Nope.
+
+One more shot - I can reduce the set of possible points by only checking the
+points one outside the range of each scanner: the invisible
+perimeter. Generating the entire set of possibles takes way too long,
+too. Possibly if I do it one scanner at a time and pray?
+----------------------------------------------------------------------------- |#
+
+(defparameter *width* 4000001)    ; "no larger than 4,000,000"
+(defparameter *height* *width*)
+(defparameter *sample-width* 21)
+(defparameter *sample-height* 21)
+
+(defun freq (x)
+  "determine the tuning frequency of a point"
+  (+ (* (col x) 4000000) (row x)))
+
+(5a:test freq-test
+  (5a:is (= 56000011 (freq (cons 14 11)))))
+
+(defun make-scanner-hash (los)
+  "given a list of strings, each describing a scanner and beacon,
+return a hash of scanner position -> scanner range"
+  (let ((sh (make-hash-table   :test 'equal :size (length los))))
+
+    (dolist (str los)
+      (let* ((digits (re:all-matches-as-strings *digits* str))
+	     (s-pos (cons (parse-integer (first digits))
+			  (parse-integer (second digits))))
+	     (b-pos (cons (parse-integer (third digits))
+			  (parse-integer (fourth digits))))
+	     (range (dist s-pos b-pos)))
+
+	(setf (gethash s-pos sh) range)))
+
+    sh))
+
+(defparameter input-hash (make-scanner-hash (uiop:read-file-lines *data-file*)))
+(defparameter sample-hash (make-scanner-hash *sample-data*))
+
+(defun pht (hash)
+  "little utility for printing the contents of a hash"
+  (loop for k being the hash-keys in hash using (hash-value v)
+	do (format t "~A => ~A~&" k v)))
+
+(defun outside-grid? (pt h w)
+  "eliminate any perimeter points that are outside the
+specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
+  (or (> 0 (col pt))
+      (> (col pt) w)
+      (> 0 (row pt))
+      (> (row pt) h)))
+
+(5a:test outside-grid?-test
+  (5a:is-true (outside-grid? (cons -1 -1) *sample-height* *sample-width*))
+  (5a:is-false (outside-grid? (cons 1 1) *sample-height* *sample-width*))
+  (5a:is-true (outside-grid? (cons 22 22) *sample-height* *sample-width*))
+  (5a:is-false (outside-grid? (cons 12 12) *sample-height* *sample-width*)))
+
+(defun invisible? (p ranges)
+  "returns true if p is invisible to all scanners"
+  (loop for s being the hash-keys in ranges do
+    (when (<= (dist p s) (gethash s ranges)) ; point is inside scanner's range
+      (return-from invisible? nil)))         ; so we can see it
+  t)                                         ; checked every scanner and nope!
+
+(5a:test invisible?-test
+  (5a:is-false (invisible? (cons 2 18) sample-hash))
+  (5a:is-true (invisible? (cons 14 11) sample-hash)))
+
+(defun get-scanner-perimeter (pt range h w)
+  "given a scanner return a list of points that represent
+the perimeter just beyond the scanners view"
+  (flet ((down-right (x y)
+	   (loop
+	     for i from (col x) upto (col y)
+	     for j from (row x) upto (row y)
+	     collect (cons i j)))
+
+	 (down-left (x y)
+	   (loop
+	     for i from (col x) downto (col y)
+	     for j from (row x) upto (row y)
+	     collect (cons i j))))
+
+    (let* ((invisible (1+ range))
+	   ;; the four corner points
+	   (top (cons (col pt) (- (row pt) invisible)))
+	   (right (cons (+ (col pt) invisible) (row pt)))
+	   (bottom (cons (col pt) (+ (row pt) invisible)))
+	   (left  (cons (- (col pt) invisible) (row pt))))
+
+      (remove-if #'(lambda (p) (outside-grid? p h w))
+		 (append
+		  (down-right top right)                         ; start at top
+		  (rest (down-left right bottom))                ; trim right
+		  (rest (down-left top left))                    ; trim top
+		  (butlast (rest (down-right left bottom)))))))) ; trim left
+
+(defun day15-2 (los h w)
+  "given a list of scanner/beacon locations find the single point that
+cannot be sceen by any of the scanners"
+  (let ((s-hash (make-scanner-hash los)))
+    ;; for every scanner in the hash
+    (loop for s being the hash-keys in s-hash using (hash-value range)
+	  ;; for every perimeter point of that scanner
+	  do (loop for pt in (get-scanner-perimeter s range h w)
+		   ;; check to see if it's invisible
+			     (when (invisible? pt s-hash)
+			       (return-from day15-2 (freq (cons col row))))))))
+
+(5a:test day15-2-test
+  (5a:is (= 56000011
+	    (day15-2 *sample-data* *sample-height* *sample-width*))))
+
+;; now solve the puzzle!
+(time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
+	      (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
+
+;; (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+;;   (day15-2 (uiop:read-file-lines *data-file*) *height* *width*)))
+
+;; -----------------------------------------------------------------------------
+;; Timings with SBCL on M2 MacBook Air with 24GB RAM
+;; -----------------------------------------------------------------------------
