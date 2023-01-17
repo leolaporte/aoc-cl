@@ -15,11 +15,11 @@
 
 (in-package :day15)
 
-;; (setf fiveam:*run-test-when-defined* t) ; test as we go
+(setf fiveam:*run-test-when-defined* nil) ; test as we go
 ;; (declaim (optimize (debug 3)))          ; max debugging info
-(declaim (optimize (speed 3) (safety 0) (debug 0))) ; max speed
+(declaim (optimize (speed 3) (debug 0))) ; max speed
 
-(defparameter  *data-file* "~/cl/AOC/2022/day15/input.txt")  ; AoC input
+(defconstant +data-file+ "~/cl/AOC/2022/day15/input.txt")  ; AoC input
 
 #| ----------------------- Day 15: Beacon Exclusion Zone -----------------------
 
@@ -44,8 +44,8 @@ We know that each scanner can see a swath of any given line - perhaps as little
 as zero, perhaps encompassing the entire line. The width of the view is directly
 related to the range of the scanner and its distance from the line.
 
-View width = (- md r) + 1 where md is manhattan distance and r is the scanner's
-range.
+View width = (1+ (* 2 (- md r))) where md is manhattan distance and r is the
+scanner's range.
 
 The view is centered on the scanner's x-axis. So the range is represented as
 (- x (- md r), y .. (+ x (- md r)), y
@@ -72,10 +72,10 @@ points.
     "Sensor at x=20, y=1: closest beacon is at x=15, y=3")
   "provided AoC example")
 
-(defparameter *example-loi* 10
+(defconstant +example-loi+ 10
   "line of interest for the sample scans")
 
-(defparameter *input-loi* 2000000
+(defconstant +input-loi+ 2000000
   "line of interest for the AoC input")
 
 (defparameter *digits* (re:create-scanner "(-?\\d)+")
@@ -90,7 +90,7 @@ points.
   (cdr p))
 
 (defun dist (x y)
-  "return the manhattan distance between two points, x y"
+  "return the manhattan distance between two points, x y - can this be optimized?"
   (+ (abs (- (col x) (col y))) (abs (- (row x) (row y)))))
 
 (defun pht (hash)
@@ -100,49 +100,54 @@ points.
 
 ;; process provided data
 (defun parse-lines (los)
-  "returns two structures, one a hash of scanners and their ranges, the second, a
-list of beacon points (for part 1)."
-  (flet ((parse-line (str)
-	   (let* ((digits (re:all-matches-as-strings *digits* str))
-		  (scanner (cons (parse-integer (first digits))
-				 (parse-integer (second digits))))
-		  (beacon (cons (parse-integer (third digits))
-				(parse-integer (fourth digits))))
-		  (range (dist scanner beacon)))
-	     (values scanner beacon range))))
+  "returns two structures: a hash of scanners and their ranges, plus a list of
+beacon points (for part 1)."
+  (labels
+      ((parse-line (str) ; process a single string
+	 (let* ((digits (re:all-matches-as-strings *digits* str)) ; get digits
+		(scanner (cons (parse-integer (first digits))     ; scanner
+			       (parse-integer (second digits))))
+		(beacon (cons (parse-integer (third digits))      ; beacon
+			      (parse-integer (fourth digits))))
+		(range (dist scanner beacon)))                    ; range
+	   (values scanner beacon range))))                 ; return all 3
 
-    (let ((scanners (make-hash-table :test 'equal :size (length los)))
-	  (beacons '()))
+    ;; set up data structures for return values
+    (let ((scanners        ; scanner=>range hash table
+	    (make-hash-table :test 'equal :size (length los)))
+	  (beacons '()))   ; list of beacon points
 
       (dolist (str los)
-	(multiple-value-bind (s b r) (parse-line str)
-	  (setf (gethash s scanners) r)
-	  (push b beacons)))
+	(multiple-value-bind (s b r) (parse-line str)  ; parse line at a time
+	  (setf (gethash s scanners) r)                ; build scanner hash
+	  (push b beacons)))                           ; build beacon list
 
-      (values scanners (remove-duplicates beacons :test #'equal)))))
+      (values scanners (remove-duplicates beacons :test #'equal))))) ; return both
 
 (defun day15-1 (los loi)
-  "given a hash table describing a number of scanner=>range pairs, an array of
- beacon points, and the y-coordinate of a line of interest, return the number of
- points visible on the loi by all the scanners and not occupied by beacons"
-  (let ((points '()))
+  "given a list of strings describing a number of scanner and beacon locations,
+ and the y-coordinate of a line of intrest, return the number of points visible
+ on the loi by all the scanners but not occupied by beacons"
+  (let ((points '()))  ; start with an empty list of visible points on loi
 
-    (multiple-value-bind (scanner-hash beacons) (parse-lines los)  ; parse the data
+    ;; parse strings into a hash of scanner=>range and beacon points
+    (multiple-value-bind (scanner-hash beacons) (parse-lines los)
 
+      ;; then walk that hash
       (maphash
-       #'(lambda (s r) (let ((md (abs (- loi (row s)))))
-			 (when (>= r md)
-			   (loop for pt
-				   from (- (col s) (- r md))
-				     upto (+ (col s) (- r md))
-				 do (push pt points)))))
+       #'(lambda (s r)
+	   (let ((md (abs (- loi (row s))))) ; manhattan distance to line
+	     (when (>= r md)                 ; if line is in range of scanner
+	       (loop for pt                  ; build a list of visible pts
+		       from (- (col s) (- r md)) upto (+ (col s) (- r md))
+		     do (push pt points))))) ; save them to our list
        scanner-hash)
 
-      (- (length (remove-duplicates points))
+      (- (length (remove-duplicates points))  ; remove overlap and count
 	 (length (remove-if-not #'(lambda (b) (= (row b) loi)) beacons))))))
 
 (5a:test day15-1-test
-  (5a:is (= 26 (day15-1 *example* *example-loi*))))
+  (5a:is (= 26 (day15-1 *example* +example-loi+))))
 
 #| -------------------------------- Part Two -----------------------------------
 
@@ -153,10 +158,12 @@ To isolate the distress beacon's signal, you need to determine its tuning
 frequency, which can be found by multiplying its x coordinate by 4000000 and
 then adding its y coordinate."
 
-NOTES: So, there's one beacon location that no scanner can see. I could test
-each point to see if it's invisible to all scanners, but that would require
-looking at 16 quadrillion points (4 million x 4 million). Clearly we're going to
-have to reduce the number of candidate points.
+NOTES:
+
+So, there's one beacon location that no scanner can see. I could test each point
+to see if it's invisible to all scanners, but that would require looking at 16
+quadrillion points (4 million x 4 million). Clearly we're going to have to
+reduce the number of candidate points.
 
 Because only one point in the entire grid is invisible (otherwise there would be
 multiple correct answers) it must be the case that it lies just outside the
@@ -165,16 +172,20 @@ scanners range there would have to be multiple visible points). So we only have
 to look at the set of points exactly one point outside the scanner range. I
 first did this with a list but it was uselessly slow. Using a vector to store
 the candidate points made a big difference. We should also make the visible?
-check as fast as possible.
+check and manhattan distance calculation as fast as possible. They're called A
+LOT.
+
+This ended up being a geometry problem, but for me, primarily a problem in
+optimizing for speed and memory usage.
 ----------------------------------------------------------------------------- |#
 
-(defparameter *example-width* 21)
-(defparameter *example-height* *example-width*)
-(defparameter *input-width* 4000001)
-(defparameter *input-height* *input-width*)
+(defconstant +example-width+ 21)
+(defconstant +example-height+ +example-width+)
+(defconstant +input-width+ 4000001)
+(defconstant +input-height+ +input-width+)
 
 (defparameter *example-scanners* (parse-lines *example*)
-  "hash of scanner->range for example data")
+  "hash of scanner=>range for example data")
 
 (defun freq (x)
   "determine the tuning frequency of a point"
@@ -186,39 +197,37 @@ check as fast as possible.
 (defun outside-grid? (pt h w)
   "eliminate any perimeter points that are outside the
 specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
-  (or (> 0 (col pt))
-      (> (col pt) w)
-      (> 0 (row pt))
-      (> (row pt) h)))
+  (or (> 0 (col pt))    ; negative x
+      (> (col pt) w)    ; x higher than width
+      (> 0 (row pt))    ; negative y
+      (> (row pt) h)))  ; y higher than height
 
 (5a:test outside-grid?-test
-  (5a:is-true (outside-grid? (cons -1 -1) *example-height* *example-width*))
-  (5a:is-false (outside-grid? (cons 1 1) *example-height* *example-width*))
-  (5a:is-true (outside-grid? (cons 22 22) *example-height* *example-width*))
-  (5a:is-false (outside-grid? (cons 12 12) *example-height* *example-width*)))
+  (5a:is-true (outside-grid? (cons -1 -1) +example-height+ +example-width+))
+  (5a:is-false (outside-grid? (cons 1 1) +example-height+ +example-width+))
+  (5a:is-true (outside-grid? (cons 22 22) +example-height+ +example-width+))
+  (5a:is-false (outside-grid? (cons 12 12) +example-height+ +example-width+)))
 
 (defun invisible? (pt scanner-hash)
   "returns true if p is invisible to all scanners"
-  (maphash #'(lambda (s r)
-	       (when (<= (dist pt s) r)
-		 (return-from invisible? nil)))
-	   scanner-hash)
-  t)
+  (loop for s being the hash-keys in scanner-hash using (hash-value r)
+	do (when (<= (dist pt s) r)         ; if the point is in range of the scanner
+	     (return-from invisible? nil))) ; return false, otherwise keep going
+  t)  ; never returned false so pt must be invisible
 
 (5a:test invisible?-test
   (5a:is-false (invisible? (cons 2 18) *example-scanners*))
-  (5a:is-true (invisible? (cons 14 11) *example-scanners*))
-  (5a:is-false (invisible? (cons 2 18) *example-scanners*)))
+  (5a:is-true (invisible? (cons 14 11) *example-scanners*)))
 
 (defun perimeter-points (pt range)
-  "given a scanner return a vector of points that represent
-the perimeter just beyond the scanners view"
-  (let* ((invisible (1+ range))
+  "given a scanner return a vector of points that represents the perimeter just
+beyond the scanners view"
+  (let* ((invisible (1+ range))    ; just out of range
 	 (points (make-array (* 4 invisible) :adjustable t :fill-pointer 0))
-	 (top (cons (col pt) (- (row pt) invisible)))
-	 (right (cons (+ (col pt) invisible) (row pt)))
-	 (bottom (cons (col pt) (+ (row pt) invisible)))
-	 (left (cons (- (col pt) invisible) (row pt))))
+	 (top (cons (col pt) (- (row pt) invisible)))    ; corner points
+	 (right (cons (+ (col pt) invisible) (row pt)))  ; of the
+	 (bottom (cons (col pt) (+ (row pt) invisible))) ; invisible
+	 (left (cons (- (col pt) invisible) (row pt))))  ; perimeter
 
     (loop ; top to right
 	  for c from (col top) below (col right)
@@ -250,46 +259,53 @@ the perimeter just beyond the scanners view"
 		   (1 . 5) (2 . 4) (3 . 3) (4 . 2)))))
 
 (defun day15-2 (los h w)
-  "given a list of strings representing a hash of scanners and ranges
-find the single point that cannot be sceen by any of the scanners"
-  (let ((scanner-hash (parse-lines los)))
+  "given a list of strings representing the locations of a number of scanners and
+their closest beacons, find the single point that cannot be seen by any of the
+scanners within a grid of height h and width w"
+  (let ((scanner-hash (parse-lines los)))  ; build the scanner=>range hash
+
+    ;; for each scanner, generate the perimeter and check for invisibility
     (maphash
      #'(lambda (scanner range)
-	 (map 'list #'(lambda (pt)
-			(unless (outside-grid? pt h w)
-			  (when (invisible? pt scanner-hash)
-			    (return-from day15-2 (freq pt)))))
-	      (perimeter-points scanner range)))
+	 ;; map should be set to return nil since we don't care about
+	 ;; the result but in SBCL this overflows the heap for some
+	 ;; reason, so I'm using 'list
+	 (map 'list ; throw out the result - we just need the side effect
+	      #'(lambda (pt)                     ; for every perimeter point
+		  (unless (outside-grid? pt h w) ; outside grid? don't bother
+		    (when (invisible? pt scanner-hash)   ; is it invisible?
+		      (return-from day15-2 (freq pt))))) ; done!
+	      (perimeter-points scanner range))) ; generate perimeter points
      scanner-hash)))
 
 (5a:test day15-2-test
   (5a:is (= 56000011
-	    (day15-2 *example* *example-height* *example-width*))))
+	    (day15-2 *example* +example-height+ +example-width+))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
-	      (day15-1 (uiop:read-file-lines *data-file*) *input-loi*)))
+	      (day15-1 (uiop:read-file-lines +data-file+) +input-loi+)))
 
-(time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
-	      (day15-2 (uiop:read-file-lines *data-file*)
-		       *input-height* *input-width*)))
+  (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+		(day15-2 (uiop:read-file-lines +data-file+)
+			 +input-height+ +input-width+)))
 
-;; -----------------------------------------------------------------------------
-;; Timings with SBCL on M2 MacBook Air with 24GB RAM
-;; -----------------------------------------------------------------------------
+  ;; -----------------------------------------------------------------------------
+  ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
+  ;; -----------------------------------------------------------------------------
 
-;; The answer to AOC 2022 Day 15 Part 1 is 5838453
-;; Evaluation took:
-;; 0.974 seconds of real time
-;; 0.974975 seconds of total run time (0.796275 user, 0.178700 system)
-;; [ Run times consist of 0.543 seconds GC time, and 0.432 seconds non-GC time. ]
-;; 100.10% CPU
-;; 660,621,104 bytes consed
+  ;; The answer to AOC 2022 Day 15 Part 1 is 5838453
+  ;; Evaluation took:
+  ;; 0.928 seconds of real time
+  ;; 0.928290 seconds of total run time (0.745965 user, 0.182325 system)
+  ;; [ Run times consist of 0.505 seconds GC time, and 0.424 seconds non-GC time. ]
+  ;; 100.00% CPU
+  ;; 660,595,648 bytes consed
 
-;; The answer to AOC 2022 Day 15 Part 2 is 12413999391794
-;; Evaluation took:
-;; 5.522 seconds of real time
-;; 5.522450 seconds of total run time (5.349567 user, 0.172883 system)
-;; [ Run times consist of 0.368 seconds GC time, and 5.155 seconds non-GC time. ]
-;; 100.00% CPU
-;; 790,020,320 bytes consed
+  ;; The answer to AOC 2022 Day 15 Part 2 is 12413999391794
+  ;; Evaluation took:
+  ;; 6.717 seconds of real time
+  ;; 6.713806 seconds of total run time (6.442755 user, 0.271051 system)
+  ;; [ Run times consist of 0.656 seconds GC time, and 6.058 seconds non-GC time. ]
+  ;; 99.96% CPU
+  ;; 790,144,752 bytes consed
