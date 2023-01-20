@@ -19,7 +19,7 @@
 ;; (declaim (optimize (debug 3)))          ; max debugging info
 (declaim (optimize (speed 3) (debug 0))) ; max speed
 
-(defconstant +data-file+ "~/cl/AOC/2022/day15/input.txt")  ; AoC input
+(defparameter *data-file* "~/cl/AOC/2022/day15/input.txt")  ; AoC input
 
 #| ----------------------- Day 15: Beacon Exclusion Zone -----------------------
 
@@ -91,7 +91,7 @@ points.
 
 (defun dist (x y)
   "return the manhattan distance between two points, x y - can this be optimized?"
-  (+ (abs (- (col x) (col y))) (abs (- (row x) (row y)))))
+  (+ (abs (- (car x) (car y))) (abs (- (cdr x) (cdr y)))))
 
 (defun pht (hash)
   "little utility for printing the contents of a hash"
@@ -139,7 +139,7 @@ beacon points (for part 1)."
 	   (let ((md (abs (- loi (row s))))) ; manhattan distance to line
 	     (when (>= r md)                 ; if line is in range of scanner
 	       (loop for pt                  ; build a list of visible pts
-		       from (- (col s) (- r md)) upto (+ (col s) (- r md))
+		       from (- (car s) (- r md)) upto (+ (car s) (- r md))
 		     do (push pt points))))) ; save them to our list
        scanner-hash)
 
@@ -197,10 +197,10 @@ optimizing for speed and memory usage.
 (defun outside-grid? (pt h w)
   "eliminate any perimeter points that are outside the
 specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
-  (or (> 0 (col pt))    ; negative x
-      (> (col pt) w)    ; x higher than width
-      (> 0 (row pt))    ; negative y
-      (> (row pt) h)))  ; y higher than height
+  (or (> 0 (car pt))    ; negative x
+      (> (car pt) w)    ; x higher than width
+      (> 0 (cdr pt))    ; negative y
+      (> (cdr pt) h)))  ; y higher than height
 
 (5a:test outside-grid?-test
   (5a:is-true (outside-grid? (cons -1 -1) +example-height+ +example-width+))
@@ -211,7 +211,7 @@ specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
 (defun invisible? (pt scanner-hash)
   "returns true if p is invisible to all scanners"
   (loop for s being the hash-keys in scanner-hash using (hash-value r)
-	do (when (<= (dist pt s) r)         ; if the point is in range of the scanner
+	do (when (<= (dist pt s) r)   ; if the point is in range of the scanner
 	     (return-from invisible? nil))) ; return false, otherwise keep going
   t)  ; never returned false so pt must be invisible
 
@@ -224,29 +224,29 @@ specified grid (21x21 in the example, 4000001x4000001 in the problem set)"
 beyond the scanners view"
   (let* ((invisible (1+ range))    ; just out of range
 	 (points (make-array (* 4 invisible) :adjustable t :fill-pointer 0))
-	 (top (cons (col pt) (- (row pt) invisible)))    ; corner points
-	 (right (cons (+ (col pt) invisible) (row pt)))  ; of the
-	 (bottom (cons (col pt) (+ (row pt) invisible))) ; invisible
-	 (left (cons (- (col pt) invisible) (row pt))))  ; perimeter
+	 (top (cons (car pt) (- (cdr pt) invisible)))    ; corner points
+	 (right (cons (+ (car pt) invisible) (cdr pt)))  ; of the
+	 (bottom (cons (car pt) (+ (cdr pt) invisible))) ; invisible
+	 (left (cons (- (car pt) invisible) (cdr pt))))  ; perimeter
 
     (loop ; top to right
-	  for c from (col top) below (col right)
-	  for r from (row top) below (row right)
+	  for c from (car top) below (car right)
+	  for r from (cdr top) below (cdr right)
 	  do (vector-push (cons c r) points))
 
     (loop ; right to bottom
-	  for c from (col right) above (col bottom)
-	  for r from (row right) below (row bottom)
+	  for c from (car right) above (car bottom)
+	  for r from (cdr right) below (cdr bottom)
 	  do (vector-push (cons c r) points))
 
     (loop ; bottom to left
-	  for c from (col bottom) above (col left)
-	  for r from (row bottom) above (row left)
+	  for c from (car bottom) above (car left)
+	  for r from (cdr bottom) above (cdr left)
 	  do (vector-push (cons c r) points))
 
     (loop ; left to top
-	  for c from (col left) below (col top)
-	  for r from (row left) above (row top)
+	  for c from (car left) below (car top)
+	  for r from (cdr left) above (cdr top)
 	  do (vector-push (cons c r) points))
 
     points))
@@ -284,28 +284,28 @@ scanners within a grid of height h and width w"
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2022 Day 15 Part 1 is ~a"
-	      (day15-1 (uiop:read-file-lines +data-file+) +input-loi+)))
+	      (day15-1 (uiop:read-file-lines *data-file*) +input-loi+)))
 
-  (time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
-		(day15-2 (uiop:read-file-lines +data-file+)
-			 +input-height+ +input-width+)))
+(time (format t "The answer to AOC 2022 Day 15 Part 2 is ~a"
+	      (day15-2 (uiop:read-file-lines *data-file*)
+		       +input-height+ +input-width+)))
 
-  ;; -----------------------------------------------------------------------------
-  ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
-  ;; -----------------------------------------------------------------------------
+;; -----------------------------------------------------------------------------
+;; Timings with SBCL on M2 MacBook Air with 24GB RAM
+;; -----------------------------------------------------------------------------
 
-  ;; The answer to AOC 2022 Day 15 Part 1 is 5838453
-  ;; Evaluation took:
-  ;; 0.928 seconds of real time
-  ;; 0.928290 seconds of total run time (0.745965 user, 0.182325 system)
-  ;; [ Run times consist of 0.505 seconds GC time, and 0.424 seconds non-GC time. ]
-  ;; 100.00% CPU
-  ;; 660,595,648 bytes consed
+;; The answer to AOC 2022 Day 15 Part 1 is 5838453
+;; Evaluation took:
+;; 0.928 seconds of real time
+;; 0.928290 seconds of total run time (0.745965 user, 0.182325 system)
+;; [ Run times consist of 0.505 seconds GC time, and 0.424 seconds non-GC time. ]
+;; 100.00% CPU
+;; 660,595,648 bytes consed
 
-  ;; The answer to AOC 2022 Day 15 Part 2 is 12413999391794
-  ;; Evaluation took:
-  ;; 6.717 seconds of real time
-  ;; 6.713806 seconds of total run time (6.442755 user, 0.271051 system)
-  ;; [ Run times consist of 0.656 seconds GC time, and 6.058 seconds non-GC time. ]
-  ;; 99.96% CPU
-  ;; 790,144,752 bytes consed
+;; The answer to AOC 2022 Day 15 Part 2 is 12413999391794
+;; Evaluation took:
+;; 6.717 seconds of real time
+;; 6.713806 seconds of total run time (6.442755 user, 0.271051 system)
+;; [ Run times consist of 0.656 seconds GC time, and 6.058 seconds non-GC time. ]
+;; 99.96% CPU
+;; 790,144,752 bytes consed

@@ -59,21 +59,59 @@ Problem input has 66 valves, but only around 16 are unbroken.
     "Valve JJ has flow rate=21; tunnel leads to valve II")
   "Example data from the problem")
 
-(5a:test day16-1-test
-  (5a:is (= 1651 (day16-1 *example*))))
+(defstruct valve
+  (name "" :type string)
+  (rate 0 :type integer)
+  (leads-to '() :type list))
 
-#| -----------------------------------------------------------------------------
---- Part Two ---
+(defparameter *valve-regex*
+  (re:create-scanner
+   "Valve ([A-Z]{2}) has flow rate=(\\d+); tunnels? leads? to valves? (.*)")
+  "a regular expression to separate out the content from the cruft")
+
+(defun str-to-valve (s)
+  (re:register-groups-bind
+      (n r v)               ; variables to bind
+      (*valve-regex* s)     ; using regex on the string
+
+    (make-valve             ; now use those variables to make a valve
+     :name n
+     :rate (parse-integer r)
+     :leads-to (re:split ", " v))))
+
+;; some really useful tips (spoilers?) here:
+;; https://www.reddit.com/r/adventofcode/comments/zo21au/comment/j0nz8df/?utm_source=reddit&utm_medium=web2x&context=3
+
+;; first we need to calculate the distances (in time units) between all nodes
+;; with a positive flow rate (zero flow rooms are just through-points). Using
+;; Floyd-Warshall algo (call that cost)
+
+;; Make a hash of rooms, costs, and flow-rates
+
+;; DFS of rooms
+
+;; track: valves that have already been opened (i.e. seen rooms)
+;; time remaining (or if no more valves can be opened)
+
+
+
+
+
+(5a:test day16-1-test
+	 (5a:is (= 1651 (day16-1 *example*))))
+
+#| ---------------------------------- Part Two ---------------------------------
+
 
 ------------------------------------------------------------------------------|#
 
-;; now solve the puzzle!
-;; (time (format t "The answer to AOC 2022 Day 16 Part 1 is ~a"
-;;	      (day16-1 (uiop:read-file-lines *data-file*))))
+  ;; now solve the puzzle!
+  ;; (time (format t "The answer to AOC 2022 Day 16 Part 1 is ~a"
+  ;;	      (day16-1 (uiop:read-file-lines *data-file*))))
 
-;; (time (format t "The answer to AOC 2022 Day 16 Part 2 is ~a"
-;;	      (day16-2 (uiop:read-file-lines *data-file*))))
+  ;; (time (format t "The answer to AOC 2022 Day 16 Part 2 is ~a"
+  ;;	      (day16-2 (uiop:read-file-lines *data-file*))))
 
-;; -----------------------------------------------------------------------------
-;; Timings with SBCL on M2 MacBook Air with 24GB RAM
-;; -----------------------------------------------------------------------------
+  ;; -----------------------------------------------------------------------------
+  ;; Timings with SBCL on M2 MacBook Air with 24GB RAM
+  ;; -----------------------------------------------------------------------------
