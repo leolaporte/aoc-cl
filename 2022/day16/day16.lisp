@@ -40,13 +40,15 @@ This is really interesting. I'm not going to think about part two at
 all. Focusing on the problem at hand... The valves are a symmetric directed
 graph in which every path can go either way so this is a pathfinding
 problem. But we can only make 30 moves to get the most pressure so it's a
-longest path problem, not shortest path. That means I can't use Dijkstra.
+longest path problem, not shortest path. It's kind of a hybrid.
 
-Problem input has 66 valves, but only around 16 are unbroken.
+Additionally, the problem input has 66 valves, but only around 16 are
+unbroken. So I think that means we can think of the 0 flow rooms as just part of
+a longer path.
 
 ----------------------------------------------------------------------------- |#
 
-(defparameter *example*
+(defparameter *example-data*
   '("Valve AA has flow rate=0; tunnels lead to valves DD, II, BB"
     "Valve BB has flow rate=13; tunnels lead to valves CC, AA"
     "Valve CC has flow rate=2; tunnels lead to valves DD, BB"
@@ -60,27 +62,33 @@ Problem input has 66 valves, but only around 16 are unbroken.
   "Example data from the problem")
 
 (defstruct valve
-  (name "" :type string)
-  (rate 0 :type integer)
-  (leads-to '() :type list))
+  name      ; name of the valve (double caps)
+  rate      ; rate of flow
+  tunnels)  ; list of tunnels leading away
 
 (defparameter *valve-regex*
   (re:create-scanner
    "Valve ([A-Z]{2}) has flow rate=(\\d+); tunnels? leads? to valves? (.*)")
   "a regular expression to separate out the content from the cruft")
 
-(defun str-to-valve (s)
-  (re:register-groups-bind
-      (n r v)               ; variables to bind
-      (*valve-regex* s)     ; using regex on the string
+(defun parse-valves (los)
+  (labels ((parse-valve (s)
+	     (re:register-groups-bind
+		 (name  (#'parse-integer rate) tunnels)
+		 (*valve-regex* s)
 
-    (make-valve             ; now use those variables to make a valve
-     :name n
-     :rate (parse-integer r)
-     :leads-to (re:split ", " v))))
+	       (make-valve
+		:name name
+		:rate rate
+		:tunnels (re:split ", " tunnels)))))
+
+    (mapcar #'parse-valve los)))
+
+(defparameter *example* (parse-valves *example-data*))
+(defparameter *data* (parse-valves (uiop:read-file-lines *data-file*)))
 
 ;; some really useful tips (spoilers?) here:
-;; https://www.reddit.com/r/adventofcode/comments/zo21au/comment/j0nz8df/?utm_source=reddit&utm_medium=web2x&context=3
+;; https://www.reddit.com/r/adventofcode/comments/zo21au/comment/j0nz8df/
 
 ;; first we need to calculate the distances (in time units) between all nodes
 ;; with a positive flow rate (zero flow rooms are just through-points). Using
@@ -98,7 +106,7 @@ Problem input has 66 valves, but only around 16 are unbroken.
 
 
 (5a:test day16-1-test
-	 (5a:is (= 1651 (day16-1 *example*))))
+  (5a:is (= 1651 (day16-1 *example*))))
 
 #| ---------------------------------- Part Two ---------------------------------
 
