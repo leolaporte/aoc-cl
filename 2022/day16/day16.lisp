@@ -66,6 +66,8 @@ a longer path.
   rate      ; rate of flow
   tunnels)  ; list of tunnels leading away
 
+(defparameter *infinity* 99999)
+
 (defparameter *valve-regex*
   (re:create-scanner
    "Valve ([A-Z]{2}) has flow rate=(\\d+); tunnels? leads? to valves? (.*)")
@@ -91,8 +93,56 @@ a longer path.
 ;; https://www.reddit.com/r/adventofcode/comments/zo21au/comment/j0nz8df/
 
 ;; first we need to calculate the distances (in time units) between all nodes
-;; with a positive flow rate (zero flow rooms are just through-points). Using
-;; Floyd-Warshall algo (call that cost)
+;; using Floyd-Warshall algo (runs on dataset in 0.03 seconds)
+(defun floyd (valves)
+  "given a list of valve structures, return a hash with the keys being a cons of any two valves and the value being the time it takes to travel between those points"
+  (let* ((num-valves (length valves))
+	 (dists (make-hash-table :test 'equal :size (* num-valves num-valves))))
+
+    ;; set up hash with to and from valves and "infinite" distances
+    (dolist (v1 valves)
+      (dolist (v2 valves)
+	(setf
+	 (gethash (cons (valve-name v1) (valve-name v2)) dists)
+	 *infinity*)))
+
+    ;; Now populate all the one move distances
+    (dolist (v1 valves)
+      (dolist (v2 (valve-tunnels v1))
+	(setf (gethash (cons (valve-name v1) v2) dists) 1)))
+
+    ;; now do the floyd-warshall walk through the hash to find the shortest
+    ;; distances
+    (dolist (i valves)
+      (dolist (j valves)
+	(dolist (k valves)
+	  (let ((new-dist (+ (gethash (cons (valve-name i) (valve-name k))
+				      dists)
+			     (gethash (cons (valve-name k) (valve-name j))
+				      dists))))
+	    (when (< new-dist
+		     (gethash (cons (valve-name i) (valve-name j)) dists))
+	      (setf (gethash (cons (valve-name i) (valve-name j)) dists)
+		    new-dist))))))
+
+    ;; clean up points
+    (loop for valves being the hash-keys in dists using (hash-value dist)
+	  do (when (or (= dist *infinity*)                 ; infinite dist
+		       (equalp (car valves) (cdr valves))) ; to = from
+	       (remhash valves dists)))                    ; remove this entry
+
+    dists))
+
+(5a:test floyd-test
+  (5a:is (= 1 (gethash (cons "AA" "DD") (floyd *example*))))
+  (5a:is (= 5 (gethash (cons "BB" "GG") (floyd *example*))))
+  (5a:is (= 3 (gethash (cons "EE" "HH") (floyd *example*)))))
+
+
+(defun pht (hash)
+  "little utility for printing the contents of a hash"
+  (loop for k being the hash-keys in hash using (hash-value v)
+	do (format t "~A => ~A~&" k v)))
 
 ;; Make a hash of rooms, costs, and flow-rates
 
