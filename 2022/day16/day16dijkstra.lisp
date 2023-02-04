@@ -60,19 +60,17 @@ Fundamentally Dijkstra works by looking at all the neighbors of the starting
 point. It calculates the distance to each then puts them in a priority-queue,
 sorted by the thing we're optimizing for (normally distance but in this case we
 want to maximize total flow). Then we move to the optimal next point (the top
-not yet visited value on the queue but, and this is important, not necessarily a
-neighbor of the current point - we might have to backtrack if there's a better
-route) then repeat the process. The algorithm concludes when it reaches the end
-point - or in this case when either time runs out or all the valves have been
-turned on.
+value on the queue but, and this is important, not necessarily a neighbor of the
+current point - we might have to backtrack if there's a better route) then
+repeat the process. The algorithm concludes when it reaches the end point - or
+in this case when either time runs out or all the valves have been turned on.
 
 So this is going to be a bit of a weird Dijkstra. Not only am I looking for a
-maximum, I also have to track the time. I'm going to store the best flow
-achieved by a valve and the time left after turning on the valve in the
-structure itself. Let's see how it works.
-
-It's just a tad low. And I notice that it's not choosing the same optimal path that the example is. Hmm.
-
+maximum, I also have to track the time. Instead of tracking visited valves in a
+list as I usually would, I'm just going to use the valve structure to track the
+visit (using on?). I'm also going to store the best flow achieved by a valve and
+the time left after turning on the valve in the structure itself. Let's see how
+it works.
 ----------------------------------------------------------------------------- |#
 
 (defparameter *example-data*
@@ -111,6 +109,20 @@ problem set")
   (loop for k being the hash-keys in hash using (hash-value v)
 	do (format t "~A => ~A~&" k v)))
 
+(defun get-valve (name valves)
+  "given a valve name and list of valves return the valve record or nil if it
+doesn't exist"
+  (dolist (v valves)
+    (when (equalp name (valve-name v))
+      (return-from get-valve v)))
+  nil)
+
+(5a:test get-valve-test
+  (5a:is (equalp (get-valve "AA" *example*)
+		 (make-valve :name "AA" :tunnels '("DD" "II" "BB"))))
+  (5a:is (equalp (get-valve "ZZ" *example*) nil)))
+
+
 (defun parse-valves (los)
   "turn a list of strings describing valves in a cave into a list of valve structures"
   (labels ((parse-valve (s)
@@ -125,23 +137,8 @@ problem set")
 
     (mapcar #'parse-valve los)))
 
-;; set these up for tests, experimentation
 (defparameter *example* (parse-valves *example-data*))
 (defparameter *data* (parse-valves (uiop:read-file-lines *data-file*)))
-
-(defun get-valve (name valves)
-  "given a valve name and list of valves return the valve record or nil if it
-doesn't exist"
-  (dolist (v valves)
-    (when (equalp name (valve-name v))
-      (return-from get-valve v)))
-  nil)
-
-(5a:test get-valve-test
-  (5a:is (equalp (get-valve "AA" *example*)
-		 (make-valve :name "AA" :tunnels '("DD" "II" "BB"))))
-  (5a:is (equalp (get-valve "ZZ" *example*) nil)))
-
 
 ;; calculate the minimum travel time between all nodes using Floyd-Warshall algo
 ;; (it's slow: O(n^3) but runs on this dataset in 0.03 seconds) - only save
@@ -182,7 +179,8 @@ to travel between those points"
 
     ;; remove destinations we don't care about
     (loop for vs being the hash-keys in dists using (hash-value dist)
-	  do (when (or (equalp (car vs) (cdr vs))   ; to = from
+	  do (when (or (= dist *infinity*)          ; if valves aren't connected
+		       (equalp (car vs) (cdr vs))   ; to = from
 		       (zerop                       ; dest valve broken
 			(valve-rate (get-valve (cdr vs) valves))))
 	       (remhash vs dists)))                 ; remove this entry
@@ -231,11 +229,11 @@ flow we can achieve in time"
 
     ;; body of do loop
     (format t "Visited: ~a Time-left: ~a Flow: ~a~&" visited time-left flow)
-    (dolist (nbr-name (get-neighbors (valve-name next) dists)) ; adjacent valves
-
+    ;; (break)
+    (dolist (nbr-name (get-neighbors (valve-name next) dists))
       ;; does this new route increases the total flow?
       (let* ((nbr-valve (get-valve nbr-name valve-list)) ; get full valve struct
-	     (new-time (- time-left ; time left after travel and turn on
+	     (new-time (- time-left ; time left after travel
 			  (gethash
 			   (cons (valve-name next) nbr-name)
 			   dists)   ; - travel time
@@ -256,7 +254,10 @@ flow we can achieve in time"
 		      (> (valve-total-flow x)
 			 (valve-total-flow y)))))
 
-    (loop ; returns next unvisited valve with highest total flow
+    (loop ; returns next unvisited valve in queue
+	  (when (null q)
+	    (return-from get-best-flow
+	      (values "Empty queue:" (reverse path) flow)))
 	  (setf next (pop q))
 	  (when (not (member (valve-name next) visited))
 	    (return)))))
