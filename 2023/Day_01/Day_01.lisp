@@ -90,7 +90,11 @@ I need to rewrite the replace function to look for the first
 occurrence of any number of the string, convert it, then continue
 through the remaining string.
 
-OH MF! The tests do not cover something like "eighthree" which I would interpret as "8hree" but apparently is supposed to be "83". The quick fix is not to replace the entire text number but just the first letter. And since the overlap can't be longer than one letter I'll preserve just the last letter of the text number.
+OH MF! The tests do not cover something like "eighthree" which I would interpret
+as "8hree" but apparently is supposed to be "83". The quick fix is not to
+replace the entire text number but just the first letter. And since the overlap
+can't be longer than one letter I'll preserve just the last letter of the text
+number.
 ------------------------------------------------------------------------------|#
 
 (defparameter *test-data2*
@@ -111,7 +115,7 @@ left to right"
 
         ;; alist for digit replacements - note: in order to preserve
         ;; subsequent text numbers I  replace the first letter with
-        ;; the digit and keep the last letter
+        ;; the digit and keep the last letter in case of overlap
         (replacements '(("one" . "1e") ("two" . "2o") ("three" . "3e")
                         ("four" . "4r") ("five" . "5e") ("six" . "6x")
                         ("seven" . "7n") ("eight" . "8t") ("nine" . "9e")))
