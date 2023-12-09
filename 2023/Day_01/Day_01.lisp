@@ -1,3 +1,4 @@
+
 ;;;; Day01.lisp
 ;;;; 2023 AOC Day 01 solution
 ;;;; Leo Laporte
@@ -59,10 +60,10 @@ two. So...
        (parse-integer (car (last digits))))))    ; ones place
 
 (5a:test string-to-number-test
-  (5a:is (equal (string-to-number (first *test-data*)) 12))
-  (5a:is (equal (string-to-number (second *test-data*)) 38))
-  (5a:is (equal (string-to-number (third *test-data*)) 15))
-  (5a:is (equal (string-to-number (fourth *test-data*)) 77)))
+         (5a:is (equal (string-to-number (first *test-data*)) 12))
+         (5a:is (equal (string-to-number (second *test-data*)) 38))
+         (5a:is (equal (string-to-number (third *test-data*)) 15))
+         (5a:is (equal (string-to-number (fourth *test-data*)) 77)))
 
 (defun Day_01-pt1 (list-of-strings)
   "given a list of strings return the sum of the numbers represented by each string"
@@ -70,7 +71,7 @@ two. So...
         sum (string-to-number s)))
 
 (5a:test Day_01-pt1-test
-  (5a:is (equal (Day_01-pt1 *test-data*) 142)))
+         (5a:is (equal (Day_01-pt1 *test-data*) 142)))
 
 
 #| -----------------------------------------------------------------------------
@@ -134,21 +135,21 @@ left to right"
            (cdr (assoc text-num replacements :test #'string=))))))
 
 (5a:test replace-text-numbers-with-digits-test
-  (5a:is (equal (replace-text-numbers-with-digits (first *test-data2*)) "2o19e"))
-  (5a:is (equal (replace-text-numbers-with-digits (second *test-data2*)) "82o3e"))
-  (5a:is (equal (replace-text-numbers-with-digits (third *test-data2*)) "abc1e23exyz"))
-  (5a:is (equal (replace-text-numbers-with-digits (fourth *test-data2*)) "x21e34r"))
-  (5a:is (equal (replace-text-numbers-with-digits (fifth *test-data2*)) "49e8t7n2"))
-  (5a:is (equal (replace-text-numbers-with-digits (sixth *test-data2*)) "z18t234"))
-  (5a:is (equal (replace-text-numbers-with-digits (seventh *test-data2*)) "7pqrst6xteen"))
-  (5a:is (equal (replace-text-numbers-with-digits "eighthree") "83e"))
-  (5a:is (equal (replace-text-numbers-with-digits "sevenine") "79e")))
+         (5a:is (equal (replace-text-numbers-with-digits (first *test-data2*)) "2o19e"))
+         (5a:is (equal (replace-text-numbers-with-digits (second *test-data2*)) "82o3e"))
+         (5a:is (equal (replace-text-numbers-with-digits (third *test-data2*)) "abc1e23exyz"))
+         (5a:is (equal (replace-text-numbers-with-digits (fourth *test-data2*)) "x21e34r"))
+         (5a:is (equal (replace-text-numbers-with-digits (fifth *test-data2*)) "49e8t7n2"))
+         (5a:is (equal (replace-text-numbers-with-digits (sixth *test-data2*)) "z18t234"))
+         (5a:is (equal (replace-text-numbers-with-digits (seventh *test-data2*)) "7pqrst6xteen"))
+         (5a:is (equal (replace-text-numbers-with-digits "eighthree") "83e"))
+         (5a:is (equal (replace-text-numbers-with-digits "sevenine") "79e")))
 
 (defun Day_01-pt2 (list-of-strings)
   (Day_01-pt1 (mapcar #'replace-text-numbers-with-digits list-of-strings)))
 
 (5a:test Day_01-pt2-test
-  (5a:is (equal (Day_01-pt2 *test-data2*) 281)))
+         (5a:is (equal (Day_01-pt2 *test-data2*) 281)))
 
 ;; Now Solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 01 Part 1 is ~a"

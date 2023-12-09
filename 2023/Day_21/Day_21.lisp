@@ -20,7 +20,7 @@
 (declaim (optimize (debug 3)))       ; max debugging info
 ;; (declaim (optimize (speed 3))     ; max speed if needed
 
-(defconstant +data-file+ "~/cl/AOC/2023/day###/input.txt"
+(defparameter *data-file* "~/cl/AOC/2023/Day_###/input.txt"
   "Downloaded from the AoC problem set")
 
 #| -----------------------------------------------------------------------------
@@ -37,10 +37,10 @@
 
 ;; now solve the puzzle!
 ;; (time (format t "The answer to AOC 2023 Day ### Part 1 is ~a"
-;;	      (day###-1 (uiop:read-file-lines +data-file+))))
+;;	      (day###-1 (uiop:read-file-lines *data-file*))))
 
 ;; (time (format t "The answer to AOC 2023 Day ### Part 2 is ~a"
-;;	      (day###-2 (uiop:read-file-lines +data-file+))))
+;;	      (day###-2 (uiop:read-file-lines *data-file*))))
 
 ;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
