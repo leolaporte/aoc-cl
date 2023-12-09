@@ -113,9 +113,9 @@ left to right"
         (text-num-regex
          (re:create-scanner "one|two|three|four|five|six|seven|eight|nine"))
 
-        ;; alist for digit replacements - note: in order to preserve
-        ;; subsequent text numbers I  replace the first letter with
-        ;; the digit and keep the last letter in case of overlap
+        ;; alist for digit replacements - note: in order to preserve subsequent
+        ;; overlapping text numbers I replace the first letter with the digit
+        ;; and keep the last letter
         (replacements '(("one" . "1e") ("two" . "2o") ("three" . "3e")
                         ("four" . "4r") ("five" . "5e") ("six" . "6x")
                         ("seven" . "7n") ("eight" . "8t") ("nine" . "9e")))
