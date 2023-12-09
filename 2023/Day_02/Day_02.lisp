@@ -1,6 +1,6 @@
 ;;;; Day02.lisp
 ;;;; 2023 AOC Day 02 solution
-;;;; Leo Laporte
+;;;; 9 Dec 2023 Leo Laporte
 
 ;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -35,11 +35,6 @@ To get information, once a bag has been loaded with cubes, the Elf
 will reach into the bag, grab a handful of random cubes, show them to
 you, and then put them back in the bag. He'll do this a few times per
 game.
-
-You play several games and record the information from each game (your
-puzzle input). Each game is listed with its ID number (like the 11 in
-Game 11: ...)  followed by a semicolon-separated list of subsets of
-cubes that were revealed from the bag (like 3 red, 5 green, 4 blue).
 
 Determine which games would have been possible if the bag had been
 loaded with only 12 red cubes, 13 green cubes, and 14 blue cubes. What
