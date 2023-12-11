@@ -114,11 +114,12 @@ left to right"
         (text-num-regex
          (re:create-scanner "one|two|three|four|five|six|seven|eight|nine"))
 
-        ;; alist for digit replacements - note: in order to preserve subsequent
-        ;; overlapping text numbers I replace the first letter with the digit
-        ;; and keep the last letter
+        ;; alist for digit replacements - note: in order to preserve
+        ;; subsequent overlapping text numbers I replace the first
+        ;; letters with the digit and keep the last letter on all but
+        ;; four and six - which end with letters that can't overlap
         (replacements '(("one" . "1e") ("two" . "2o") ("three" . "3e")
-                        ("four" . "4r") ("five" . "5e") ("six" . "6x")
+                        ("four" . "4") ("five" . "5e") ("six" . "6")
                         ("seven" . "7n") ("eight" . "8t") ("nine" . "9e")))
 
         ;; next text number to replace
@@ -138,10 +139,10 @@ left to right"
          (5a:is (equal (replace-text-numbers-with-digits (first *test-data2*)) "2o19e"))
          (5a:is (equal (replace-text-numbers-with-digits (second *test-data2*)) "82o3e"))
          (5a:is (equal (replace-text-numbers-with-digits (third *test-data2*)) "abc1e23exyz"))
-         (5a:is (equal (replace-text-numbers-with-digits (fourth *test-data2*)) "x21e34r"))
+         (5a:is (equal (replace-text-numbers-with-digits (fourth *test-data2*)) "x21e34"))
          (5a:is (equal (replace-text-numbers-with-digits (fifth *test-data2*)) "49e8t7n2"))
          (5a:is (equal (replace-text-numbers-with-digits (sixth *test-data2*)) "z18t234"))
-         (5a:is (equal (replace-text-numbers-with-digits (seventh *test-data2*)) "7pqrst6xteen"))
+         (5a:is (equal (replace-text-numbers-with-digits (seventh *test-data2*)) "7pqrst6teen"))
          (5a:is (equal (replace-text-numbers-with-digits "eighthree") "83e"))
          (5a:is (equal (replace-text-numbers-with-digits "sevenine") "79e")))
 
