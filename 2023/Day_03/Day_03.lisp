@@ -1,7 +1,7 @@
 ;;;; Day03.lisp
 ;;;; 2023 AOC Day 03 solution
 ;;;; Leo Laporte
-;;;; 9 December 2023
+;;;; 9-15 December 2023
 
 ;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -65,17 +65,20 @@ statement*)
 variable. Each variable definition is itself a list, typically of
 three parts:
 
--- The variable name.
--- An initial value expression.
--- An expression to calculate the next value of the variable in each iteration (optional).
+-- The variable name.  An initial value expression.  An expression to
+-- calculate the next value of the variable in each
+-- iteration (optional).
 
 2. End Test and Result Forms:
 
--- The end-test-form is evaluated before each iteration. If it returns a non-nil value, the DO loop terminates.
+-- The end-test-form is evaluated before each iteration. If it returns
+   a non-nil value, the DO loop terminates.
 
--- Result-forms are evaluated to provide the result of the DO loop upon termination. These are optional.
+-- Result-forms are evaluated to provide the result of the DO loop
+   upon termination. These are optional.
 
-3. Body Statements: These are the expressions executed in each iteration as long as the end-test-form evaluates to nil.
+3. Body Statements: These are the expressions executed in each
+iteration as long as the end-test-form evaluates to nil.
 
 -----------------------------------------------------------------------------
 |#
@@ -264,7 +267,8 @@ a gear '*'. A point is represented as (x . y)"
         do (format t "~A => ~A~&" k v)))
 
 (defun make-adjacencies-hash (list-of-lines)
-  "makes a hash table with the key being the list of all adjacencies for a given part and the value the part number"
+  "makes a hash table with the key being the list of all adjacencies for
+a given part and the value the part number"
   (do* ((number-adjacencies (make-hash-table :test 'equal)) ; the resulting hash
 
         (y 0 (1+ y))                        ; line number - aka y coord
