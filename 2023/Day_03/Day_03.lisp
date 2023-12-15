@@ -42,9 +42,7 @@ What is the sum of all of the part numbers in the engine schematic?"
 
 NOTES:
 
-It's the usual AoC two step here.
-
-1. Go through each line recording the location of all the symbols as a
+1. Go through each line, recording the location of all the symbols as a
 point on the grid, resulting in a set of points containing symbols.
 
 2. Collect the part numbers, checking the part's adjacent points as I
@@ -52,6 +50,33 @@ go. The only tricky part is that we don't know the length of the part
 numbers in advance: the number of adjacent points will vary. So,
 generate the set of adjacent points for any given part number. If that
 set intersects with the symbol set add the part number to the sum.
+
+I use DO loops a lot today. Quick explanation for Pythonistas. Lisp does not
+have a FOR statement - the DO and LOOP macros are its more flexible (and
+complicated) option.
+
+DO works like this:
+
+(DO (variable-definition*)
+(end-test-form result-form*)
+statement*)
+
+1. Variable Definitions: This is a list where each element defines a
+variable. Each variable definition is itself a list, typically of
+three parts:
+
+-- The variable name.
+-- An initial value expression.
+-- An expression to calculate the next value of the variable in each iteration (optional).
+
+2. End Test and Result Forms:
+
+-- The end-test-form is evaluated before each iteration. If it returns a non-nil value, the DO loop terminates.
+
+-- Result-forms are evaluated to provide the result of the DO loop upon termination. These are optional.
+
+3. Body Statements: These are the expressions executed in each iteration as long as the end-test-form evaluates to nil.
+
 -----------------------------------------------------------------------------
 |#
 
@@ -170,7 +195,7 @@ for points off grid"
 
            ((null part)) ; no more parts to check on this line
 
-        ;; check for symbol adjacency
+        ;; Check for symbol adjacency
         (when ;; the current part touches a symbol
             (intersection (all-adjacent-points start end y)
                           symbol-pts :test 'equal)
@@ -183,32 +208,34 @@ for points off grid"
 #| -----------------------------------------------------------------------------
 --- Part Two ---
 
-A gear is any * symbol that is adjacent to exactly two part numbers. Its
+
+"A gear is any * symbol that is adjacent to exactly two part numbers. Its
 gear ratio is the result of multiplying those two numbers together.
 
 This time, you need to find the gear ratio of every gear and add them all up so
 that the engineer can figure out which gear needs to be replaced.
 
-What is the sum of all of the gear ratios in your engine schematic?
+What is the sum of all of the gear ratios in your engine schematic?"
 
 NOTE: Well it looks like the strategy I chose for part one isn't a great match
-for part two.
+for part two. But at least I can re-use some of it. And the patterns I used for
+looping line-by-line can be re-used. So for this part...
 
-First I'll make a new set of points - all the gears on the map.
+1. make a new set of points - all the gears on the map.
 
+2. check each gear's surrounding points for numbers - to be a gear it must be
+touched exactly two numbers. How do I test for that? If I make a hash table of
+all the numbers in the grid and the set of points each occupies, I could use it
+to find all the numbers that touch any gear. If it's exactly two, multiply them
+together and add to the total.
+
+Oops there's a problem. There may be more than one gear with the same
+part number - so the hash by number doesn't work. For example there
+are two part 409s - only one can show up in the hash. The adjacencies
+are unique. But that's a crazy hash key. Or is it.
+
+Let's do it... and it works!
 ------------------------------------------------------------------------------|#
-
-(defparameter *pt2-test*
-  '("467..114.."
-    "...*......"
-    "..35..633."
-    "......#..."
-    "617*......"
-    ".....+.58."
-    "..592....."
-    "......755."
-    "...$.*...."
-    ".664.598.."))
 
 (defun map-gear-symbols (list-of-lines)
   "given a list of lines defining a grid, return a list of points that hold
@@ -221,7 +248,7 @@ a gear '*'. A point is represented as (x . y)"
        ((null line) list-of-symbol-posn)      ;; all done, return the list
 
     ;; loop body - go through each char in line
-    (let ((chars (coerce (first line) 'list)))    ;; convert line into list of chars
+    (let ((chars (coerce (first line) 'list)))    ;; string -> list of chars
       (dotimes (x (length chars))                 ;; for each char's x posn
         (let ((c (nth x chars)))                  ;; get the char
           (when (char= c #\*)                     ;; it's a gear
@@ -231,19 +258,94 @@ a gear '*'. A point is represented as (x . y)"
   (5a:is (equal (map-gear-symbols *test-data*)
                 '((5 . 8) (3 . 4) (3 . 1)))))
 
+(defun pht (hash)
+  "little utility for printing the contents of a hash"
+  (loop for k being the hash-keys in hash using (hash-value v)
+        do (format t "~A => ~A~&" k v)))
 
-(5a:test Day03-1-test
-  (5a:is (equal (Day03-2 *pt2-test*) 467835)))
+(defun make-adjacencies-hash (list-of-lines)
+  "makes a hash table with the key being the list of all adjacencies for a given part and the value the part number"
+  (do* ((number-adjacencies (make-hash-table :test 'equal)) ; the resulting hash
 
+        (y 0 (1+ y))                        ; line number - aka y coord
+        (lines list-of-lines (rest lines))  ; step through lines
+
+        ;; list the start and end+1 x-coords of each part on this line
+        (part-posns (re:all-matches digits (first lines))
+                    (re:all-matches digits (first lines)))
+
+        ;; list the part number of each part as a string
+        (part-nums (re:all-matches-as-strings digits (first lines))
+                   (re:all-matches-as-strings digits (first lines))))
+
+       ((null lines) number-adjacencies)
+
+    ;; loop body
+    (unless (null part-nums) ; don't bother unless there's parts on this line
+      (do* ((posn part-posns (cdr (cdr posn))) ; go 2 by 2 through x coords
+            (start (first posn) (first posn))  ; first x on the line
+            (end (second posn) (second posn))  ; last+1 x on the line
+            (part part-nums (rest part)))      ; part numbers
+
+           ((null part)) ; no more parts to check on this line
+
+        ;; set hash to adjacent points for each part number on this line
+        (setf (gethash (all-adjacent-points start end y) number-adjacencies)
+              (parse-integer (first part)))))))
+
+(defun touches-gear (gear number-adjacencies)
+  "given a gear position, and a hash of number adjacencies, return the list of
+numbers that touch that gear"
+  (loop for adjacent-points being the hash-keys in
+        number-adjacencies using (hash-value part)
+        when (member gear adjacent-points :test 'equal)
+          collect part))
+
+(5a:test touches-gear-test
+  (5a:is (equal (touches-gear (cons 3 4) (make-adjacencies-hash *test-data*))
+                '(617)))
+  (5a:is (equal (touches-gear (cons 3 1) (make-adjacencies-hash *test-data*))
+                '(467 35)))
+  (5a:is (equal (touches-gear (cons 5 8) (make-adjacencies-hash *test-data*))
+                '(755 598))))
+
+(defun Day03-2 (list-of-lines)
+  (let ((gear-list (map-gear-symbols list-of-lines)) ; list of gears
+        (adjacency-hash
+          (make-adjacencies-hash list-of-lines)) ; hash of adjacencies
+        (gear-ratio-sum 0))                          ; running total of gear ratios
+
+    ;; now check every gear to see if it's touching exactly two part numbers
+    (dolist (g gear-list)
+      (let ((touches (touches-gear g adjacency-hash)))
+        (when (= 2 (length touches)) ; touches exactly two parts
+          (incf gear-ratio-sum (* (first touches) (second touches))))))
+    gear-ratio-sum)) ; return the final sum of all those gear ratios
+
+(5a:test Day03-2-test
+  (5a:is (equal (Day03-2 *test-data*) 467835)))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 03 Part 1 is ~a"
               (day03-1 (uiop:read-file-lines *data-file*))))
 
-
-;; (time (format t "The answer to AOC 2023 Day 03 Part 2 is ~a"
-;;	      (day03-2 (uiop:read-file-lines *data-file*))))
+(time (format t "The answer to AOC 2023 Day 03 Part 2 is ~a"
+              (day03-2 (uiop:read-file-lines *data-file*))))
 
 ;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; -----------------------------------------------------------------------------
+
+;; The answer to AOC 2023 Day 03 Part 1 is 556367
+;; Evaluation took:
+;; 0.071 seconds of real time
+;; 0.071640 seconds of total run time (0.070869 user, 0.000771 system)
+;; 101.41% CPU
+;; 3,535,424 bytes consed
+
+;; The answer to AOC 2023 Day 03 Part 2 is 89471771
+;; Evaluation took:
+;; 0.049 seconds of real time
+;; 0.049430 seconds of total run time (0.048933 user, 0.000497 system)
+;; 100.00% CPU
+;; 3,664,896 bytes consed
