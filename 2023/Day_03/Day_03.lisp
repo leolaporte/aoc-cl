@@ -226,11 +226,12 @@ looping line-by-line can be re-used. So for this part...
 
 1. make a new set of points - all the gears on the map.
 
-2. check each gear's surrounding points for numbers - to be a gear it must be
-touched exactly two numbers. How do I test for that? If I make a hash table of
-all the numbers in the grid and the set of points each occupies, I could use it
-to find all the numbers that touch any gear. If it's exactly two, multiply them
-together and add to the total.
+2. check each gear's surrounding points for numbers - to be a gear it
+must be touching exactly two numbers. How do I test for that? If I
+make a hash table of all the numbers in the grid and the set of points
+each occupies, I could use it to find all the numbers that touch any
+gear. If it's exactly two, multiply them together and add to the
+total.
 
 Oops there's a problem. There may be more than one gear with the same
 part number - so the hash by number doesn't work. For example there
@@ -268,8 +269,8 @@ a gear '*'. A point is represented as (x . y)"
 
 (defun make-adjacencies-hash (list-of-lines)
   "makes a hash table with the key being the list of all adjacencies for
-a given part and the value the part number"
-  (do* ((number-adjacencies (make-hash-table :test 'equal)) ; the resulting hash
+a given part and the value being the part number"
+  (do* ((number-adjacencies (make-hash-table :test 'equal)) ; an empty hash
 
         (y 0 (1+ y))                        ; line number - aka y coord
         (lines list-of-lines (rest lines))  ; step through lines
@@ -285,7 +286,8 @@ a given part and the value the part number"
        ((null lines) number-adjacencies)
 
     ;; loop body
-    (unless (null part-nums) ; don't bother unless there's parts on this line
+    (unless (null part-nums) ; don't bother unless there are parts on
+                                        ; this line
       (do* ((posn part-posns (cdr (cdr posn))) ; go 2 by 2 through x coords
             (start (first posn) (first posn))  ; first x on the line
             (end (second posn) (second posn))  ; last+1 x on the line
