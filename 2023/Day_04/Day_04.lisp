@@ -1,7 +1,7 @@
 ;;;; Day04.lisp
 ;;;; 2023 AOC Day 04 solution
 ;;;; Leo Laporte
-;;;; 15- December 2023
+;;;; 15-16 December 2023
 
 ;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -178,7 +178,8 @@ It works but it's SLOW! Oh well. It works.
           ;; and for every copy of that card
           do (loop for i from 1 upto (card-copies (get-scratchcard s scratchers))
                    ;; add a copy for the following WINNER number of cards
-                   do (loop for c from (1+ s) upto (+ s (count-winners s scratchers))
+                   do (loop for c from (1+ s)
+                              upto (+ s (count-winners s scratchers))
                             do (incf-copies c scratchers))))
 
     ;; then go through the cards, adding the copies
