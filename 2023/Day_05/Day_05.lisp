@@ -1,7 +1,7 @@
 ;;;; Day05.lisp
 ;;;; 2023 AOC Day 05 solution
 ;;;; Leo Laporte
-;;;; 16 December 2023 - 3 January 2024 (optimizing was a b***h)
+;;;; 16 December 2023 - 3 January 2024 (optimizing Part 2 was a b***h)
 
 ;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
