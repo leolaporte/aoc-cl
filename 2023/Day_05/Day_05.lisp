@@ -40,7 +40,7 @@ numbers are reused by each category - that is, soil 123 and fertilizer
 What is the lowest location number that corresponds to any of the
 initial seed numbers?"
 
-NOTE: Parse the almanac into eight lists, one of seeds, and seven maps
+LEO'S NOTE: Parse the almanac into eight lists, one of seeds, and seven maps
 consisting of triplets in the form '(dest start, source start, range):
 soil, fert, water, light, temp, humid, and loc (this is where most of
 the work will be).
@@ -170,18 +170,22 @@ numbers. The values on the initial seeds: line come in pairs. Within
 each pair, the first value is the start of the range and the second
 value is the length of the range."
 
-NOTES: Hmm. Not much of a change. I just have to modify how I get the
-seed list. I'll factor that out of part one as MAKE-SEEDS and write a
-new function for part 2, NEW-MAKE-SEEDS.
+LEO'S NOTES: Hmm. Not much of a change. I just have to modify how I
+get the seed list. I'll factor that out of part one as MAKE-SEEDS and
+write a new function for part 2, NEW-MAKE-SEEDS.
 
-Oh, it is a LOT of seeds. Well the first part was very fast let's see
+Oh. It is a LOT of seeds. Well the first part was very fast let's see
 how it handles a MUCH longer list of seeds!
+
+...
 
 Emacs crashes just generating the seed list. I need a better way of
 looking at seeds. Honestly I don't see how I can NOT expand the range
 - I have to look at every seed for the answer. The bottleneck seems to
 be in NEW-MAKE-SEEDS - let me see if I can speed that up. Would a
 vector be faster than a list? Almost certainly.
+
+...
 
 OK but I exhausted the heap! So we'll have to do this on the fly. I'll
 generate each seed range one at a time, collect the minimum seed from
@@ -199,7 +203,8 @@ the optimization.
 One more mistake I made. I assumed that once I matched any portion of
 a seed to a map that I was done. In fact, I'm not. I have to keep
 processing the unchanged portion of the range until there are no more
-overlaps. Fixed that and it sails through in 0 seconds. (Well .000772 to be exact).
+overlaps. Fixed that and it sails through in 0 seconds. (Well .000772
+to be exact).
 ------------------------------------------------------------------------------|#
 
 (defun overlap-p (source seed)
@@ -322,13 +327,13 @@ In other words two lists:  changed range and unchanged ranges"
 
 (defun map-seed (map seed)
   "given a list of map triplets (a complete map) and a single seed,
-returned a list of fully processed seed->dest ranges"
+return a list of fully processed seed->dest ranges"
   (do ((changed '())             ; stack of transformed ranges
-       (unchanged (list seed)))   ; stack of yet to be transformed ranges
+       (unchanged (list seed)))  ; stack of yet to be transformed ranges
 
       ((null unchanged) changed) ; no more to do? return transformed ranges
 
-    ;; loop through remaining unprocessed ranges
+    ;; loop through unprocessed ranges
     (let* ((next (pop unchanged))
            (match (find-if #'(lambda (m) (overlap-p m next)) map)))
       (if (null match)        ; any valid map range?
