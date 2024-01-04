@@ -46,9 +46,13 @@ Two pair
 One pair
 High card
 
-If two hands have the same type, a second ordering rule takes effect. Start by comparing the first card in each hand. If these cards are different, the hand with the stronger first card is considered stronger.
+If two hands have the same type, a second ordering rule takes
+effect. Start by comparing the first card in each hand. If these cards
+are different, the hand with the stronger first card is considered
+stronger.
 
-Now, you can determine the total winnings of this set of hands by adding up the result of multiplying each hand's bid with its rank.
+Now, you can determine the total winnings of this set of hands by
+adding up the result of multiplying each hand's bid with its rank.
 
 Find the rank of every hand in your set. What are the total winnings?"
 
@@ -83,7 +87,7 @@ All the real work is in the SORT predicate.
     "KTJJT 220"
     "QQQJA 483"))
 
-#| ------------------------ Parsing code ----------------------------|#
+#| ---------------------------- Parsing code ---------------------------------|#
 
 (defun pht (hash)
   "little utility for printing the contents of a hash"
@@ -91,7 +95,10 @@ All the real work is in the SORT predicate.
         do (format t "~A => ~A~&" k v)))
 
 (defun make-hands-hash (los)
-  "given a list of strings containing the hand and a number string separated by a space, return a hash table of all lines with the hand string being the key and the number string as an integer for the bid value."
+  "given a list of strings containing the hand and a number string
+separated by a space, return a hash table of all lines with the hand
+string being the key and the number string as an integer for the bid
+value."
   (let ((hands (make-hash-table :test 'equalp :size (length los))))
     (dolist (hand los)
       (let ((hb (ss:split-sequence #\Space hand)))
@@ -106,10 +113,12 @@ All the real work is in the SORT predicate.
           do (vector-push h hands-vector))
     hands-vector))
 
-#| ----------------- Working code ------------------------- |#
+#| ------------------------------- Working code ----------------------------- |#
 
 (defun score-hand (hand)
-  "given a string of five characters (a hand) return the hand score: 7 for five of a kind, 6 for four of a kind, 5 for full house ... 0 for highcard, etc."
+  "given a string of five characters (a hand) return the hand score: 7
+for five of a kind, 6 for four of a kind, 5 for full house ... 0 for
+highcard, etc."
   (let* ((total (apply #'+ (loop for c in (coerce hand 'list)
                                  collect (count c hand)))))
 
@@ -131,7 +140,8 @@ All the real work is in the SORT predicate.
   (5a:is (equal (score-hand "12345") 0)))
 
 (defun lower-hand-p (x y)
-  "returns true if x is a lower hand than y by card rank and order - applied only if both hands have an equal score"
+  "returns true if x is a lower hand than y by card rank and order -
+applied only if both hands have an equal score"
   (labels ((encode (hand)
              (setf hand (substitute #\E #\A hand))
              (setf hand (substitute #\D #\K hand))
@@ -150,7 +160,8 @@ All the real work is in the SORT predicate.
   (5a:is-false (lower-hand-p "12J34" "12T45")))
 
 (defun hand< (x y)
-  "given two hands, x y, return true if x is lower than y. This is where the magic happens"
+  "given two hands, x y, return true if x is lower than y. This is where
+the magic happens"
   (let ((x-score (score-hand x))
         (y-score (score-hand y)))
 
@@ -192,11 +203,15 @@ stays the same.
 ------------------------------------------------------------------------------|#
 
 (defun score-hand2 (hand)
-  "given a string of five characters (a hand) return the hand score (Jokers are wild so use them to maximize the score): 7 for five of a kind, 6 for four of a kind, 5 for full house ... 0 for highcard, etc.. It feels like there's something I could do to make it simpler but it runs fairly quickly so..."
+  "given a string of five characters (a hand) return the hand
+score (Jokers are wild so use them to maximize the score): 7 for five
+of a kind, 6 for four of a kind, 5 for full house ... 0 for highcard,
+etc.. It feels like there's something I could do to make it simpler
+but it runs fairly quickly so..."
   (let* ((jokers (count #\J hand))      ; count the jokers
          (base-hand (remove #\J hand))  ; then remove them
-         (score (apply #'+ (loop for c in (coerce base-hand 'list) ; score what's left
-                                 collect (count c base-hand)))))
+         (score (apply #'+ (loop for c in (coerce base-hand 'list) ; score
+                                 collect (count c base-hand)))))   ; what's left
 
     (tr:match jokers ; match the number of jokers
 
@@ -234,7 +249,8 @@ stays the same.
   (5a:is (equal (score-hand2 "12345") 0)))
 
 (defun lower-hand2-p (x y)
-  "returns true if x is a lower hand than y by card rank and order - applies only if the hands have equal score"
+  "returns true if x is a lower hand than y by card rank and order -
+applies only if the hands have equal score"
   (labels ((encode (hand)
              (setf hand (substitute #\E #\A hand))
              (setf hand (substitute #\D #\K hand))
@@ -250,7 +266,8 @@ stays the same.
   (5a:is-true (lower-hand2-p "12J34" "12T45")))
 
 (defun hand2< (x y)
-  "given two hands, x y, return true if x is lower than y. This is where the magic happens"
+  "given two hands, x y, return true if x is lower than y. This is where
+the magic happens"
   (let ((x-score (score-hand2 x))
         (y-score (score-hand2 y)))
 
