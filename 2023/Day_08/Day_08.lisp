@@ -126,7 +126,7 @@ going to take more than a few cycles. Hmm.
 
 LCM to the rescue! I do each tumbler one at a time then multiply the
 results together to get the moment (way into the future) when they all
-click!
+click! (Instead of multiplying find the least common multiplier using #'LCM)
 
 ------------------------------------------------------------------------------|#
 
@@ -180,7 +180,7 @@ ending with A to end with Z simultaneously"
                              collect node)))
 
       ;; walk each node through the tree until it reaches Z
-      ;; then multiply the number of steps each took together
+      ;; then LCM the number of steps each took together
       ;; for the result
       (reduce #'lcm (mapcar
                      #'(lambda (n) (traverse-from-a-to-z directions tree n))
