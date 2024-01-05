@@ -74,18 +74,18 @@ that.
 
 (defun parse-data (los)
   (let ((directions (coerce (first los) 'list)) ; turn string into a list of dirs
-        (node-hash (make-hash-table :test 'equalp :size (- (length los) 2))))
+        (tree-hash (make-hash-table :test 'equalp :size (- (length los) 2))))
 
     (dolist (n (rest (rest los)))  ; use regex to populate the hash
       (re:register-groups-bind (key left right) (*node-regex* n)
-        (setf (gethash key node-hash) (cons left right))))
+        (setf (gethash key tree-hash) (cons left right))))
 
-    (values directions node-hash))) ; return list of dirs and a hash of nodes
+    (values directions tree-hash))) ; return list of dirs and a hash of nodes
 
 #|---------------------------- Working Code ----------------------------|#
 
 (defun Day08-1 (los)
-  (multiple-value-bind (directions nodes) (parse-data los)
+  (multiple-value-bind (directions tree) (parse-data los)
     (setf (cdr (last directions)) directions) ; make it a circular list
 
     (do ((d directions (rest d)) ; loop eternally
@@ -95,8 +95,8 @@ that.
         ((equalp node "ZZZ") steps)
 
       (if (equalp (first d) #\L)
-          (setf node (car (gethash node nodes)))     ; left node
-          (setf node (cdr (gethash node nodes))))))) ; right node
+          (setf node (car (gethash node tree)))     ; left node
+          (setf node (cdr (gethash node tree))))))) ; right node
 
 (5a:test Day08-1-test
   (5a:is (= (Day08-1 *test-data*) 6)))
@@ -150,7 +150,7 @@ click!
   "returns true if a node ends with the letter Z"
   (equalp #\Z (elt node 2)))
 
-(defun traverse-from-a-to-z (directions nodes node)
+(defun traverse-from-a-to-z (directions tree node)
   "given a node, walk it through the tree using directions until the node
 ends in z, return the number of steps"
   (do
@@ -164,16 +164,18 @@ ends in z, return the number of steps"
     ;; loop body
     (setf node
           (if (equalp (first d) #\L)         ; lookup next node
-              (car (gethash node nodes))     ; use left
-              (cdr (gethash node nodes)))))) ; use right
+              (car (gethash node tree))      ; use left
+              (cdr (gethash node tree))))))  ; use right
 
 (defun Day08-2 (los)
-  "given a list of strings describing a set of directions and a tree of nodes to walk return the number of steps it takes to get all nodes ending with A to end with Z simultaneously"
-  (multiple-value-bind (directions nodes) (parse-data los)
+  "given a list of strings describing a set of directions and a tree of
+nodes to walk return the number of steps it takes to get all nodes
+ending with A to end with Z simultaneously"
+  (multiple-value-bind (directions tree) (parse-data los)
     (setf (cdr (last directions)) directions) ; make it a circular list
 
     ;; get the list of starting nodes (ending in A)
-    (let ((node-list (loop for node being the hash-keys in nodes
+    (let ((node-list (loop for node being the hash-keys in tree
                            when (ends-with-a? node)
                              collect node)))
 
@@ -181,7 +183,7 @@ ends in z, return the number of steps"
       ;; then multiply the number of steps each took together
       ;; for the result
       (reduce #'lcm (mapcar
-                     #'(lambda (n) (traverse-from-a-to-z directions nodes n))
+                     #'(lambda (n) (traverse-from-a-to-z directions tree n))
                      node-list)))))
 
 (5a:test Day08-2-test
