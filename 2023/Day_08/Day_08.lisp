@@ -74,6 +74,8 @@ that.
 
 (defun parse-data (los)
   (let ((directions (coerce (first los) 'list)) ; turn string into a list of dirs
+
+        ;; and make a hash table for storing the nodes
         (tree-hash (make-hash-table :test 'equalp :size (- (length los) 2))))
 
     (dolist (n (rest (rest los)))  ; use regex to populate the hash
@@ -85,15 +87,21 @@ that.
 #|---------------------------- Working Code ----------------------------|#
 
 (defun Day08-1 (los)
+  ;; parse the data into a list of directions and a tree of nodes
   (multiple-value-bind (directions tree) (parse-data los)
-    (setf (cdr (last directions)) directions) ; make it a circular list
 
-    (do ((d directions (rest d)) ; loop eternally
-         (node "AAA")
-         (steps 0 (incf steps)))
+    ;; set the end of directions to point to the beginning so it's circular
+    (setf (cdr (last directions)) directions)
 
+    (do ((d directions (rest d))        ; loop eternally
+         (node "AAA")                   ; the starting node
+         (steps 0 (incf steps))) ; number of steps so far (increments every loop)
+
+        ;; termination clause - end when we reach node "ZZZ"
+        ;; return the number of steps it took
         ((equalp node "ZZZ") steps)
 
+      ;; body of the look - walk the tree
       (if (equalp (first d) #\L)
           (setf node (car (gethash node tree)))     ; left node
           (setf node (cdr (gethash node tree))))))) ; right node
@@ -140,7 +148,9 @@ click! (Instead of multiplying find the least common multiplier using #'LCM)
     "LLB = (MMC, MMC)"
     "MMC = (JJZ, JJZ)"
     "JJZ = (LLB, LLB)"
-    "XXX = (XXX, XXX)"))
+    "XXX = (XXX, XXX)")
+  "this is the provided example, but I had to replace the numbers with
+letters - why did Eric do that?")
 
 (defun ends-with-a? (node)
   "returns true if a node ends with the letter A"
@@ -158,10 +168,10 @@ ends in z, return the number of steps"
    ((d directions (rest d))             ; loop eternally
     (steps 0 (incf steps)))             ; count the steps
 
-   ;; termination condition
-   ((ends-with-z? node) steps)          ; found the end, return steps
+   ;; termination condition, node ends with Z
+   ((ends-with-z? node) steps)          ; so return steps
 
-    ;; loop body
+    ;; loop body - walk the tree
     (setf node
           (if (equalp (first d) #\L)         ; lookup next node
               (car (gethash node tree))      ; use left
@@ -171,10 +181,13 @@ ends in z, return the number of steps"
   "given a list of strings describing a set of directions and a tree of
 nodes to walk return the number of steps it takes to get all nodes
 ending with A to end with Z simultaneously"
+  ;; parse the data
   (multiple-value-bind (directions tree) (parse-data los)
-    (setf (cdr (last directions)) directions) ; make it a circular list
 
-    ;; get the list of starting nodes (ending in A)
+    ;; set the end of directions to point to the beginning so it's circular
+    (setf (cdr (last directions)) directions)
+
+    ;; generate a list of starting nodes (ending in A)
     (let ((node-list (loop for node being the hash-keys in tree
                            when (ends-with-a? node)
                              collect node)))
