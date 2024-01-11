@@ -93,7 +93,7 @@ numbers"
 
        ;; until seq is all zeros, then return the final item in the
        ;; sequence
-       ((every #'(lambda (x) (zerop x)) seq) ; all zeros?
+       ((every #'zerop seq) ; all zeros?
 
         ;; then add up the last digits in all the sequences
         (reduce #'+ (mapcar #'(lambda (l) (car (last l)))
@@ -127,7 +127,7 @@ LEO'S NOTES: Um reverse?
 
 ------------------------------------------------------------------------------|#
 
-(defun Day09-2 (los)
+(Defun Day09-2 (los)
   (let ((histories (parse-histories los)))
     (reduce #'+ (mapcar #'next-in-sequence
                         (mapcar #'reverse histories)))))

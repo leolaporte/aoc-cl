@@ -21,7 +21,7 @@
 
 (defparameter *data-file* "~/cl/AOC/2022/day10/input.txt")  ; supplied data from AoC.
 (defparameter *test-file* "~/cl/AOC/2022/day10/test.txt")   ; test info
-
+ggxf
 (defun parse-inst (inst)
   (let ((i (re:split " " inst)))
     (if (equal "noop" (first i))
