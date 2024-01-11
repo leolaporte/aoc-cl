@@ -10,10 +10,10 @@
 (ql:quickload '(:fiveam :cl-ppcre :iterate))
 
 (defpackage :day10
-  (:use #:cl #:iterate)                 ; use ITERATE instead of LOOP
+  (:use #:cl #:iterate)   ; use ITERATE instead of LOOP
   (:local-nicknames
-   (:re :cl-ppcre)                      ; regex
-   (:5a :fiveam)))                     ; testing
+   (:re :cl-ppcre)        ; regex
+   (:5a :fiveam)))        ; testing
 
 (in-package :day10)
 (setf 5a:*run-test-when-defined* t)         ; test as we go
@@ -98,6 +98,7 @@ indexed in (row col) order"
       (for row below height)
       (iter (for col below width)
         (setf (aref pipes row col) (elt (nth row los) col))))
+
     pipes))
 
 #| -------------------------------- Workness ------------------------------- |#
@@ -152,7 +153,7 @@ indexed in (row col) order"
     (if (or (< r 0) (< c 0)
             (>= r (array-dimension map 0))
             (>= c (array-dimension map 1)))
-        pos                                        ; out-of range
+        pos                                 ; out-of range
         (cons r c))))
 
 (5a:test move-test
@@ -199,7 +200,7 @@ indexed in (row col) order"
 
       (otherwise (error "I'm lost! ~a" heading)))
 
-    ;; not at end, so keep going along (new?) heading
+    ;; not at end, so contine to flow in heading
     (flow map (move heading map pos) heading (incf moves))))
 
 (5a:test flow-test
@@ -221,15 +222,16 @@ flowing through the entire path and returning 1/2 that distance)"
 
          ;; characters at those points
          (nc (char-at map np))      ; character north of start
-         (ec (char-at map ep))      ; character east of start
+         (ec (char-at map ep))      ; east of start
          (sc (char-at map sp))      ; south
          (wc (char-at map wp)))     ; west
 
-    (/
+    (/  ; halfway point is most distant so...
+
      ;; figure out where the route begins - pick first place we can
-     ;; flow to, going clockwise from north
+     ;; flow to, going clockwise from north, then call FLOW
      (cond ((or (char= nc #\|) (char= nc #\7) (char= nc #\F))
-            (flow map np 'N 1))    ; and flow in that direction
+            (flow map np 'N 1))         ; and flow in that direction
 
            ((or (char= ec #\-) (char= ec #\7) (char= nc #\J))
             (flow map ep 'E 1))
@@ -241,7 +243,8 @@ flowing through the entire path and returning 1/2 that distance)"
             (flow map wp 'W 1))
 
            (t (error "Lost AGAIN!")))
-     2)))                               ; halfway point is most distant
+
+     2))) ; ... divide total moves by 2
 
 (5a:test Day10-1-test
   (5a:is (= (day10-1 *loop1*) 4))
@@ -256,6 +259,8 @@ the loop?"
 
 LEO'S NOTES: I'm told there is a trick that simplifies this. Hmmm.
 
+Can I scan the map row by row, counting the points on the path, to determine what's inside the loop? For example, when I see | I'm now inside the loop until the next |. Let's play with that and see.
+
 ------------------------------------------------------------------------------|#
 
 ;; now solve the puzzle!
@@ -268,3 +273,10 @@ LEO'S NOTES: I'm told there is a trick that simplifies this. Hmmm.
 ;; -----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; -----------------------------------------------------------------------------
+
+;; The answer to AOC 2023 Day 10 Part 1 is 7030
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002301 seconds of total run time (0.002190 user, 0.000111 system)
+;; 100.00% CPU
+;; 487,472 bytes consed
