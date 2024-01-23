@@ -276,7 +276,8 @@ that right? This is going to require some experimentation.
 2. Figure out which pipe type is under the S and replace the S with
 the pipe.
 
-3. replace - F and 7 with >, replace | J and L with ^
+3. replace - F and 7 with >, replace | J and L with ^ (this is where I
+might have to experiment)
 
 4. for aesthetic purposes replace ALL other pipes with "." so I can
 verify my method with a visual inspection of the pipe map (cut down
@@ -391,7 +392,7 @@ inside an odd number of ^
 (defun prettify-map (map)
   "given a pipe map, replace the flow path with > and ^ characters,
 including the starting square, then make all the other positions a ."
-  (let ((path (get-flow-path map))      ; the path of the flow in map
+  (let ((path (get-flow-path map))     ; the path of the flow in map
         (start-loc (find-start map)))
 
     ;; replace S with pipe type
@@ -404,12 +405,11 @@ including the starting square, then make all the other positions a ."
             (setf (aref map (row loc) (col loc)) #\>) ; replace with >
             (setf (aref map (row loc) (col loc)) #\^)))) ; otherwise with ^
 
-    ;; replace every location not on path with .
+    ;; replace every non-path location with .
     (iter (for row below (array-dimension map 0))
       (iter (for col below (array-dimension map 1))
         (let ((c (aref map row col)))
-          (when (and (not (char= c #\^))
-                     (not (char= c #\>)))      ; not a flow char
+          (when (and (not (char= c #\^)) (not (char= c #\>))) ; not a flow char
             (setf (aref map row col) #\.)))))  ; so make it a .
 
     map))
@@ -417,23 +417,22 @@ including the starting square, then make all the other positions a ."
 (defun mark-inside (map)
   "given a prettified pipe-flow-map, replace all the points inside the
 path with #\0, return modified map"
-  (let ((wall-count 0)
-        (m map))
+  (let ((wall-count 0))
 
-    (iter (for row below (array-dimension m 0))
+    (iter (for row below (array-dimension map 0))
       (setf wall-count 0)    ; reset wall count for each row
 
-      (iter (for col below (array-dimension m 1))  ; walk down the row
-        (let ((c (aref m row col)))                ; looking at each pipe type
+      (iter (for col below (array-dimension map 1))  ; walk down the row
+        (let ((c (aref map row col)))                ; looking at each pipe type
 
           ;; check three conditions
           (cond ((char= c #\^) (incf wall-count))  ; wall char, increment count
 
                 ((and (char= c #\.) (oddp wall-count)) ; inside loop!
-                 (setf (aref m row col) #\0))
+                 (setf (aref map row col) #\0))
 
                 (t nil)))))                            ; otherwise do nothing
-    m))
+    map))
 
 (defun Day10-2 (los)
   "given a list of strings representing a pipe map, return the number
