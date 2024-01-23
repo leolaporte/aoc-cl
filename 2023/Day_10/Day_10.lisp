@@ -7,13 +7,12 @@
 ;; Prologue code for setup - same every day
 ;; --------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :cl-ppcre :iterate :trivia))
+(ql:quickload '(:fiveam :cl-ppcre :iterate))
 
 (defpackage :day10
   (:use #:cl #:iterate)   ; use ITERATE instead of LOOP
   (:local-nicknames
-   (:re :cl-ppcre)        ; regex
-   (:tr :trivia)          ; pattern matching
+   (:re :cl-ppcre)
    (:5a :fiveam)))        ; testing
 
 (in-package :day10)
@@ -274,7 +273,8 @@ that right? This is going to require some experimentation.
 
 1. modify the flow function in part 1 to keep track of route
 
-2. Figure out which pipe type is under the S and replace the S with the pipe.
+2. Figure out which pipe type is under the S and replace the S with
+the pipe.
 
 3. replace - F and 7 with >, replace | J and L with ^
 
@@ -421,7 +421,7 @@ path with #\0, return modified map"
         (m map))
 
     (iter (for row below (array-dimension m 0))
-      (setf wall-count 0)                          ; reset wall count for each row
+      (setf wall-count 0)    ; reset wall count for each row
 
       (iter (for col below (array-dimension m 1))  ; walk down the row
         (let ((c (aref m row col)))                ; looking at each pipe type
@@ -429,7 +429,7 @@ path with #\0, return modified map"
           ;; check three conditions
           (cond ((char= c #\^) (incf wall-count))  ; wall char, increment count
 
-                ((and (char= c #\.) (oddp wall-count)) ; odd number of wall chars
+                ((and (char= c #\.) (oddp wall-count)) ; inside loop!
                  (setf (aref m row col) #\0))
 
                 (t nil)))))                            ; otherwise do nothing
