@@ -3,27 +3,28 @@
 ;;;; Leo Laporte
 ;;;; 7- Jan 2024
 
-;; -----------------------------------------------------------------------------
+;; --------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
-;; -----------------------------------------------------------------------------
+;; --------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :cl-ppcre :iterate))
+(ql:quickload '(:fiveam :cl-ppcre :iterate :trivia))
 
 (defpackage :day10
   (:use #:cl #:iterate)   ; use ITERATE instead of LOOP
   (:local-nicknames
    (:re :cl-ppcre)        ; regex
+   (:tr :trivia)          ; pattern matching
    (:5a :fiveam)))        ; testing
 
 (in-package :day10)
-(setf 5a:*run-test-when-defined* t)         ; test as we go
-(declaim (optimize (debug 3) (safety 3)))   ; max debugging info
-;; (declaim (optimize (speed 3))            ; max speed if needed
+(setf 5a:*run-test-when-defined* t)    ; test as we go
+(declaim (optimize (debug 3)))         ; max debugging info
+;; (declaim (optimize (speed 3))       ; max speed if needed
 
 (defparameter *data-file* "~/cl/AOC/2023/Day_10/input.txt"
   "Downloaded from the AoC problem set")
 
-#| -----------------------------------------------------------------------------
+#| --------------------------------------------------------------------------
 --- Day 10: Pipe Maze ---
 --- Part One ---
 
@@ -71,7 +72,7 @@ single loop.
 5. goto 4 until back at S
 6. return (/ moves 2)
 
------------------------------------ Parsation ------------------------------- |#
+----------------------------------- Parsation -------------------------- |#
 
 (defparameter *loop1*
   '("-L|F7"
@@ -101,7 +102,11 @@ indexed in (row col) order"
 
     pipes))
 
-#| -------------------------------- Workness ------------------------------- |#
+(defparameter map1 (parse-pipe-map *loop1*))
+(defparameter map2 (parse-pipe-map *loop2*))
+(defparameter map3 (parse-pipe-map (uiop:read-file-lines *data-file*)))
+
+#| -------------------------------- Workness ----------------------------- |#
 
 (defun row (loc)
   "given a location as (cons row col) return row"
@@ -124,13 +129,13 @@ indexed in (row col) order"
   (5a:is-false (s? (cons 0 0) (parse-pipe-map *loop2*)))
   (5a:is-true (s? (cons 1 1) (parse-pipe-map *loop1*))))
 
-(defun find-start (pipes)
+(defun find-start (map)
   "given a pipe map, return the (row col) location of #\S"
   (iter
-    (for row below (array-dimension pipes 0))
+    (for row below (array-dimension map 0))
     (iter
-      (for col below (array-dimension pipes 1))
-      (when (s? (cons row col) pipes)
+      (for col below (array-dimension map 1))
+      (when (s? (cons row col) map)
         (return-from find-start (cons row col))))))
 
 (5a:test find-start-test
@@ -153,115 +158,287 @@ indexed in (row col) order"
     (if (or (< r 0) (< c 0)
             (>= r (array-dimension map 0))
             (>= c (array-dimension map 1)))
-        pos                                 ; out-of range
+        pos                             ; out-of range
         (cons r c))))
 
 (5a:test move-test
   (let ((map (parse-pipe-map *loop1*)))
-    (5a:is (equal (move 'N map (cons 4 4)) (cons 3 4)))
-    (5a:is (equal (move 'S map (cons 4 4)) (cons 4 4)))
-    (5a:is (equal (move 'W map (cons 0 0)) (cons 0 0)))
-    (5a:is (equal (move 'E map (cons 0 4)) (cons 0 4)))
-    (5a:is (equal (move 'W map (cons 3 3)) (cons 3 2)))))
+    (5a:is (equal (move 'S map (cons 4 4)) (cons 4 4))) ; out of range
+    (5a:is (equal (move 'W map (cons 0 0)) (cons 0 0))) ; out of range
+    (5a:is (equal (move 'E map (cons 0 4)) (cons 0 4))) ; out of range
+    (5a:is (equal (move 'N map (cons 2 2)) (cons 1 2)))
+    (5a:is (equal (move 'S map (cons 2 2)) (cons 3 2)))
+    (5a:is (equal (move 'E map (cons 2 2)) (cons 2 3)))
+    (5a:is (equal (move 'W map (cons 2 2)) (cons 2 1)))))
 
-(defun flow (map pos heading moves)
-  "given a location on a pipe map and a heading (N E S W) return the
- number of moves it will take to get back to the start (S) - begin to
- flow from first move after S! Function recurses until S"
-  (let ((next (char-at map pos)))       ; next move
-
-    ;; which way do I flow next?
-    (case next
-      (#\S (return-from flow moves))    ; we're at the end!
-
-      ;; straight pipe - maintain heading
-      ((or #\| #\-) nil)
-
-      ;; bent pipe - make a turn
-      (#\L
-       (if (equal heading 'S)
-           (setf heading 'E)            ; turn right
-           (setf heading 'N)))          ; turn left
-
-      (#\J
-       (if (equal heading 'S)
-           (setf heading 'W)            ; turn right
-           (setf heading 'N)))          ; turn left
-
-      (#\7
-       (if (equal heading 'N)           ; were we going north?
-           (setf heading 'W)            ; then make a left
-           (setf heading 'S)))          ; otherwise a right
-
-      (#\F
-       (if (equal heading 'N)
-           (setf heading 'E)            ; turn right
-           (setf heading 'S)))          ; turn left
-
-      (otherwise (error "I'm lost! ~a" heading)))
-
-    ;; not at end, so contine to flow in heading
-    (flow map (move heading map pos) heading (incf moves))))
-
-(5a:test flow-test
-  (5a:is (flow (parse-pipe-map *loop1*) (cons 1 2) 'W 1) 8)
-  (5a:is (flow (parse-pipe-map *loop2*) (cons 2 1) 'E 1) 16))
-
-(defun Day10-1 (los)
-  "given a list of strings representing a map of pipes, find the starting
-point and return the most distant point on the path (we do this by
-flowing through the entire path and returning 1/2 that distance)"
-  (let* ((map (parse-pipe-map los)) ; our pipe map 2D array (from input)
-         (start (find-start map))   ; the location of the S in the map
+(defun find-first-move (map)
+  "given a pipe map, find the first move from the start, return two
+values: the point and its cardinal direction ('N 'E 'W' 'S)"
+  (let* ((start (find-start map))    ; the location of the S in the map
 
          ;; points at the four cardinal directions
-         (np (move 'N map start))   ; position north of start
-         (ep (move 'E map start))   ; east
-         (sp (move 'S map start))   ; south
-         (wp (move 'W map start))   ; west of start
+         (np (move 'N map start))        ; position north of start
+         (ep (move 'E map start))        ; east
+         (sp (move 'S map start))        ; south
+         (wp (move 'W map start))        ; west of start
 
          ;; characters at those points
-         (nc (char-at map np))      ; character north of start
-         (ec (char-at map ep))      ; east of start
-         (sc (char-at map sp))      ; south
-         (wc (char-at map wp)))     ; west
+         (nc (char-at map np))           ; character north of start
+         (ec (char-at map ep))           ; east of start
+         (sc (char-at map sp))           ; south
+         (wc (char-at map wp)))          ; west
 
-    (/  ; halfway point is most distant so...
+    ;; figure out where the route begins - pick first place we can
+    ;; flow to, going clockwise from north
+    (cond ((or (char= nc #\|) (char= nc #\7) (char= nc #\F))
+           (values np 'N))              ; and flow in that direction
 
-     ;; figure out where the route begins - pick first place we can
-     ;; flow to, going clockwise from north, then call FLOW
-     (cond ((or (char= nc #\|) (char= nc #\7) (char= nc #\F))
-            (flow map np 'N 1))         ; and flow in that direction
+          ((or (char= ec #\-) (char= ec #\7) (char= nc #\J))
+           (values ep 'E))
 
-           ((or (char= ec #\-) (char= ec #\7) (char= nc #\J))
-            (flow map ep 'E 1))
+          ((or (char= sc #\|) (char= sc #\J) (char= sc #\L))
+           (values sp 'S))
 
-           ((or (char= sc #\|) (char= sc #\J) (char= sc #\L))
-            (flow map sp 'S 1))
+          ((or (char= wc #\-) (char= wc #\F) (char= wc #\L))
+           (values wp 'W 1))
 
-           ((or (char= wc #\-) (char= wc #\F) (char= wc #\L))
-            (flow map wp 'W 1))
+          (t (error "Lost AGAIN!")))))
 
-           (t (error "Lost AGAIN!")))
+(defun get-flow-path (map)
+  "given a pipe map follow the map to return a list of points that flow
+back to the start (S). Iterative version."
 
-     2))) ; ... divide total moves by 2
+  (multiple-value-bind (posn heading) (find-first-move map)
+    (do* ((p posn (move heading map p))       ; next point on the map
+          (d (char-at map p) (char-at map p)) ; pipe at that point
+          (path (list p) (push p path)))      ; path so far
+
+         ((char= d #\S) path) ; return the path of flow
+
+      ;; loop body: look for turns and change heading if we find one
+      (case d
+        (#\L
+         (if (equal heading 'S)        ; turn depends on heading
+             (setf heading 'E)         ; coming from north? turn right
+             (setf heading 'N)))       ; coming from east? turn left
+
+        (#\J
+         (if (equal heading 'S)
+             (setf heading 'W)          ; turn right
+             (setf heading 'N)))        ; turn left
+
+        (#\7
+         (if (equal heading 'N)
+             (setf heading 'W)          ; left
+             (setf heading 'S)))        ; right
+
+        (#\F
+         (if (equal heading 'N)
+             (setf heading 'E)          ; right
+             (setf heading 'S)))))))
+
+(5a:test flow-test
+  (5a:is (length (flow (parse-pipe-map *loop1*))) 8)
+  (5a:is (length (flow (parse-pipe-map *loop2*))) 16))
+
+(defun Day10-1 (los)
+  "given a list of strings representing a map of pipes return the most
+distant point on the path (we do this by flowing through the entire
+path and returning 1/2 that distance)"
+  (let ((map (parse-pipe-map los))) ; our pipe map 2D array (from input)
+    (/ (length (get-flow-path map))
+       2)))     ; divide length of path by 2 to find most distant pt
 
 (5a:test Day10-1-test
   (5a:is (= (day10-1 *loop1*) 4))
   (5a:is (= (day10-1 *loop2*) 8)))
 
-#| -----------------------------------------------------------------------------
+#| -----------------------------------------------------------------------
 --- Part Two
 
 "Figure out whether you have time to search for the nest by
 calculating the area within the loop. How many tiles are enclosed by
 the loop?"
 
-LEO'S NOTES: I'm told there is a trick that simplifies this. Hmmm.
+LEO'S NOTES:
 
-Can I scan the map row by row, counting the points on the path, to determine what's inside the loop? For example, when I see | I'm now inside the loop until the next |. Let's play with that and see.
+In the simplest case, if the path were a square the inner part of the
+loop would be preceded by a | and continue until the next |. We can
+ignore horizontal lines. It gets more complicated as the path winds
+around but the basic idea should hold, right? For example, when I see
+| I'm now inside the loop until the next |. Let's play with that and
+see. Oh and maybe J and L are also counted as | and F and 7 are -. Is
+that right? This is going to require some experimentation.
 
-------------------------------------------------------------------------------|#
+1. modify the flow function in part 1 to keep track of route
+
+2. Figure out which pipe type is under the S and replace the S with the pipe.
+
+3. replace - F and 7 with >, replace | J and L with ^
+
+4. for aesthetic purposes replace ALL other pipes with "." so I can
+verify my method with a visual inspection of the pipe map (cut down
+the noise)
+
+5. Go row by row left to right from top, replacing . with 0 whenever
+inside an odd number of ^
+
+6. Count the 0s for our answer.
+
+-------------------------------------------------------------------------|#
+
+;; New examples
+(defparameter *loop3*
+  '("..........."
+    ".S-------7."
+    ".|F-----7|."
+    ".||.....||."
+    ".||.....||."
+    ".|L-7.F-J|."
+    ".|..|.|..|."
+    ".L--J.L--J."
+    "..........."))
+
+(defparameter *loop4*
+  '(".F----7F7F7F7F-7...."
+    ".|F--7||||||||FJ...."
+    ".||.FJ||||||||L7...."
+    "FJL7L7LJLJ||LJ.L-7.."
+    "L--J.L7...LJS7F-7L7."
+    "....F-J..F7FJ|L7L7L7"
+    "....L7.F7||L7|.L7L7|"
+    ".....|FJLJ|FJ|F7|.LJ"
+    "....FJL-7.||.||||..."
+    "....L---J.LJ.LJLJ..."))
+
+(defparameter *loop5*
+  '("FF7FSF7F7F7F7F7F---7"
+    "L|LJ||||||||||||F--J"
+    "FL-7LJLJ||||||LJL-77"
+    "F--JF--7||LJLJ7F7FJ-"
+    "L---JF-JLJ.||-FJLJJ7"
+    "|F|F-JF---7F7-L7L|7|"
+    "|FFJF7L7F-JF7|JL---7"
+    "7-L-JL7||F7|L7F-7F7|"
+    "L.L7LFJ|||||FJL7||LJ"
+    "L7JLJL-JLJLJL--JLJ.L"))
+
+(defparameter map3 (parse-pipe-map *loop3*))
+(defparameter map4 (parse-pipe-map *loop4*))
+(defparameter map5 (parse-pipe-map *loop5*))
+
+(defun start-pipe (map)
+  "given a pipe map, return the pipe hidden under S"
+  (let* ((start (find-start map))
+
+         ;; points at the four cardinal directions
+         (np (move 'N map start))       ; position north of start
+         (ep (move 'E map start))       ; east
+         (sp (move 'S map start))       ; south
+         (wp (move 'W map start))       ; west of start
+
+         ;; characters at those points
+         (nc (char-at map np))          ; character north of start
+         (ec (char-at map ep))          ; east of start
+         (sc (char-at map sp))          ; south
+         (wc (char-at map wp)))          ; west
+
+    ;; what's under the S?
+    (cond
+      ;; N
+      ((or (char= nc #\|) (char= nc #\F) (char= nc #\7))
+       (cond
+         ;; to E
+         ((or (char= ec #\-)
+              (char= ec #\7)
+              (char= ec #\J)) #\L)
+         ;; to S
+         ((or (char= sc #\|)
+              (char= sc #\J)
+              (char= sc #\L)) #\|)
+         ;; to W
+         ((or (char= wc #\-)
+              (char= wc #\F)
+              (char= wc #\L)) #\J)))
+
+      ;; E
+      ((or (char= ec #\-) (char= ec #\J) (char= ec #\7))
+       (cond
+         ;; to S
+         ((or (char= sc #\|)
+              (char= sc #\J)
+              (char= sc #\L)) #\F)
+
+         ;; to W
+         ((or (char= wc #\-)
+              (char= wc #\L)
+              (char= wc #\F)) #\-)))
+
+      ;; S
+      ((or (char= sc #\|) (char= sc #\L) (char= sc #\J))
+       ;; to W
+       #\7))))
+
+(5a:test start-pipe-test
+  (5a:is (equal (start-pipe map1) #\F))
+  (5a:is (equal (start-pipe map2) #\F))
+  (5a:is (equal (start-pipe map3) #\F))
+  (5a:is (equal (start-pipe map4) #\F))
+  (5a:is (equal (start-pipe map5) #\7)))
+
+(defun prettify-map (map)
+  "given a pipe map, replace the flow path with > and ^ characters, including the starting square, then make all the other positions a ."
+  (let ((path (get-flow-path map))      ; the path of the flow in map
+        (start-loc (find-start map))    ; the location of S
+        (start-pipe (start-pipe map)))  ; the kind of pipe under S
+
+    ;; replace S with pipe type
+    (setf (aref map (row start-loc) (col start-loc)) start-pipe)
+
+    (dolist (loc path)                  ; for every point in the path
+      (let ((c (char-at map loc)))
+        (if (or (char= c #\-) (char= c #\7) (char= c #\F)) ; if it's - 7 or F
+            (set (aref map (row loc) (col loc)) #\>) ; replace with >
+            (set (aref map (row loc) (col loc)) #\^)))) ; otherwise replace with ^
+
+    ;; now clear the rest of the map - replacing every pipe with .
+    (iter (for row below (array-dimension map 0))
+      (iter (for col below (array-dimension map 1))
+        (let ((c (aref map row col)))
+          (when (and (not (char= c #\^)) (not (char= c #\>))) ; not a flow char
+            (setf (aref map row col) #\.)))))))
+
+
+(defun mark-inside (map)
+  "given a map and a set of points for the flow path through the map return the number of points fully inside the path"
+  (let ((wall-count 0))
+
+    (iter (for row below (array-dimension map 0))
+      (setf wall-count 0)               ;
+      (iter (for col below (array-dimension map 1))
+        (let ((c (aref map row col)))
+          (cond ((char= c #\^) (1+ wall-count))
+                ((and (char= c #\.) (oddp wall-count))
+                 (setf (aref map row col) #\0))
+                (t nil)))))))
+
+(defun Day10-2 (los)
+  "given a list of strings representing a pipe map, return the number
+ of points surrounded entirely by the flow path"
+  (let* ((pretty-map (mark-inside (prettify-map (parse-pipe-map los))))
+         (inside-count 0))
+
+    (iter (for col below (array-dimension pretty-map 0))
+      (iter (for row below (array-dimension pretty-map 1))
+        (when (char= (char-at pretty-map (cons row col)) #\0)
+          (incf inside-count))))
+
+    inside-count))
+
+(5a:test Day10-2-test
+  (5a:is (= (Day10-2 *loop3*) 4))
+  (5a:is (= (Day10-2 *loop4*) 8))
+  (5a:is (= (Day10-2 *loop5*) 10)))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 10 Part 1 is ~a"
@@ -270,9 +447,9 @@ Can I scan the map row by row, counting the points on the path, to determine wha
 ;; (time (format t "The answer to AOC 2023 Day 10 Part 2 is ~a"
 ;;	      (day10-2 (uiop:read-file-lines *data-file*))))
 
-;; -----------------------------------------------------------------------------
+;; ------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
-;; -----------------------------------------------------------------------------
+;; ------------------------------------------------------------------------
 
 ;; The answer to AOC 2023 Day 10 Part 1 is 7030
 ;; Evaluation took:
