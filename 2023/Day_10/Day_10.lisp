@@ -144,21 +144,21 @@ indexed in (row col) order"
 
 ;; calculate the next location in any direction - if a move goes off
 ;; the map, return the original position unchanged
-(defun move (dir map pos)
-  (let ((r (row pos))
-        (c (col pos)))
+(defun move (dir map loc)
+  (let ((r (row loc))
+        (c (col loc)))
 
     (case dir
       (N (setf r (1- r)))
       (S (setf r (1+ r)))
       (E (setf c (1+ c)))
       (W (setf c (1- c)))
-      (otherwise (error "What location is that? ~a ~a" dir pos)))
+      (otherwise (error "What location is that? ~a ~a" dir loc)))
 
     (if (or (< r 0) (< c 0)
             (>= r (array-dimension map 0))
             (>= c (array-dimension map 1)))
-        pos                             ; out-of range
+        loc                             ; out-of range
         (cons r c))))
 
 (5a:test move-test
@@ -173,7 +173,7 @@ indexed in (row col) order"
 
 (defun find-first-move (map)
   "given a pipe map, find the first move from the start, return two
-values: the point and its cardinal direction ('N 'E 'W' 'S)"
+values: the location and its cardinal direction ('N 'E 'W' 'S)"
   (let* ((start (find-start map))    ; the location of the S in the map
 
          ;; points at the four cardinal directions
@@ -191,7 +191,7 @@ values: the point and its cardinal direction ('N 'E 'W' 'S)"
     ;; figure out where the route begins - pick first place we can
     ;; flow to, going clockwise from north
     (cond ((or (char= nc #\|) (char= nc #\7) (char= nc #\F))
-           (values np 'N))              ; and flow in that direction
+           (values np 'N))              ; start here
 
           ((or (char= ec #\-) (char= ec #\7) (char= nc #\J))
            (values ep 'E))
@@ -208,8 +208,8 @@ values: the point and its cardinal direction ('N 'E 'W' 'S)"
   "given a pipe map follow the map to return a list of points that flow
 back to the start (S). Iterative version."
 
-  (multiple-value-bind (posn heading) (find-first-move map)
-    (do* ((p posn (move heading map p))       ; next point on the map
+  (multiple-value-bind (loc heading) (find-first-move map) ; get first move
+    (do* ((p loc (move heading map p))        ; next point on the map
           (d (char-at map p) (char-at map p)) ; pipe at that point
           (path (list p) (push p path)))      ; path so far
 
@@ -246,8 +246,10 @@ back to the start (S). Iterative version."
 distant point on the path (we do this by flowing through the entire
 path and returning 1/2 that distance)"
   (let ((map (parse-pipe-map los))) ; our pipe map 2D array (from input)
-    (/ (length (get-flow-path map))
-       2)))     ; divide length of path by 2 to find most distant pt
+
+    (/
+     (length (get-flow-path map))   ; get length of flow path
+     2)))     ; divide length of path by 2 to find most distant pt
 
 (5a:test Day10-1-test
   (5a:is (= (day10-1 *loop1*) 4))
@@ -341,27 +343,27 @@ inside an odd number of ^
          (nc (char-at map np))          ; character north of start
          (ec (char-at map ep))          ; east of start
          (sc (char-at map sp))          ; south
-         (wc (char-at map wp)))          ; west
+         (wc (char-at map wp)))         ; west
 
     ;; what's under the S?
     (cond
-      ;; N
+      ;; pipe connects N...
       ((or (char= nc #\|) (char= nc #\F) (char= nc #\7))
        (cond
-         ;; to E
+         ;; ...to E
          ((or (char= ec #\-)
               (char= ec #\7)
               (char= ec #\J)) #\L)
-         ;; to S
+         ;; ...to S
          ((or (char= sc #\|)
               (char= sc #\J)
               (char= sc #\L)) #\|)
-         ;; to W
+         ;; ...to W
          ((or (char= wc #\-)
               (char= wc #\F)
               (char= wc #\L)) #\J)))
 
-      ;; E
+      ;; pipe connects E
       ((or (char= ec #\-) (char= ec #\J) (char= ec #\7))
        (cond
          ;; to S
@@ -374,9 +376,9 @@ inside an odd number of ^
               (char= wc #\L)
               (char= wc #\F)) #\-)))
 
-      ;; S
+      ;; pipe connects S
       ((or (char= sc #\|) (char= sc #\L) (char= sc #\J))
-       ;; to W
+       ;; to W (that's all that's left)
        #\7))))
 
 (5a:test start-pipe-test
@@ -387,33 +389,34 @@ inside an odd number of ^
   (5a:is (equal (start-pipe map5) #\7)))
 
 (defun prettify-map (map)
-  "given a pipe map, replace the flow path with > and ^ characters, including the starting square, then make all the other positions a ."
+  "given a pipe map, replace the flow path with > and ^ characters,
+including the starting square, then make all the other positions a ."
   (let ((path (get-flow-path map))      ; the path of the flow in map
-        (start-loc (find-start map))    ; the location of S
-        (m map))
+        (start-loc (find-start map)))
 
     ;; replace S with pipe type
-    (setf (aref m (row start-loc) (col start-loc)) (start-pipe map))
+    (setf (aref map (row start-loc) (col start-loc)) (start-pipe map))
 
     ;; replace path piping with flow characters > and ^
     (dolist (loc path)
       (let ((c (char-at map loc)))
         (if (or (char= c #\-) (char= c #\7) (char= c #\F)) ; if it's - 7 or F
-            (set (aref m (row loc) (col loc)) #\>)       ; replace with >
-            (set (aref m (row loc) (col loc)) #\^))))    ; otherwise replace with ^
+            (setf (aref map (row loc) (col loc)) #\>) ; replace with >
+            (setf (aref map (row loc) (col loc)) #\^)))) ; otherwise with ^
 
     ;; replace every location not on path with .
     (iter (for row below (array-dimension map 0))
       (iter (for col below (array-dimension map 1))
         (let ((c (aref map row col)))
           (when (and (not (char= c #\^))
-                     (not (char= c #\>))) ; not a flow char
-            (setf (aref m row col) #\.)))))
-    m))
+                     (not (char= c #\>)))      ; not a flow char
+            (setf (aref map row col) #\.)))))  ; so make it a .
+
+    map))
 
 (defun mark-inside (map)
-  "given a prettified pipe-flow-map, replace all the points inside the path
-with #\0, return modified map"
+  "given a prettified pipe-flow-map, replace all the points inside the
+path with #\0, return modified map"
   (let ((wall-count 0)
         (m map))
 
