@@ -200,7 +200,7 @@ values: the point and its cardinal direction ('N 'E 'W' 'S)"
            (values sp 'S))
 
           ((or (char= wc #\-) (char= wc #\F) (char= wc #\L))
-           (values wp 'W 1))
+           (values wp 'W))
 
           (t (error "Lost AGAIN!")))))
 
@@ -390,37 +390,47 @@ inside an odd number of ^
   "given a pipe map, replace the flow path with > and ^ characters, including the starting square, then make all the other positions a ."
   (let ((path (get-flow-path map))      ; the path of the flow in map
         (start-loc (find-start map))    ; the location of S
-        (start-pipe (start-pipe map)))  ; the kind of pipe under S
+        (m map))
 
     ;; replace S with pipe type
-    (setf (aref map (row start-loc) (col start-loc)) start-pipe)
+    (setf (aref m (row start-loc) (col start-loc)) (start-pipe map))
 
-    (dolist (loc path)                  ; for every point in the path
+    ;; replace path piping with flow characters > and ^
+    (dolist (loc path)
       (let ((c (char-at map loc)))
         (if (or (char= c #\-) (char= c #\7) (char= c #\F)) ; if it's - 7 or F
-            (set (aref map (row loc) (col loc)) #\>) ; replace with >
-            (set (aref map (row loc) (col loc)) #\^)))) ; otherwise replace with ^
+            (set (aref m (row loc) (col loc)) #\>)       ; replace with >
+            (set (aref m (row loc) (col loc)) #\^))))    ; otherwise replace with ^
 
-    ;; now clear the rest of the map - replacing every pipe with .
+    ;; replace every location not on path with .
     (iter (for row below (array-dimension map 0))
       (iter (for col below (array-dimension map 1))
         (let ((c (aref map row col)))
-          (when (and (not (char= c #\^)) (not (char= c #\>))) ; not a flow char
-            (setf (aref map row col) #\.)))))))
-
+          (when (and (not (char= c #\^))
+                     (not (char= c #\>))) ; not a flow char
+            (setf (aref m row col) #\.)))))
+    m))
 
 (defun mark-inside (map)
-  "given a map and a set of points for the flow path through the map return the number of points fully inside the path"
-  (let ((wall-count 0))
+  "given a prettified pipe-flow-map, replace all the points inside the path
+with #\0, return modified map"
+  (let ((wall-count 0)
+        (m map))
 
-    (iter (for row below (array-dimension map 0))
-      (setf wall-count 0)               ;
-      (iter (for col below (array-dimension map 1))
-        (let ((c (aref map row col)))
-          (cond ((char= c #\^) (1+ wall-count))
-                ((and (char= c #\.) (oddp wall-count))
-                 (setf (aref map row col) #\0))
-                (t nil)))))))
+    (iter (for row below (array-dimension m 0))
+      (setf wall-count 0)                          ; reset wall count for each row
+
+      (iter (for col below (array-dimension m 1))  ; walk down the row
+        (let ((c (aref m row col)))                ; looking at each pipe type
+
+          ;; check three conditions
+          (cond ((char= c #\^) (incf wall-count))  ; wall char, increment count
+
+                ((and (char= c #\.) (oddp wall-count)) ; odd number of wall chars
+                 (setf (aref m row col) #\0))
+
+                (t nil)))))                            ; otherwise do nothing
+    m))
 
 (defun Day10-2 (los)
   "given a list of strings representing a pipe map, return the number
