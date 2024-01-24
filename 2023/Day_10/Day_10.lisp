@@ -237,8 +237,8 @@ back to the start (S). Iterative version."
              (setf heading 'S)))))))
 
 (5a:test flow-test
-  (5a:is (length (flow (parse-pipe-map *loop1*))) 8)
-  (5a:is (length (flow (parse-pipe-map *loop2*))) 16))
+  (5a:is (length (get-flow-path (parse-pipe-map *loop1*))) 8)
+  (5a:is (length (get-flow-path (parse-pipe-map *loop2*))) 16))
 
 (defun Day10-1 (los)
   "given a list of strings representing a map of pipes return the most
@@ -434,14 +434,21 @@ path with #\0, return modified map"
                 (t nil)))))                            ; otherwise do nothing
     map))
 
+(defun pretty-print-map (map)
+  "given a pipe flow map, pretty print it out (for my visual verification)"
+  (iter (for row below (array-dimension map 0))
+    (format t "~&")                     ; new line
+    (iter (for col below (array-dimension map 1))
+      (format t "~a" (aref map row col)))))
+
 (defun Day10-2 (los)
   "given a list of strings representing a pipe map, return the number
  of points surrounded entirely by the flow path"
   (let* ((pretty-map (mark-inside (prettify-map (parse-pipe-map los))))
          (inside-count 0))
 
-    (iter (for col below (array-dimension pretty-map 0))
-      (iter (for row below (array-dimension pretty-map 1))
+    (iter (for row below (array-dimension pretty-map 0))
+      (iter (for col below (array-dimension pretty-map 1))
         (when (char= (char-at pretty-map (cons row col)) #\0)
           (incf inside-count))))
 
@@ -456,8 +463,8 @@ path with #\0, return modified map"
 (time (format t "The answer to AOC 2023 Day 10 Part 1 is ~a"
               (day10-1 (uiop:read-file-lines *data-file*))))
 
-;; (time (format t "The answer to AOC 2023 Day 10 Part 2 is ~a"
-;;	      (day10-2 (uiop:read-file-lines *data-file*))))
+(time (format t "The answer to AOC 2023 Day 10 Part 2 is ~a"
+              (day10-2 (uiop:read-file-lines *data-file*))))
 
 ;; ------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
@@ -465,7 +472,16 @@ path with #\0, return modified map"
 
 ;; The answer to AOC 2023 Day 10 Part 1 is 7030
 ;; Evaluation took:
-;; 0.002 seconds of real time
-;; 0.002301 seconds of total run time (0.002190 user, 0.000111 system)
+;; 0.003 seconds of real time
+;; 0.002675 seconds of total run time (0.002675 user, 0.000000 system)
 ;; 100.00% CPU
-;; 487,472 bytes consed
+;; 8,555,531 processor cycles
+;; 842,512 bytes consed
+
+;; The answer to AOC 2023 Day 10 Part 2 is 285
+;; Evaluation took:
+;; 0.003 seconds of real time
+;; 0.004307 seconds of total run time (0.000907 user, 0.003400 system)
+;; 133.33% CPU
+;; 13,758,139 processor cycles
+;; 1,235,504 bytes consed
