@@ -1,7 +1,7 @@
 ;;;; Day10.lisp
 ;;;; 2023 AOC Day 10 solution
 ;;;; Leo Laporte
-;;;; 7- Jan 2024
+;;;; 7-23 Jan 2024
 
 ;; --------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -101,10 +101,6 @@ indexed in (row col) order"
 
     pipes))
 
-(defparameter map1 (parse-pipe-map *loop1*))
-(defparameter map2 (parse-pipe-map *loop2*))
-(defparameter map3 (parse-pipe-map (uiop:read-file-lines *data-file*)))
-
 #| -------------------------------- Workness ----------------------------- |#
 
 (defun row (loc)
@@ -119,14 +115,14 @@ indexed in (row col) order"
   "returns character at a given location on map"
   (aref map (row loc) (col loc)))
 
-(defun s? (loc map)
+(defun s? (map loc)
   "returns true if the current location on the map is S (the start)"
   (char= (aref map (row loc) (col loc)) #\S))
 
 (5a:test s?-test
-  (5a:is-true (s? (cons 2 0) (parse-pipe-map *loop2*)))
-  (5a:is-false (s? (cons 0 0) (parse-pipe-map *loop2*)))
-  (5a:is-true (s? (cons 1 1) (parse-pipe-map *loop1*))))
+  (5a:is-true (s? (parse-pipe-map *loop2*) (cons 2 0)))
+  (5a:is-false (s? (parse-pipe-map *loop2*) (cons 0 0)))
+  (5a:is-true (s? (parse-pipe-map *loop1*) (cons 1 1))))
 
 (defun find-start (map)
   "given a pipe map, return the (row col) location of #\S"
@@ -134,7 +130,7 @@ indexed in (row col) order"
     (for row below (array-dimension map 0))
     (iter
       (for col below (array-dimension map 1))
-      (when (s? (cons row col) map)
+      (when (s? map (cons row col))
         (return-from find-start (cons row col))))))
 
 (5a:test find-start-test
@@ -288,6 +284,7 @@ inside an odd number of ^
 
 6. Count the 0s for our answer.
 
+Whoa. It worked.
 -------------------------------------------------------------------------|#
 
 ;; New examples
@@ -325,10 +322,6 @@ inside an odd number of ^
     "7-L-JL7||F7|L7F-7F7|"
     "L.L7LFJ|||||FJL7||LJ"
     "L7JLJL-JLJLJL--JLJ.L"))
-
-(defparameter map3 (parse-pipe-map *loop3*))
-(defparameter map4 (parse-pipe-map *loop4*))
-(defparameter map5 (parse-pipe-map *loop5*))
 
 (defun start-pipe (map)
   "given a pipe map, return the pipe hidden under S"
@@ -383,11 +376,11 @@ inside an odd number of ^
        #\7))))
 
 (5a:test start-pipe-test
-  (5a:is (equal (start-pipe map1) #\F))
-  (5a:is (equal (start-pipe map2) #\F))
-  (5a:is (equal (start-pipe map3) #\F))
-  (5a:is (equal (start-pipe map4) #\F))
-  (5a:is (equal (start-pipe map5) #\7)))
+  (5a:is (equal (start-pipe (parse-pipe-map *loop1*)) #\F))
+  (5a:is (equal (start-pipe (parse-pipe-map *loop2*)) #\F))
+  (5a:is (equal (start-pipe (parse-pipe-map *loop3*)) #\F))
+  (5a:is (equal (start-pipe (parse-pipe-map *loop4*)) #\F))
+  (5a:is (equal (start-pipe (parse-pipe-map *loop5*)) #\7)))
 
 (defun prettify-map (map)
   "given a pipe map, replace the flow path with > and ^ characters,
@@ -444,8 +437,8 @@ path with #\0, return modified map"
 (defun Day10-2 (los)
   "given a list of strings representing a pipe map, return the number
  of points surrounded entirely by the flow path"
-  (let* ((pretty-map (mark-inside (prettify-map (parse-pipe-map los))))
-         (inside-count 0))
+  (let ((pretty-map (mark-inside (prettify-map (parse-pipe-map los))))
+        (inside-count 0))
 
     (iter (for row below (array-dimension pretty-map 0))
       (iter (for col below (array-dimension pretty-map 1))
@@ -472,16 +465,14 @@ path with #\0, return modified map"
 
 ;; The answer to AOC 2023 Day 10 Part 1 is 7030
 ;; Evaluation took:
-;; 0.003 seconds of real time
-;; 0.002675 seconds of total run time (0.002675 user, 0.000000 system)
-;; 100.00% CPU
-;; 8,555,531 processor cycles
-;; 842,512 bytes consed
+;; 0.001 seconds of real time
+;; 0.001972 seconds of total run time (0.001897 user, 0.000075 system)
+;; 200.00% CPU
+;; 726,640 bytes consed
 
 ;; The answer to AOC 2023 Day 10 Part 2 is 285
 ;; Evaluation took:
 ;; 0.003 seconds of real time
-;; 0.004307 seconds of total run time (0.000907 user, 0.003400 system)
-;; 133.33% CPU
-;; 13,758,139 processor cycles
-;; 1,235,504 bytes consed
+;; 0.003256 seconds of total run time (0.003154 user, 0.000102 system)
+;; 100.00% CPU
+;; 1,224,512 bytes consed
