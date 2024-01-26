@@ -1,7 +1,7 @@
 ;;;; Day12.lisp
 ;;;; 2023 AOC Day 12 solution
 ;;;; Leo Laporte
-;;;; 25 January 2023
+;;;; 25- January 2023
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -48,7 +48,15 @@ and broken springs that meet the given criteria. What is the sum of
 those counts?
 
 LEO'S NOTES: The structure of the program is easy, it's writing the
-code to count the possible arrangements that's tough.
+code to count the possible arrangements that's tough. It seems like a
+job for regular expressions, actually.
+
+1. Separate the digits
+
+2. Remove # blocks that match digits and the corresponding digits
+
+3. Determine the number of ways each ? block can match the remaining
+digits.
 
 ---------------------------------------------------------------------------- |#
 
