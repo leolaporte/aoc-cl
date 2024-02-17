@@ -196,10 +196,6 @@ some much worse.
 
 There's some optimization that's eluding me because I know people are
 doing part 2 much faster even with the much slower Python.
-
-D'oh - replaced the recursive version of Day 12 with an iterative
-Version and it's SO much faster. Done!
-
 ----------------------------------------------------------------------------|#
 
 (defun unfold-input (los)
@@ -250,14 +246,16 @@ Version and it's SO much faster. Done!
 
 ;; The answer to AOC 2023 Day 12 Part 1 is 6488
 ;; Evaluation took:
-;; 0.056 seconds of real time
-;; 0.055592 seconds of total run time (0.055354 user, 0.000238 system)
+;; 0.219 seconds of real time
+;; 0.219077 seconds of total run time (0.218875 user, 0.000202 system)
 ;; 100.00% CPU
-;; 917,312 bytes consed
+;; 5,364,464 bytes consed
 
 ;; The answer to AOC 2023 Day 12 Part 2 is 815364548481
 ;; Evaluation took:
-;; 0.219 seconds of real time
-;; 0.219244 seconds of total run time (0.218900 user, 0.000344 system)
-;; 100.00% CPU
-;; 3,800,112 bytes consed
+;; 80.559 seconds of real time
+;; 80.427035 seconds of total run time (80.370239 user, 0.056796 system)
+;; [ Real times consist of 0.045 seconds GC time, and 80.514 seconds non-GC time. ]
+;; [ Run times consist of 0.045 seconds GC time, and 80.383 seconds non-GC time. ]
+;; 99.84% CPU
+;; 190,909,600 bytes consed
