@@ -105,10 +105,10 @@ integers representing valid groupings of damaged springs"
 ;; results - each call to memoize checks to see if I've seen this
 ;; argument before and only performs the calculation if it's new
 (defun memoize (fn)
-  (let ((cache (make-hash-table :test 'equal))) ; push each sub-result into hash
+  (let ((cache (make-hash-table :test 'equal))) ; add each sub-result into hash
     #'(lambda (&rest args)
         (or (gethash args cache) ; have I already solved this? yes!
-            (setf (gethash args cache) (apply fn args)))))) ; nope, solve and cache
+            (setf (gethash args cache) (apply fn args)))))) ; no solve and cache
 
 (defun max-damage (springs)
   "returns the largest number of possible damaged springs in a list of
@@ -181,7 +181,10 @@ sum of possible arrangements of operational and broken springs"
 
 Let's get exponential!!
 
-"unfold the records, on each row, replace the list of spring springs with five copies of itself (separated by ?) and replace the list of contiguous groups of damaged springs with five copies of itself (separated by ,)."
+"unfold the records, on each row, replace the list of spring springs
+with five copies of itself (separated by ?) and replace the list of
+contiguous groups of damaged springs with five copies of
+itself (separated by ,)."
 
 I was prepared for this. I'll unfold the original parsed lines and
 then let's see if my simple memoization is up to the task.
