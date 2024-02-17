@@ -1,5 +1,4 @@
 ;;;; Day12.lisp
-
 ;;;; 2023 AOC Day 12 solution
 ;;;; Leo Laporte
 ;;;; 25 January - 16 February 2023
@@ -69,9 +68,7 @@ results. If I've already solved for that argument, just return the
 hash value, otherwise solve it and save the result to the hash.
 
 I'm told this is "top down dynamic programming." Well la-di-da.
-
-Well it's a little disappointing - it took 78 seconds to do part 2. Maybe I should use a memoize library instead of my roll-your-own hash table.
----------------------------------------------------------------------------- |#
+----------------------------------------------------------------------------|#
 
 (defparameter *test-data*
   '("???.### 1,1,3"
@@ -91,8 +88,8 @@ integers representing valid groupings of damaged springs"
       (let ((splits (re:split " " l)))  ; split line in two: springs and groupings
 
         (push (list
-               (concatenate 'list (first splits) '(#\.)) ;
-               (mapcar #'parse-integer ; make groupings a list of ints
+               (concatenate 'list (first splits) '(#\.)) ; turn into lst of char
+               (mapcar #'parse-integer                   ; and a list of ints
                        (re:all-matches-as-strings "\\d+"
                                                   (second splits))))
               spring-list)))            ; push each tuple into a list
@@ -126,20 +123,20 @@ integers representing valid groupings of damaged springs"
 (defparameter *cc* ; cached count
   (memoize ; cache each substring result
    (lambda (tuple)
-     (let ((springs (first tuple))  ; the list of spring chars
+     (let ((springs (first tuple))   ; the list of spring chars
            (groups (second tuple)))  ; the groupings as a list of int
 
-       (cond ((null groups)                 ; we've done all the groups
-              (if (find #\# springs)    ; any leftover #?
-                  0                        ; then fail
-                  1)) ; satisfied all the groups with no leftovers
+       (cond ((null groups)          ; we've done all the groups
+              (if (find #\# springs) ; if leftover #s
+                  0                  ; then fail
+                  1))                ; no leftovers - a win!
 
              ;; insufficient springs remain to do the job
              ((< (max-damage springs) (apply #'+ groups)) 0)
 
-             (t         ; there are still groups and springs left to check
+             (t ; there are still groups and springs left to check
               (+
-               ;; does the first chunk of springs satisfy the groups?
+               ;; does the first chunk of springs satisfy the first group?
                (if (or
                     ;; the first group of springs cannot be #
                     (not (= (max-damage (subseq springs 0 (first groups)))
@@ -154,9 +151,10 @@ integers representing valid groupings of damaged springs"
                    (funcall *cc* (list (subseq springs (1+ (first groups)))
                                        (rest groups))))
 
-               ;; if the first spring is operational, drop it and continue
-               (if (char= #\# (first springs))
-                   0              ; damaged and didn't work above so fail
+               ;;  we don't have a satisfactory group, so what do we have?
+               (if (char= #\# (first springs)) ; do we have a bad group?
+                   0                           ; in which case, fail
+                   ;; not damaged, so it must be operational, drop and recurse
                    (funcall *cc* (list (rest springs) groups))))))))))
 
 (5a:test funcall-*cc*-test
@@ -168,13 +166,12 @@ integers representing valid groupings of damaged springs"
     (5a:is (= (funcall *cc* (fifth d)) 4))
     (5a:is (= (funcall *cc* (sixth d)) 10))))
 
-
 (Defun Day12 (los)
   "given a list of strings reflecting each sprint condition return the
 sum of possible arrangements of operational and broken springs"
   (cond ((null los) 0)
         (t (+ (funcall *cc* (first los))
-              (Day12-1 (rest los))))))
+              (Day12 (rest los))))))
 
 (5a:test Day12-test
   (5a:is (= (Day12 (parse-input *test-data*)) 21)))
@@ -189,7 +186,14 @@ Let's get exponential!!
 I was prepared for this. I'll unfold the original parsed lines and
 then let's see if my simple memoization is up to the task.
 
-Harumph - at least it completes but the time (78 seconds) is disappointing.
+Harumph - at least it completes but the time (78 seconds) is
+disappointing.  Maybe I should use a memoize library instead of my
+roll-your-own hash table. ... So I've tested three different
+memoization libraries for common lisp and none of them does better -
+some much worse.
+
+There's some optimization that's eluding me because I know people are
+doing part 2 much faster even with the much slower Python.
 ---------------------------------------------------------------------------- |#
 
 (defun unfold-input (los)
@@ -205,7 +209,6 @@ Harumph - at least it completes but the time (78 seconds) is disappointing.
              (rules (mapcar #'parse-integer
                             (re:all-matches-as-strings "\\d+"
                                                        (second splits)))))
-
         (push
          (list
           (append (rest (iter (repeat 5) (appending (cons #\? springs)))) '(#\.))
