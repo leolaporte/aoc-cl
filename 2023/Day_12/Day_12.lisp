@@ -169,9 +169,8 @@ integers representing valid groupings of damaged springs"
 (Defun Day12 (los)
   "given a list of strings reflecting each sprint condition return the
 sum of possible arrangements of operational and broken springs"
-  (cond ((null los) 0)
-        (t (+ (funcall *cc* (first los))
-              (Day12 (rest los))))))
+  (iter (for l in los)
+    (summing (funcall *cc* l))))
 
 (5a:test Day12-test
   (5a:is (= (Day12 (parse-input *test-data*)) 21)))
@@ -197,11 +196,15 @@ some much worse.
 
 There's some optimization that's eluding me because I know people are
 doing part 2 much faster even with the much slower Python.
----------------------------------------------------------------------------- |#
+
+D'oh - replaced the recursive version of Day 12 with an iterative
+Version and it's SO much faster. Done!
+
+----------------------------------------------------------------------------|#
 
 (defun unfold-input (los)
   "given a list of lists containing spring springs and groupings return
- an unfolded list with each condition string repeated five time with a
+ an unfolded list with each condition string repeated five times with a
  ? in between each, and return a list of groupings repeating the
  original group five times."
   (let ((unfolded '()))
@@ -214,7 +217,9 @@ doing part 2 much faster even with the much slower Python.
                                                        (second splits)))))
         (push
          (list
-          (append (rest (iter (repeat 5) (appending (cons #\? springs)))) '(#\.))
+          (append
+           (rest (iter (repeat 5) (appending (cons #\? springs))))
+           '(#\.))
           (iter (repeat 5) (appending rules)))
          unfolded)))
 
@@ -245,16 +250,14 @@ doing part 2 much faster even with the much slower Python.
 
 ;; The answer to AOC 2023 Day 12 Part 1 is 6488
 ;; Evaluation took:
-;; 0.214 seconds of real time
-;; 0.214490 seconds of total run time (0.214301 user, 0.000189 system)
+;; 0.056 seconds of real time
+;; 0.055592 seconds of total run time (0.055354 user, 0.000238 system)
 ;; 100.00% CPU
-;; 5,364,672 bytes consed
+;; 917,312 bytes consed
 
 ;; The answer to AOC 2023 Day 12 Part 2 is 815364548481
 ;; Evaluation took:
-;; 78.090 seconds of real time
-;; 77.934677 seconds of total run time (77.876157 user, 0.058520 system)
-;; [ Real times consist of 0.045 seconds GC time, and 78.045 seconds non-GC time. ]
-;; [ Run times consist of 0.045 seconds GC time, and 77.890 seconds non-GC time. ]
-;; 99.80% CPU
-;; 190,906,736 bytes consed
+;; 0.219 seconds of real time
+;; 0.219244 seconds of total run time (0.218900 user, 0.000344 system)
+;; 100.00% CPU
+;; 3,800,112 bytes consed
