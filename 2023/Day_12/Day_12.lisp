@@ -20,7 +20,6 @@
 (in-package :day12)
 (setf 5a:*run-test-when-defined* t)  ; test as we go
 (declaim (optimize (debug 3)))       ; max debugging info
-;; (declaim (optimize (speed 3))     ; max speed if needed
 
 (defparameter *data-file* "~/cl/AOC/2023/Day_12/input.txt"
   "Downloaded from the AoC problem set")
@@ -47,12 +46,12 @@ For each row, count all of the different arrangements of operational
 and broken springs that meet the given criteria. What is the sum of
 those counts?"
 
-LEO'S NOTES: The structure of the program is easy, it's writing the
+LEO'S NOTES: The structure of the program is simple, it's writing the
 code to count the possible arrangements that's tough.
 
 Let's start with the easy part: parsing the input. Each line needs to
-be separated into two segments I'll call springs and groupings. I'll put
-a meaningless . char at the end of each condition list to make the
+be separated into two segments I'll call springs and groups. I'll put
+a meaningless . char at the end of each spring string to make the
 check for the final group easier. (Otherwise I get an error comparing
 # to nil.)
 
@@ -101,14 +100,17 @@ integers representing valid groupings of damaged springs"
                 (cons "???.###." '(1 1 3)))))
 
 ;; use memoization to speed up this process (especially in part 2) by
-;; keeping a hash of all the solved spring sub-sequences and their
-;; results - each call to memoize checks to see if I've seen this
-;; argument before and only performs the calculation if it's new
+;; keeping a hash of all the solved tuples and results - each call to
+;; memoize checks to see if I've seen this tuple before and only
+;; performs the calculation if it's new
 (defun memoize (fn)
-  (let ((cache (make-hash-table :test 'equal))) ; add each sub-result into hash
+
+  ;; the result hash (key: args  value: result)
+  (let ((cache (make-hash-table :test 'equal)))
+
     #'(lambda (&rest args)
-        (or (gethash args cache) ; have I already solved this? yes!
-            (setf (gethash args cache) (apply fn args)))))) ; no solve and cache
+        (or (gethash args cache)  ; have I already solved this? yes!
+            (setf (gethash args cache) (apply fn args)))))) ; no, solve and cache
 
 (defun max-damage (springs)
   "returns the largest number of possible damaged springs in a list of
@@ -119,11 +121,11 @@ integers representing valid groupings of damaged springs"
   (5a:is (= 6 (max-damage "??##...##"))))
 
 ;; Use recursion to split the parsing into small chunks, memoizing the
-;; results
+;; results - *cc* is a closure I'll call with funcall
 (defparameter *cc* ; cached count
   (memoize ; cache each substring result
    (lambda (tuple)
-     (let ((springs (car tuple))     ; the list of spring chars
+     (let ((springs (car tuple))     ; the spring string
            (groups (cdr tuple)))     ; the groupings as a list of int
 
        (cond ((null groups)          ; we've done all the groups
@@ -131,10 +133,10 @@ integers representing valid groupings of damaged springs"
                   0                  ; then fail
                   1))                ; no leftovers - a win!
 
-             ;; insufficient springs remain to do the job
+             ;; or insufficient springs remain to do the job, fail!
              ((< (max-damage springs) (apply #'+ groups)) 0)
 
-             (t ; there are still groups and springs left to check
+             (t ; so there are still groups and springs left to check
               (+
                ;; does the first chunk of springs satisfy the first group?
                (if (or
@@ -166,13 +168,13 @@ integers representing valid groupings of damaged springs"
     (5a:is (= (funcall *cc* (fifth d)) 4))
     (5a:is (= (funcall *cc* (sixth d)) 10))))
 
-(Defun Day12 (los)
-  "given a list of strings reflecting each sprint condition return the
-sum of possible arrangements of operational and broken springs"
-  (iter (for l in los)
-    (summing (funcall *cc* l))))
+(Defun Day12 (springs)
+  "given a list of spring tuples return the sum of possible arrangements of
+operational and broken springs"
+  (iter (for tuple in springs)
+    (summing (funcall *cc* tuple))))
 
-(5a:test Day12-test
+(5a:test Day12-1-test
   (5a:is (= (Day12 (parse-input *test-data*)) 21)))
 
 #| ----------------------------------------------------------------------------
@@ -180,12 +182,12 @@ sum of possible arrangements of operational and broken springs"
 
 Let's get exponential!!
 
-"unfold the records, on each row, replace the list of spring springs
+"unfold the records, on each row, replace the list of spring strings
 with five copies of itself (separated by ?) and replace the list of
 contiguous groups of damaged springs with five copies of
 itself (separated by ,)."
 
-I was prepared for this. I'll unfold the original parsed lines and
+LEO'S NOTES: I was prepared for this. I'll unfold the parsed lines and
 then let's see if my simple memoization is up to the task.
 
 Harumph - at least it completes but the time (78 seconds) is
@@ -200,31 +202,36 @@ doing part 2 much faster even with the much slower Python.
 OK I figured it out. I was representing the spring string as a list of
 chars. Strings are vectors and much faster - so I'm leaving it as a
 string (which is a very minor modification as it turns out). And I
-suspect vectors work better as keys for the memoize hash.
+suspect vectors work better as keys for the memoize hash. Also I'm
+making the tuple a cons instead of a list. That might be better for
+the memoization, too. It's nearly 500x faster, so yes, that's better!
 ----------------------------------------------------------------------------|#
 
 (defun unfold-input (los)
-  "given a list of lists containing spring springs and groupings return
- an unfolded list with each condition string repeated five times with a
- ? in between each, and return a list of groupings repeating the
- original group five times."
+  "given a list of strings containing spring strings and groupings return
+ an unfolded list of tuples with every spring string repeated five
+ times with a ? in between each, and each grouping repeated five
+ times."
   (let ((unfolded '()))
 
     (dolist (l los)
       (let* ((splits (re:split " " l))
              (springs (first splits))
-             (rules (mapcar #'parse-integer
-                            (re:all-matches-as-strings "\\d+"
-                                                       (second splits)))))
+             (groups (mapcar #'parse-integer
+                             (re:all-matches-as-strings "\\d+"
+                                                        (second splits)))))
         (push
          (cons
-          (let ((folded (loop repeat 5 collect (concatenate 'string springs "?") into sequences
-                              finally (return (apply #'concatenate 'string sequences)))))
+          (let ((expanded
+                  (loop
+                    repeat 5
+                    collect (concatenate 'string springs "?") into sequences
+                    finally (return (apply #'concatenate 'string sequences)))))
 
-            ;; replace the last ? with .
-            (concatenate 'string (subseq folded 0 (1- (length folded))) "."))
+            ;; replace the last ? with meaningless . for range-checking
+            (concatenate 'string (subseq expanded 0 (1- (length expanded))) "."))
 
-          (iter (repeat 5) (appending rules)))
+          (iter (repeat 5) (appending groups)))
          unfolded)))
 
     (reverse unfolded)))
