@@ -29,7 +29,7 @@
 --- Day 12: Hot Springs ---
 --- Part One ---
 
-For each row, the condition records show every spring and whether it
+"For each row, the condition records show every spring and whether it
 is operational (.) or damaged (#). This is the part of the condition
 records that is itself damaged; for some springs, it is simply
 unknown (?) whether the spring is operational or damaged.
@@ -45,7 +45,7 @@ be 4, never 2,2).
 
 For each row, count all of the different arrangements of operational
 and broken springs that meet the given criteria. What is the sum of
-those counts?
+those counts?"
 
 LEO'S NOTES: The structure of the program is easy, it's writing the
 code to count the possible arrangements that's tough.
@@ -56,9 +56,9 @@ a meaningless . char at the end of each condition list to make the
 check for the final group easier. (Otherwise I get an error comparing
 # to nil.)
 
-Thanks to Peter Norvig (whose solution I pretty much copied) and
-Xavdid (who helped me understand what is actually happening) I have a
-recursive solution to part one.
+Thanks to Peter Norvig (whose solution I adapted) and Xavdid (who
+helped me understand what is actually happening) I have a recursive
+solution to part one.
 
 To speed things up for part two - which grows exponentially - I'll use
 memoization. There's a library for that but I wanted to write my
@@ -87,8 +87,8 @@ integers representing valid groupings of damaged springs"
     (dolist (l los)                     ; go line by line
       (let ((splits (re:split " " l)))  ; split line in two: springs and groupings
 
-        (push (list
-               (concatenate 'list (first splits) '(#\.)) ; turn into lst of char
+        (push (cons
+               (concatenate 'string (first splits) ".")  ; add . for convenience
                (mapcar #'parse-integer                   ; and a list of ints
                        (re:all-matches-as-strings "\\d+"
                                                   (second splits))))
@@ -98,7 +98,7 @@ integers representing valid groupings of damaged springs"
 
 (5a:test parse-input-t
   (5a:is (equal (first (parse-input *test-data*))
-                (list '(#\? #\? #\? #\. #\# #\# #\# #\.) '(1 1 3)))))
+                (cons "???.###." '(1 1 3)))))
 
 ;; use memoization to speed up this process (especially in part 2) by
 ;; keeping a hash of all the solved spring sub-sequences and their
@@ -116,15 +116,15 @@ integers representing valid groupings of damaged springs"
   (+ (count #\# springs) (count #\? springs)))
 
 (5a:test max-damage-test
-  (5a:is (= 6 (max-damage '(#\# #\? #\. #\? #\. #\# #\# #\#)))))
+  (5a:is (= 6 (max-damage "??##...##"))))
 
 ;; Use recursion to split the parsing into small chunks, memoizing the
 ;; results
 (defparameter *cc* ; cached count
   (memoize ; cache each substring result
    (lambda (tuple)
-     (let ((springs (first tuple))   ; the list of spring chars
-           (groups (second tuple)))  ; the groupings as a list of int
+     (let ((springs (car tuple))     ; the list of spring chars
+           (groups (cdr tuple)))     ; the groupings as a list of int
 
        (cond ((null groups)          ; we've done all the groups
               (if (find #\# springs) ; if leftover #s
@@ -142,20 +142,20 @@ integers representing valid groupings of damaged springs"
                     (not (= (max-damage (subseq springs 0 (first groups)))
                             (first groups)))
                     ;; the group is followed by #\# (breaking it)
-                    (char= #\# (first (subseq springs (first groups)))))
+                    (char= #\# (char (subseq springs (first groups)) 0)))
                    0   ; then it's a fail
 
                    ;; else we've got the first group so chop
                    ;; off that group (and following spring
                    ;; which must be .) and continue
-                   (funcall *cc* (list (subseq springs (1+ (first groups)))
+                   (funcall *cc* (cons (subseq springs (1+ (first groups)))
                                        (rest groups))))
 
                ;;  we don't have a satisfactory group, so what do we have?
-               (if (char= #\# (first springs)) ; do we have a bad group?
-                   0                           ; in which case, fail
+               (if (char= #\# (char springs 0)) ; do we have a bad group?
+                   0                            ; in which case, fail
                    ;; not damaged, so it must be operational, drop and recurse
-                   (funcall *cc* (list (rest springs) groups))))))))))
+                   (funcall *cc* (cons (subseq springs 1) groups))))))))))
 
 (5a:test funcall-*cc*-test
   (let ((d (parse-input *test-data*)))
@@ -196,6 +196,11 @@ some much worse.
 
 There's some optimization that's eluding me because I know people are
 doing part 2 much faster even with the much slower Python.
+
+OK I figured it out. I was representing the spring string as a list of
+chars. Strings are vectors and much faster - so I'm leaving it as a
+string (which is a very minor modification as it turns out). And I
+suspect vectors work better as keys for the memoize hash.
 ----------------------------------------------------------------------------|#
 
 (defun unfold-input (los)
@@ -207,15 +212,18 @@ doing part 2 much faster even with the much slower Python.
 
     (dolist (l los)
       (let* ((splits (re:split " " l))
-             (springs (coerce (first splits) 'list))
+             (springs (first splits))
              (rules (mapcar #'parse-integer
                             (re:all-matches-as-strings "\\d+"
                                                        (second splits)))))
         (push
-         (list
-          (append
-           (rest (iter (repeat 5) (appending (cons #\? springs))))
-           '(#\.))
+         (cons
+          (let ((folded (loop repeat 5 collect (concatenate 'string springs "?") into sequences
+                              finally (return (apply #'concatenate 'string sequences)))))
+
+            ;; replace the last ? with .
+            (concatenate 'string (subseq folded 0 (1- (length folded))) "."))
+
           (iter (repeat 5) (appending rules)))
          unfolded)))
 
@@ -246,16 +254,16 @@ doing part 2 much faster even with the much slower Python.
 
 ;; The answer to AOC 2023 Day 12 Part 1 is 6488
 ;; Evaluation took:
-;; 0.219 seconds of real time
-;; 0.219077 seconds of total run time (0.218875 user, 0.000202 system)
+;; 0.007 seconds of real time
+;; 0.006673 seconds of total run time (0.006230 user, 0.000443 system)
 ;; 100.00% CPU
-;; 5,364,464 bytes consed
+;; 4,228,144 bytes consed
 
 ;; The answer to AOC 2023 Day 12 Part 2 is 815364548481
 ;; Evaluation took:
-;; 80.559 seconds of real time
-;; 80.427035 seconds of total run time (80.370239 user, 0.056796 system)
-;; [ Real times consist of 0.045 seconds GC time, and 80.514 seconds non-GC time. ]
-;; [ Run times consist of 0.045 seconds GC time, and 80.383 seconds non-GC time. ]
-;; 99.84% CPU
-;; 190,909,600 bytes consed
+;; 0.165 seconds of real time
+;; 0.166004 seconds of total run time (0.162056 user, 0.003948 system)
+;; [ Real times consist of 0.010 seconds GC time, and 0.155 seconds non-GC time. ]
+;; [ Run times consist of 0.010 seconds GC time, and 0.157 seconds non-GC time. ]
+;; 100.61% CPU
+;; 104,884,816 bytes consed
