@@ -67,9 +67,14 @@ index of the first fold row +1 (the rows are zero-based).
 
 3. If rows don't match, do the same with cols (rotate rect and repeat)
 
-OK sneaky. I've found at least one rectangle with three folds - only one
-is a mirror. (See *prob-rect*) so I have to keep checking for multiple
-folds in any given rectangle.
+FIXES: OK sneaky. I've found at least one rectangle with three folds -
+only ; one is a mirror so I have to keep checking for multiple folds
+in any given rectangle.
+
+Oh and also apparently some people had NO mirrors in one or more rects
+- in which case the result is 0. Which of course doesn't affect the
+result - but it shouldn't cause an error by comparing nil to 0. So
+I'll fix that.
 
 ----------------------------------------------------------------------------|#
 
@@ -90,27 +95,6 @@ folds in any given rectangle.
     "..##..###"
     "#....#..#"))
 
-(defparameter *prob-rect*
-  '("########...#."
-    ".#...#......."
-    "##.##.#...##."
-    "####.#.##.##."
-    "..#..##...#.#"
-    "##.##.#.#.#.."
-    "#.####....###"
-    "#.##.#..#####"
-    "#.##.#..#####"
-    "#.####....###"
-    "##.##.#.#.#.#"
-    "##.##.#.#.#.#"
-    "#.####....###"
-    "#.##.#..#####"
-    "#.##.#..#####"
-    "#.####....###"
-    "##.##.#.#.#..")
-  "this rectangle has three matched pairs of lines - but only one is an
-actual line of reflection")
-
 (defun parse-input (los)
   "turns a list of strings into a list of lists of strings, each
 representing a complete rectangle, creating a new rectangle at every
@@ -130,7 +114,6 @@ empty string"
 (defparameter *rects* (parse-input *test-data*))
 (defparameter *rect1* (first *rects*))
 (defparameter *rect2* (second *rects*))
-(defparameter *rect3* (parse-input *prob-rect*))
 
 (defun rotate-rect (rect)
   "turns a list of strings clockwise 90 degrees"
@@ -176,17 +159,17 @@ line (which includes the top side of the mirror), otherwise nil"
   (5a:is-false (find-mirror-exact *rect1*))
   (5a:is (= (find-mirror-exact (rotate-rect *rect1*)) 5))
   (5a:is (= (find-mirror-exact *rect2*) 4))
-  (5a:is-false (find-mirror-exact (rotate-rect *rect2*)))
-  (5a:is (= (find-mirror-exact *prob-rect*) 11)))
+  (5a:is-false (find-mirror-exact (rotate-rect *rect2*))))
 
 (defun rows-before-mirror (rect)
   "given a rect return 100 * the number lines above or 1 * the number
 of lines to the left of the mirror fold"
-  (let ((rows (find-mirror-exact rect)))
+  (Let ((row (find-mirror-exact rect)))
 
-    (if rows                                      ; found it?
-        (* 100 rows)                              ; it's a horiz mirror
-        (find-mirror-exact (rotate-rect rect))))) ; else vert mirror
+    (if row
+        (* 100 row )                               ; horiz mirror
+        (or (find-mirror-exact (rotate-rect rect)) ; vertical mirror
+            0))))                    ; no mirror in either direction
 
 (5a:test rows-before-mirror-test
   (5a:is (= 5 (rows-before-mirror *rect1*)))
@@ -230,12 +213,13 @@ once in any given rectangle. So I need a closure that keeps track of
 the state of the compare - once relaxed compare has been used it must
 revert to an exact compare until the next rectangle.
 
-Hmm. The number is too high. I guess I really will have to eliminate
-mirrors from part 1 (remember that line: 'fix the smudge that causes a
-DIFFERENT reflection line to be valid') drat. It's getting ugly up
-there; instead of continuing to Frankenstein my solution from Part 1
-I'm going to leave it as is and create new definitions for part 2
-below.
+FIXES: Hmm. The number is too high. I guess I really will have to
+eliminate mirrors from part 1. (Remember that line: 'fix the smudge
+that causes a DIFFERENT reflection line to be valid'?) Drat.
+
+It's getting ugly up there. Instead of continuing to Frankenstein my
+solution from Part 1 I'm going to leave it as is and create new
+definitions for part 2 below.
 
 ----------------------------------------------------------------------------|#
 
@@ -249,7 +233,7 @@ below.
   ;; more than one character, but if the strings do differ by one,
   ;; future calls require an exact match until the function is reset
   ;; by adding the optional parameter 'INEXACT (or force exact string
-  ;; matching with 'EXACT)
+  ;; matching with 'EXACT anytime.)
   (let ((state 'INEXACT))               ; state persists between calls
     #'(lambda (str1 str2 &optional (mode))
 
@@ -284,13 +268,13 @@ below.
   (5a:is-true (funcall *rsc* "abc" "abd" 'INEXACT)) ; reset, match
   (5a:is-false (funcall *rsc* "abc" "abd")))        ; again, no match
 
-(defun find-mirror-inexact (rect &optional (mode 'INEXACT))
+(defun find-mirror-inexact (rect &optional (start-row 0))
   "returns the mirror line in a rect using an inexact match"
-  (iter (for row below (length rect))   ; for each row in rect
+  (iter (for row from start-row below (length rect))   ; for each row in rect
     ;; is it a mirror?
-    (when (funcall *rsc* (nth row rect) (nth (1+ row) rect)) ; lines match
-      (if (zerop row)                                  ; first row?
-          (return-from get-mirror 1)                   ; then done
+    (when (funcall *rsc* (nth row rect) (nth (1+ row) rect) 'INEXACT)
+      (if (zerop row)                   ; first row?
+          (return-from find-mirror-inexact 1)    ; then done
           ;; otherwise check surrounding rows
           (when (iter                   ; do surrounding rows match?
                   (for up from (1- row) downto 0)
@@ -301,11 +285,29 @@ below.
             (return-from find-mirror-inexact (1+ row))))))
   nil)
 
-(defun rows-before-smudged-mirror (rect)
-  0                                     ; stub
-  )
+(5a:test find-mirror-inexact-test
+  (5a:is (= 3 (find-mirror-inexact *rect1*)))
+  (5a:is (= 1 (find-mirror-inexact *rect2*))))
 
-(5a:test rows-before-mirror-test-2
+(defun rows-before-smudged-mirror (rect)
+  "returns the mirror row using the more relaxed string=, ensures that the smudged row is different from the exact mirror row in part 1"
+  (labels ((smudged-mirror-row (rect)
+             ;; searches for a mirror row not seen in part 1
+             ;; returns nil if none is found
+             (let ((exact (find-mirror-exact rect))      ; part 1 mirror
+                   (inexact (find-mirror-inexact rect))) ; pssble smudged mir
+               (cond ((null inexact) nil) ; couldn't find a mirror at all
+                     ((equal exact inexact) ; if they're the same
+                      (find-mirror-inexact rect exact)) ; try again
+                     (t inexact))))) ; else return smudged mirror row
+
+    (let ((result (smudged-mirror-row rect)))
+      (if result
+          (* 100 result)                      ; got a horizontal row
+          (or (smudged-mirror-row (rotate-rect rect)) ; got vert row
+              0)))))                                  ; got nuthin'
+
+(5a:test rows-before-smudged-mirror-test
   (5a:is (= 300 (rows-before-smudged-mirror *rect1*)))
   (5a:is (= 100 (rows-before-smudged-mirror *rect2*))))
 
@@ -315,7 +317,8 @@ below.
       (sum (rows-before-smudged-mirror r)))))
 
 (5a:test day13-2-test
-  (5a:is (= (day13-2 *test-data*) 400)))
+  (5a:is (= (day13-2 *test-data*) 400))
+  (5a:is (= (day13-2 *other-rects*) 2800)))
 
 (time (format t "The answer to AOC 2023 Day 13 Part 1 is ~a"
               (day13-1 (uiop:read-file-lines *data-file*))))
@@ -326,3 +329,17 @@ below.
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2023 Day 13 Part 1 is 33735
+;; Evaluation took:
+;; 0.001 seconds of real time
+;; 0.000893 seconds of total run time (0.000750 user, 0.000143 system)
+;; 100.00% CPU
+;; 917,296 bytes consed
+
+;; The answer to AOC 2023 Day 13 Part 2 is 38063
+;; Evaluation took:
+;; 0.001 seconds of real time
+;; 0.001030 seconds of total run time (0.001002 user, 0.000028 system)
+;; 100.00% CPU
+;; 851,680 bytes consed
