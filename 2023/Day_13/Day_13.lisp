@@ -330,16 +330,17 @@ definitions for part 2 below.
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; ----------------------------------------------------------------------------
 
+
 ;; The answer to AOC 2023 Day 13 Part 1 is 33735
 ;; Evaluation took:
 ;; 0.001 seconds of real time
-;; 0.000893 seconds of total run time (0.000750 user, 0.000143 system)
+;; 0.000765 seconds of total run time (0.000593 user, 0.000172 system)
 ;; 100.00% CPU
-;; 917,296 bytes consed
+;; 917,216 bytes consed
 
 ;; The answer to AOC 2023 Day 13 Part 2 is 38063
 ;; Evaluation took:
-;; 0.001 seconds of real time
-;; 0.001030 seconds of total run time (0.001002 user, 0.000028 system)
+;; 0.000 seconds of real time
+;; 0.000753 seconds of total run time (0.000730 user, 0.000023 system)
 ;; 100.00% CPU
-;; 851,680 bytes consed
+;; 851,792 bytes consed
