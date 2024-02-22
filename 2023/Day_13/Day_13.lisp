@@ -186,7 +186,8 @@ of lines to the left of the mirror fold"
 #| ----------------------------------------------------------------------------
 --- Part Two ---
 
-"Upon closer inspection, you discover that every mirror has exactly one smudge: exactly one . or # should be the opposite type.
+"Upon closer inspection, you discover that every mirror has exactly
+one smudge: exactly one . or # should be the opposite type.
 
 In each pattern, you'll need to locate and fix the smudge that causes
 a _different reflection line to be valid_. (The old reflection line
@@ -290,7 +291,8 @@ definitions for part 2 below.
   (5a:is (= 1 (find-mirror-inexact *rect2*))))
 
 (defun rows-before-smudged-mirror (rect)
-  "returns the mirror row using the more relaxed string=, ensures that the smudged row is different from the exact mirror row in part 1"
+  "returns the mirror row using the more relaxed string=, ensures that
+the smudged row is different from the exact mirror row in part 1"
   (labels ((smudged-mirror-row (rect)
              ;; searches for a mirror row not seen in part 1
              ;; returns nil if none is found
