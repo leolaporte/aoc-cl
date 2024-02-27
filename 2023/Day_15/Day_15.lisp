@@ -107,12 +107,15 @@ We'll call our hash table boxes and for each key (0...24)
 there will be a list of lenses stored in the order they're
 processed as (cons label focal-length)
 
+Oops. Can't assume the lens label is just two characters (as
+in the sample). Changing [a-z]{2} to [a-z]+.
+
 ------------------------------------------------------------------- |#
 
 (defparameter *lens-regexp*
   (re:create-scanner "([a-z]+)(-|=)(\\d?)")
   "using cl-ppcre library: pre-compiled regular expression for
-lenses containing three groups: 2 lower case characters,
+lenses containing three groups: n lower case characters,
  followed by either - or =, followed by an optional single
  digit representing the focal length")
 
