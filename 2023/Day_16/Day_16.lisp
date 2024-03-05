@@ -318,13 +318,22 @@ the beams are done"
   (5a:is (= 2 (Day16-1 *sample3* (cons 0 0) 'E))))
 
 #| ----------------------------------------------------------------------------
-                           --- Part Two ---
+--- Part Two ---
 
-"a collection of buttons lets you align the contraption so that the beam enters from any edge tile and heading away from that edge. (You can choose either of two directions for the beam if it starts on a corner; for instance, if the beam starts in the bottom-right corner, it can start heading either left or upward.)"
+"a collection of buttons lets you align the contraption so that the
+beam enters from any edge tile and heading away from that edge. (You
+can choose either of two directions for the beam if it starts on a
+corner; for instance, if the beam starts in the bottom-right corner,
+it can start heading either left or upward.)"
 
-Find the initial beam configuration that energizes the largest number of tiles; how many tiles are energized in that configuration?"
+Find the initial beam configuration that energizes the largest number
+of tiles; how many tiles are energized in that configuration?"
 
-LEO'S NOTES: This should be simple to brute force since there are only (+ (* 2 height) (* 2 width) 4) tests (in other word perimeter + 4)
+LEO'S NOTES: This should be simple to brute force since there are
+only (+ (* 2 height) (* 2 width)) tests (in other word perimeter)
+
+Yeah takes 16 seconds. Not great but I dont see any obvious
+shortcuts. I'm gonna take the win and move on.
 
 ---------------------------------------------------------------------------- |#
 
