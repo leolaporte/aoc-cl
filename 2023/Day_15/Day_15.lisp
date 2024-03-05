@@ -25,8 +25,8 @@
   "Downloaded from the AoC problem set")
 
 #| -------------------------------------------------------------------
---- Day 15: Lens Library ---
---- Part One ---
+                     --- Day 15: Lens Library ---
+                           --- Part One ---
 
 "The HASH algorithm is a way to turn any string of characters into a
 single number in the range 0 to 255. To run the HASH algorithm on a
@@ -84,10 +84,10 @@ can get. Which makes me very nervous for part 2.
   (5a:is (= 1320 (Day15-1 *sample*))))
 
 #| -------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 yada yada yada - lots of detailed instructions which boil
-down to: interpret the provided data as a series of
+down to: interpretg the provided data as a series of
 lenses. Store the lenses then return the total focusing
 power of the resulting configuration?
 
