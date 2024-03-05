@@ -26,8 +26,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
-                --- Day 16: The Floor Will Be Lava ---
-                           --- Part One ---
+--- Day 16: The Floor Will Be Lava ---
+--- Part One ---
 
 "The beam enters in the top-left corner from the left and heading to
 the right. Then, its behavior depends on what it encounters as it
@@ -66,18 +66,19 @@ LEO'S NOTES: Let's do the sparse hash thing again.
 
 We can record the ENERGIZED tiles as a list. We'll also need a list of
 BEAMS (since multiple beams can be created). I'll make BEAM a struct
-with x y and heading.
+with POS as (cons row col) and DIR as its current heading (which
+changes when it hits a mirror or splitter.
 
 The problem doesn't say when the processing ends, though. Is it when a
 beam goes off the grid? Repeats infinitely? Once a beam is on the same
 point with the same heading it will repeat infinitely so we no longer
 need to track it. I'll have to keep track of where the beam has been
 and what direction it's heading in in another list: VISITED with
-position and heading as (cons pos dir). If I do that I don't need the
+position and heading as (cons POS DIR). If I do that I don't need the
 ENERGIZED list - I can just look at all the visited fields.
 
 Also every move can result in more beams being created. So I'll have a
-list of beams that are currently active and add to them when I
+list of BEAMS that are currently active and add to them when I
 split. When the beam is either off the grid (never to return) or in a
 repeating cycle I can stop processing it so I'll remove it from the
 BEAMS list. When the list is empty the process is done and we can
@@ -110,11 +111,11 @@ characters")
 visitations")
 
 (defun been-there? (pos dir)
-  "returns true if the *visited* hash contains dir at that position"
-  (member dir (gethash pos *visited*) :test #'equal))
+  "returns true if the *visited* hash contains DIR at that POS"
+  (member dir (gethash pos *visited*)))
 
 (defun done-that (pos dir)
-  "adds the dir to the pos in the *visited* hash"
+  "adds the DIR to the POS in the *visited* hash"
   (let ((dirs (gethash pos *visited*)))
     (push dir dirs)
     (setf (gethash pos *visited*) dirs)))
@@ -159,7 +160,7 @@ additional item for height and width: 'dim => (cons width height)"
   (cdr pos))
 
 (defun next-pos (pos dir grid)
-  "given a point, moves in the direction and returns the next point
+  "given a POS, moves in the DIR and returns the next POS
 as (cons row col) or nil if it's off the grid"
   (let ((width (car (gethash 'dim grid)))
         (height (cdr (gethash 'dim grid)))
@@ -185,17 +186,16 @@ as (cons row col) or nil if it's off the grid"
     (5a:is (equal (next-pos (cons 9 9) 'S grid) nil))))
 
 (defun next-mirror (pos dir grid)
-  "given a position and direction 'N 'E 'W 'S to move on a sparse hash
-grid, return the next populated position as (cons row col) or nil if
-the move is off the grid, track all visited positions in VISITED as
-energized"
+  "given a POS and DIR 'N 'E 'W 'S to move on a sparse hash
+GRID, return the next populated position as (cons row col) or nil if
+the move is off the grid, track all visited positions in *VISITED*"
   (let ((new-pos (next-pos pos dir grid))) ; next coordinate
 
     (iter
       (while (and new-pos                        ; on the grid
                   (not (gethash new-pos grid)))) ; but not on a mirror
 
-      (done-that new-pos dir)        ; record visit
+      (done-that new-pos dir)                    ; record visit
       (setf new-pos (next-pos new-pos dir grid)) ; keep moving
 
       ;; either off grid (nil) or on a mirror/splitter (cons x y)
@@ -209,43 +209,44 @@ energized"
     (5a:is (equal (next-mirror (cons 3 8) 'S grid) nil))))
 
 (defun next-dir (pos dir grid)
-  "given a position on a mirror/splitter and a heading, return the next
-heading if it's a mirror, or if it's a splitter continue on if it's
+  "given a POS on a mirror/splitter and a DIR, return the next
+DIR if it's a mirror, or if it's a splitter continue on if it's
 hitting it head on, or split into two beams, push the new beam on
-*BEAMS* and return the new heading for the exisiting beam"
-  (let ((mirror (gethash pos grid)))  ; char at position
+*BEAMS* for later processing, mark the POS/DIR in *VISITED* and return
+the new DIR for the exisiting beam"
 
-    (cond ((char= mirror #\\)         ; change dir
-           (cond ((equal dir 'N) 'W)
-                 ((equal dir 'E) 'S)
-                 ((equal dir 'W) 'N)
-                 ((equal dir 'S) 'E)))
+  (tr:match (gethash pos grid) ; what have we here?
+    (#\\         ; change dir
+     (cond ((equal dir 'N) 'W)
+           ((equal dir 'E) 'S)
+           ((equal dir 'W) 'N)
+           ((equal dir 'S) 'E)))
 
-          ((char= mirror #\/)         ; change dir
-           (cond ((equal dir 'N) 'E)
-                 ((equal dir 'E) 'N)
-                 ((equal dir 'W) 'S)
-                 ((equal dir 'S) 'W)))
+    (#\/         ; change dir
+     (cond ((equal dir 'N) 'E)
+           ((equal dir 'E) 'N)
+           ((equal dir 'W) 'S)
+           ((equal dir 'S) 'W)))
 
-          ((char= mirror #\|)           ; split or do nothing
-           (cond ((or (equal dir 'N) (equal dir 'S)) dir)
-                 ((or (equal dir 'E) (equal dir 'W))
-                  ;; it's a split so make a new beam going 'S
-                  (push (make-beam :pos pos :dir 'S) *beams*)
-                  (done-that pos 'S)
-                  ;; and aim original beam 'N
-                  'N)))
+    (#\|         ; continue or split
+     (cond ((or (equal dir 'N) (equal dir 'S)) dir) ; continue
+           ((or (equal dir 'E) (equal dir 'W))      ; split
+            ;; it's a split so make a new beam going 'S
+            (push (make-beam :pos pos :dir 'S) *beams*)
+            (done-that pos 'S)
+            ;; and aim original beam 'N
+            'N)))
 
-          ((char= mirror #\-)           ; split or do nothing
-           (cond ((or (equal dir 'E) (equal dir 'W)) dir)
-                 ((or (equal dir 'S) (equal dir 'N))
-                  ;; it's a split so make a new beam going 'E
-                  (push (make-beam :pos pos :dir 'E) *beams*)
-                  (done-that pos 'E)
-                  ;; and aim original beam 'W
-                  'W)))
+    (#\-         ; continue or split
+     (cond ((or (equal dir 'E) (equal dir 'W)) dir) ; continue
+           ((or (equal dir 'S) (equal dir 'N))      ; split
+            ;; it's a split so make a new beam going 'E
+            (push (make-beam :pos pos :dir 'E) *beams*)
+            (done-that pos 'E)
+            ;; and aim original beam 'W
+            'W)))
 
-          (t (error "What is that?? ~A" mirror)))))
+    (otherwise (error "What is that?? ~A" (gethash pos grid)))))
 
 (5a:test next-dir-test
   (let ((grid (make-sparse-hash *sample*)))
@@ -256,11 +257,11 @@ hitting it head on, or split into two beams, push the new beam on
 
 (defun move-one (grid)
   "given a mirror grid, move the first beam in the *BEAMS* list in its
-current direction until it hits a mirror, returns to a previous pos
-and heading, or goes off the grid. Remove BEAM from *BEAMS* list if
-it's off the grid or repeating a previous path, otherwise move it to
-the next position, update the heading, and, if indicated, make another
-beam (split). Modifies the global *BEAMS* and *VISITED* lists."
+current DIR until it hits a mirror, returns to a previous POS and DIR,
+or goes off the grid. Remove BEAM from *BEAMS* list if it's off the
+grid or repeating a previous path, otherwise move it to the next POS,
+update DIR, and, if indicated, make another beam (split). Modifies the
+global *BEAMS* and *VISITED* lists."
   (let* ((beam (pop *beams*))         ; pop the top beam off the stack
          (pos (beam-pos beam))        ; position before moving
          (dir (beam-dir beam))        ; active beam's heading
@@ -270,21 +271,21 @@ beam (split). Modifies the global *BEAMS* and *VISITED* lists."
     (when (null new-pos)         ; off-grid
       (return-from move-one))    ; leave beam off stack and return
 
-    ;; it's sitting on a mirror
+    ;; no? then it's sitting on a mirror
     (setf (beam-pos beam) new-pos)
     (setf (beam-dir beam) (next-dir new-pos dir grid))
 
-    ;; have we already seen this new position and heading? no need to
+    ;; have we already seen this new POS and DIR? no need to
     ;; re-litigate. Leave the beam off the stack and get the next one
     (when (been-there? (beam-pos beam) (beam-dir beam))
       (return-from move-one))
 
-    ;; save the results of our labors
-    (done-that (beam-pos beam) (beam-dir beam))
+    ;; otherwise, save the results of our labors
+    (done-that (beam-pos beam) (beam-dir beam)) ; record visit
     (push beam *beams*))) ; put updated beam back on stack
 
 (defun count-energized-tiles ()
-  "returns the number of unique tiles that have been visited by one or
+  "returns the number of tiles that have been visited by one or
 more beams"
   (iter (for (keys values) in-hashtable *visited*)
     (when values
@@ -297,26 +298,24 @@ the beams are done"
   (let ((grid (make-sparse-hash los)))
 
     ;; setup *visited*
-    (clrhash *visited*)
+    (clrhash *visited*) ; make sure it's empty from previous runs
+    ;; then create an entry for every position on the grid
     (iter (for row below (car (gethash 'dim grid)))
       (iter (for col below (cdr (gethash 'dim grid)))
         (setf (gethash (cons row col) *visited*) '())))
 
     ;; special case - if initial square is a mirror
     ;; process it before moving to next position
-    (cond ((gethash start-pos grid) ; starting on a mirror
-           (let ((new-dir (next-dir start-pos start-dir grid)))
-             (setf *beams*
-                   (list (make-beam :pos start-pos :dir new-dir)))
-             (done-that start-pos new-dir)))
+    (when (gethash start-pos grid) ; starting on a mirror/split
+      (setf start-dir (next-dir start-pos start-dir grid)))
 
-          (t ; otherwise
-           (setf *beams*
-                 (list (make-beam :pos start-pos :dir start-dir))) ; start point
-           (done-that start-pos start-dir)))  ; first point visited
+    (done-that start-pos start-dir)  ; save visit to *visited*
+    (setf *beams*                    ; make the starting beam
+          (list (make-beam :pos start-pos :dir start-dir)))
 
-    (iter (while *beams*) ; while there are beams left
-      (move-one grid)
+    ;; now go!
+    (iter (while *beams*) ; while there are beams on stack
+      (move-one grid)     ; move top beam one tile, repeat
       (finally (return (count-energized-tiles))))))
 
 (5a:test Day16-1-test
@@ -328,7 +327,7 @@ the beams are done"
 #| ----------------------------------------------------------------------------
 --- Part Two ---
 
-"a collection of buttons lets you align the contraption so that the
+"A collection of buttons lets you align the contraption so that the
 beam enters from any edge tile and heading away from that edge. (You
 can choose either of two directions for the beam if it starts on a
 corner; for instance, if the beam starts in the bottom-right corner,
@@ -346,13 +345,13 @@ shortcuts. I'm gonna take the win and move on.
 Oh I can't do it. It's just too slow. I'm going to try one
 optimization. I'm sure the slowest part of the code is the call to
 MEMBER *VISITED* - lists are very slow to search - so I'll make
-*VISITED* a hash with the keys being the position on the grid and the
-values being the headings of beam visits.
+*VISITED* a hash with the keys being the POS on the grid and the
+values being the DIRs of beam visits.
 
 This will require a re-write of ENERGIZED and I'll have to change the
-various visited routines. I'll write BEEN-THERE? to check if a beam
-has been here before and DONE-THAT to add a beam's heading to its
-position in the hash. Let's see if that helps.
+various calls to *VISITED*. I'll write BEEN-THERE? to check if a beam
+has been here before with a given dir and DONE-THAT to add a beam's
+dir to its position in the hash. Let's see if that helps.
 
 Yeah! That really worked. Now under 1 second, and the code is cleaner,
 too!
@@ -379,7 +378,7 @@ pos dir) for each perimeter point on the grid"
 (defun Day16-2 (los)
   "given a list of strings reflecting a field of mirrors and splitters,
  try every starting point on the perimeter of the field to find the
- one that returns the hightst number of energized points"
+ one that returns the highest number of energized points"
   (let ((starts (make-perimeter-points los)))
     (iter (for s in starts)
       (maximize (day16-1 los (car s) (cdr s))))))
@@ -400,16 +399,16 @@ pos dir) for each perimeter point on the grid"
 
 ;; The answer to AOC 2023 Day 16 Part 1 is 7392
 ;; Evaluation took:
-;; 0.002 seconds of real time
-;; 0.002642 seconds of total run time (0.002601 user, 0.000041 system)
-;; 150.00% CPU
-;; 2,405,184 bytes consed
+;; 0.005 seconds of real time
+;; 0.005452 seconds of total run time (0.005300 user, 0.000152 system)
+;; 100.00% CPU
+;; 1,065,584 bytes consed
 
 ;; The answer to AOC 2023 Day 16 Part 2 is 7665
 ;; Evaluation took:
-;; 0.946 seconds of real time
-;; 0.945969 seconds of total run time (0.943536 user, 0.002433 system)
-;; [ Real times consist of 0.219 seconds GC time, and 0.727 seconds non-GC time. ]
-;; [ Run times consist of 0.218 seconds GC time, and 0.728 seconds non-GC time. ]
+;; 0.735 seconds of real time
+;; 0.735450 seconds of total run time (0.733087 user, 0.002363 system)
+;; [ Real times consist of 0.010 seconds GC time, and 0.725 seconds non-GC time. ]
+;; [ Run times consist of 0.010 seconds GC time, and 0.726 seconds non-GC time. ]
 ;; 100.00% CPU
-;; 357,312,880 bytes consed
+;; 357,285,968 bytes consed
