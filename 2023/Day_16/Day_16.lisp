@@ -93,19 +93,31 @@ so a little fix in the main routine.
 ---------------------------------------------------------------------------- |#
 
 (defparameter *sample1-file* "~/cl/AOC/2023/Day_16/sample.txt"
-  "have to do it this way because lisp treats slashes as special characters")
+  "have to do it this way because lisp treats slashes as special
+characters")
 (defparameter *sample1* (uiop:read-file-lines *sample-file*))
 
 (defparameter *sample2-file* "~/cl/AOC/2023/Day_16/sample2.txt"
-  "have to do it this way because lisp treats slashes as special characters")
+  "this should energize every point")
 (defparameter *sample2* (uiop:read-file-lines *sample2-file*))
 
 (defparameter *sample3-file* "~/cl/AOC/2023/Day_16/sample3.txt"
-  "have to do it this way because lisp treats slashes as special characters")
+  "(0 0) is a mirror")
 (defparameter *sample3* (uiop:read-file-lines *sample3-file*))
 
-(defparameter *visited* '()
-  "GLOBAL! list of energized points")
+(defparameter *visited* (make-hash-table :test 'equal)
+  "GLOBAL! hash with key being all points and value the headings of
+visitations")
+
+(defun been-there? (pos dir)
+  "returns true if the *visited* hash contains dir at that position"
+  (member dir (gethash pos *visited*) :test #'equal))
+
+(defun done-that (pos dir)
+  "adds the dir to the pos in the *visited* hash"
+  (let ((dirs (gethash pos *visited*)))
+    (push dir dirs)
+    (setf (gethash pos *visited*) dirs)))
 
 (defparameter *beams* '()
   "GLOBAL! list of active beam structures")
@@ -159,12 +171,10 @@ as (cons row col) or nil if it's off the grid"
                    (otherwise (error "Unknown direction ~A" dir)))))
 
     ;; make sure we're still on the grid
-    (if (or (>= (row new-pos) height)
-            (< (row new-pos) 0)
-            (>= (col new-pos) width)
-            (< (col new-pos) 0))
-        nil
-        new-pos)))
+    (if (and (< -1 (row new-pos) height)
+             (< -1 (col new-pos) width))
+        new-pos
+        nil)))
 
 (5a:test next-pos-test
   (let ((grid (make-sparse-hash *sample*)))
@@ -185,7 +195,7 @@ energized"
       (while (and new-pos                        ; on the grid
                   (not (gethash new-pos grid)))) ; but not on a mirror
 
-      (push (cons new-pos dir) *visited*)        ; record visit
+      (done-that new-pos dir)        ; record visit
       (setf new-pos (next-pos new-pos dir grid)) ; keep moving
 
       ;; either off grid (nil) or on a mirror/splitter (cons x y)
@@ -222,7 +232,7 @@ hitting it head on, or split into two beams, push the new beam on
                  ((or (equal dir 'E) (equal dir 'W))
                   ;; it's a split so make a new beam going 'S
                   (push (make-beam :pos pos :dir 'S) *beams*)
-                  (push (cons pos 'S) *visited*)
+                  (done-that pos 'S)
                   ;; and aim original beam 'N
                   'N)))
 
@@ -231,7 +241,7 @@ hitting it head on, or split into two beams, push the new beam on
                  ((or (equal dir 'S) (equal dir 'N))
                   ;; it's a split so make a new beam going 'E
                   (push (make-beam :pos pos :dir 'E) *beams*)
-                  (push (cons pos 'E) *visited*)
+                  (done-that pos 'E)
                   ;; and aim original beam 'W
                   'W)))
 
@@ -266,23 +276,19 @@ beam (split). Modifies the global *BEAMS* and *VISITED* lists."
 
     ;; have we already seen this new position and heading? no need to
     ;; re-litigate. Leave the beam off the stack and get the next one
-    (when (member
-           (cons (beam-pos beam) (beam-dir beam)) *visited* :test #'equalp)
+    (when (been-there? (beam-pos beam) (beam-dir beam))
       (return-from move-one))
 
     ;; save the results of our labors
-    (push (cons (beam-pos beam) (beam-dir beam)) *visited*)
+    (done-that (beam-pos beam) (beam-dir beam))
     (push beam *beams*))) ; put updated beam back on stack
 
 (defun count-energized-tiles ()
   "returns the number of unique tiles that have been visited by one or
 more beams"
-  (let ((energized '()))
-    ;; strip direction info from visited
-    (iter (for v in *visited*)
-      (push (first v) energized) ; strip off dir - just get pos
-      (finally (return (length
-                        (remove-duplicates energized :test #'equal)))))))
+  (iter (for (keys values) in-hashtable *visited*)
+    (when values
+      (count keys))))
 
 (defun Day16-1 (los start-pos start-dir)
   "Given a list of strings reflecting a field of mirrors, and a starting
@@ -290,7 +296,11 @@ point and direction, return the number of energized points once all
 the beams are done"
   (let ((grid (make-sparse-hash los)))
 
-    ;; set up the globals
+    ;; setup *visited*
+    (clrhash *visited*)
+    (iter (for row below (car (gethash 'dim grid)))
+      (iter (for col below (cdr (gethash 'dim grid)))
+        (setf (gethash (cons row col) *visited*) '())))
 
     ;; special case - if initial square is a mirror
     ;; process it before moving to next position
@@ -298,14 +308,12 @@ the beams are done"
            (let ((new-dir (next-dir start-pos start-dir grid)))
              (setf *beams*
                    (list (make-beam :pos start-pos :dir new-dir)))
-             (setf *visited*
-                   (list (cons start-pos new-dir)))))
+             (done-that start-pos new-dir)))
 
           (t ; otherwise
            (setf *beams*
                  (list (make-beam :pos start-pos :dir start-dir))) ; start point
-           (setf *visited*
-                 (list (cons start-pos start-dir)))))  ; first point visited
+           (done-that start-pos start-dir)))  ; first point visited
 
     (iter (while *beams*) ; while there are beams left
       (move-one grid)
@@ -335,6 +343,20 @@ only (+ (* 2 height) (* 2 width)) tests (in other word perimeter)
 Yeah takes 16 seconds. Not great but I dont see any obvious
 shortcuts. I'm gonna take the win and move on.
 
+Oh I can't do it. It's just too slow. I'm going to try one
+optimization. I'm sure the slowest part of the code is the call to
+MEMBER *VISITED* - lists are very slow to search - so I'll make
+*VISITED* a hash with the keys being the position on the grid and the
+values being the headings of beam visits.
+
+This will require a re-write of ENERGIZED and I'll have to change the
+various visited routines. I'll write BEEN-THERE? to check if a beam
+has been here before and DONE-THAT to add a beam's heading to its
+position in the hash. Let's see if that helps.
+
+Yeah! That really worked. Now under 1 second, and the code is cleaner,
+too!
+
 ---------------------------------------------------------------------------- |#
 
 (defun make-perimeter-points (los)
@@ -358,8 +380,9 @@ pos dir) for each perimeter point on the grid"
   "given a list of strings reflecting a field of mirrors and splitters,
  try every starting point on the perimeter of the field to find the
  one that returns the hightst number of energized points"
-  (iter (for s in (make-perimeter-points los))
-    (maximize (day16-1 los (car s) (cdr s)))))
+  (let ((starts (make-perimeter-points los)))
+    (iter (for s in starts)
+      (maximize (day16-1 los (car s) (cdr s))))))
 
 (5a:test Day16-2-test
   (5a:is (= 51 (day16-2 *sample*))))
@@ -377,16 +400,16 @@ pos dir) for each perimeter point on the grid"
 
 ;; The answer to AOC 2023 Day 16 Part 1 is 7392
 ;; Evaluation took:
-;; 0.061 seconds of real time
-;; 0.061423 seconds of total run time (0.061376 user, 0.000047 system)
-;; 100.00% CPU
-;; 1,726,176 bytes consed
+;; 0.002 seconds of real time
+;; 0.002642 seconds of total run time (0.002601 user, 0.000041 system)
+;; 150.00% CPU
+;; 2,405,184 bytes consed
 
 ;; The answer to AOC 2023 Day 16 Part 2 is 7665
 ;; Evaluation took:
-;; 16.293 seconds of real time
-;; 16.279503 seconds of total run time (16.264539 user, 0.014964 system)
-;; [ Real times consist of 0.021 seconds GC time, and 16.272 seconds non-GC time. ]
-;; [ Run times consist of 0.021 seconds GC time, and 16.259 seconds non-GC time. ]
-;; 99.92% CPU
-;; 516,828,736 bytes consed
+;; 0.946 seconds of real time
+;; 0.945969 seconds of total run time (0.943536 user, 0.002433 system)
+;; [ Real times consist of 0.219 seconds GC time, and 0.727 seconds non-GC time. ]
+;; [ Run times consist of 0.218 seconds GC time, and 0.728 seconds non-GC time. ]
+;; 100.00% CPU
+;; 357,312,880 bytes consed
