@@ -322,9 +322,8 @@ total distance possible"
       (finally (return cells)))))
 
 (defun print-path ()
-  "for debugging: given a global *state* prints resulting path after running main
- routine"
-
+  "for debugging: given a global *state* prints resulting path after
+running main routine"
   (let ((path (reconstruct-path (cons 0 0) (cons 12 12)))
         (map (parse-map *test-data*)))
 
@@ -336,7 +335,7 @@ total distance possible"
       (format t "~&")
       (iter (for col below (array-dimension map 1))
         (if (member (cons row col) path :test 'equal)
-            (format t ".")
+            (format t "X")
             (format t "~A" (aref map row col)))))))
 
 #|
