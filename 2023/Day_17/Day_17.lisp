@@ -70,6 +70,10 @@ making a turn I'll clear the path and start with the new direction. I
 think this works. The path in the originating cell shows the current
 best path. If we try another path it will be replaced.
 
+(After further thought I realized that since I can't backtrack i only
+need to track the direction of moves: horizontal or vertical. I use 'H
+and 'V.)
+
 When there are three identical moves in the path, I can't
 move again in the same direction so that won't be offered as a
 potential next cell by LIST-SURROUNDS. LIST-SURROUNDS is the
@@ -95,10 +99,10 @@ a fourth move in the same direction through.
 
 (defstruct (cell)
   "saved state of a cell in the map"
-  (dist 10000 :type integer)   ; starts "infinitely" distant
-  (path '() :type list)        ; straight line moves 'U 'D 'L 'R
-  (prev (cons nil nil) :type cons)        ; track previous pos for path
-  (visited nil :type boolean)) ; visited yet?
+  (dist most-positive-fixnum :type integer) ; starts "infinitely" distant
+  (path '() :type list)                     ; straight line moves 'H or 'V
+  (prev (cons nil nil) :type cons)          ; track previous pos for path
+  (visited nil :type boolean))              ; visited yet?
 
 (defparameter *state* (make-hash-table :test 'equal)
   "GLOBAL: hash table key: POS => value: CELL")
@@ -190,9 +194,9 @@ updated path"
   (let ((move (get-move-axis curr next)) ; what's the next move direction
         (path (get-path curr)))          ; previous moves in a line
 
-    (if (equal move (first path))       ; still moving in same direction?
-        (setf path (push move path))    ; yes add this move to the path
-        (setf path (list move)))        ; else start new sequence
+    (if (equal move (first path))        ; still moving in same direction?
+        (setf path (push move path))     ; yes add this move to the path
+        (setf path (list move)))         ; else start new sequence
 
     path))
 
@@ -214,21 +218,21 @@ direction"
     ;; remove if off grid
     (setf surrounds
           (remove-if-not                ; on grid
-           #'(lambda (next) (and (< -1 (row next) height)
-                                 (< -1 (col next) width)))
+           #'(lambda (p) (and (< -1 (row p) height)
+                              (< -1 (col p) width)))
            surrounds))
 
     ;; remove if previously visited
     (setf surrounds
           (remove-if                    ; been here already
-           #'(lambda (next) (visited? next))
+           #'(lambda (p) (visited? p))
            surrounds))
 
     ;; remove if position would exceed max-moves in the same dir
     (setf surrounds
           (remove-if   ; exceeds max-moves in same direction
-           #'(lambda (next)
-               (> (length (new-path curr next)) max-moves))
+           #'(lambda (p)
+               (> (length (new-path curr p)) max-moves))
            surrounds))
 
     ;; return filtered list
