@@ -321,6 +321,24 @@ total distance possible"
       (push (cons prev (gethash prev *state*)) cells)
       (finally (return cells)))))
 
+(defun print-path ()
+  "for debugging: given a global *state* prints resulting path after running main
+ routine"
+
+  (let ((path (reconstruct-path (cons 0 0) (cons 12 12)))
+        (map (parse-map *test-data*)))
+
+    (setf path ; strip off struct info
+          (iter (for cell in path)
+            (collect (first cell))))
+
+    (iter (for row below (array-dimension map 0))
+      (format t "~&")
+      (iter (for col below (array-dimension map 1))
+        (if (member (cons row col) path :test 'equal)
+            (format t ".")
+            (format t "~A" (aref map row col)))))))
+
 #|
 0123456789012
 
@@ -352,19 +370,22 @@ total distance possible"
 2546548887735
 4322674655533
 
-2>>3^>>311323
-32v>>5v>>>623
-325524565v254
-344658584v452
-454665786v536
-143859879v>>>
-445787698776v
-363787797965v
-46549679868<v
-45646799864v>
-122468686556v
-254654888773v
-432267465553v
+My psth
+
+2..3...311323
+32...5....623
+325524565..54
+3446585845.52
+4546657867..6
+14385987984..
+445787698776.
+363787797965.
+46549679868..
+45646799864..
+122468686556.
+254654888773.
+432267465553.
+
 |#
 #| ----------------------------------------------------------------------------
 --- Part Two ---
