@@ -54,31 +54,33 @@ checked - it's a superset of the shortest path. Hmm.
 After spending a few days noodling around I think I've come up with a
 solution. Instead of a DISTANCES hash, I'm going to make a STATES hash
 that will maintain several conditions for every position on the map:
-DIST, PATH, VISITED.
+DIST, PATH, VISITED. (And adding PREV so I can reconstruct the
+shortest path for post mortem debugging.)
 
 This will actually be faster than a visited list and I think I have to
 do this to satisfy the no more than three in a row rule. PATH will
-show the moves in a line that it took to get to a point. 'U 'D 'L 'R.
+show the moves in a line that it took to get to a point. 'U 'D 'L
+'R. (Actually only 'H and 'V for horizontal and vertical are needed.)
 
 I'll update the STATES hash whenever I check out a new point. Distance
 will be updated to the new, best distance, VISITED can be set to true
 when I pop that point off the priority queue. PATH is a little
 tricky. Each time I move from one CELL to another I'll note the move
-direction, up, down, left, right. When the move is the same as the
-move to get to the previous cell, I'll push it to the PATH. If I'm
-making a turn I'll clear the path and start with the new direction. I
-think this works. The path in the originating cell shows the current
-best path. If we try another path it will be replaced.
+axis When the move is the same as the move to get to the previous
+cell, I'll push it to the PATH. If I'm making a turn I'll clear the
+path and start with the new direction. I think this works. The path in
+the originating cell shows the current best path. If we try another
+path it will be replaced.
 
 (After further thought I realized that since I can't backtrack i only
 need to track the direction of moves: horizontal or vertical. I use 'H
 and 'V.)
 
-When there are three identical moves in the path, I can't
-move again in the same direction so that won't be offered as a
-potential next cell by LIST-SURROUNDS. LIST-SURROUNDS is the
-gatekeeper - it doesn't let VISITED cells or cells that would require
-a fourth move in the same direction through.
+When there are three identical moves in the path, I can't move again
+in the same direction so that won't be offered as a potential next
+cell by LIST-SURROUNDS. LIST-SURROUNDS is the gatekeeper - it doesn't
+let VISITED cells or cells that would require a fourth move in the
+same direction through.
 
 ---------------------------------------------------------------------------- |#
 
@@ -202,7 +204,7 @@ updated path"
 
 (defun list-surrounds (curr map max-moves)
   "The Gatekeeper. Given a point on a grid return a list of valid
-surrounding points in DOWN RIGHT LEFT UP order - eliminates already
+surrounding points in UP DOWN LEFT RIGHT order - eliminates already
 visited points and choices that would represent max-moves in the same
 direction"
   (let* ((r (row curr))
