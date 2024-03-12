@@ -256,6 +256,7 @@ total distance possible"
 
     ;; set each position in states hash to cell defaults:
     ;; "infinite" distance, empty path, empty prev, unvisited
+    ;; using the struct defaults above
     (clrhash *state*)
     (iter (for row below height)
       (iter (for col below width)
@@ -291,8 +292,8 @@ total distance possible"
             (set-prev surr curr)
             (he:enqueue q surr new-dist)))) ; enqueue it
 
-      ;; end while loop
-      (finally (return distance)))))
+      ;; queue is empty - end loop. Shouldn't get here.
+      (finally (error "Queue is empty")))))
 
 (declaim (notinline find-shortest-path))
 
@@ -306,7 +307,8 @@ total distance possible"
 (5a:test Day17-1-test
   (5a:is (= 102 (Day17-1 *test-data* 3))))
 
-
+;; for debugging - I'm getting a result that's too high. For some
+;; reason I'm returning a different (worse) path than the example
 (defun reconstruct-path (start end)
   "returns the path from start to end along with associated cells"
   (let ((route (list end))
