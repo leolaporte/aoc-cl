@@ -28,59 +28,37 @@
 --- Day 17: Clumsy Crucible ---
 --- Part One ---
 
-"Each city block is marked by a single digit that represents the amount
-of heat loss if the crucible enters that block. The starting point,
-the lava pool, is the top-left city block; the destination, the
-machine parts factory, is the bottom-right city block. (Because you
-already start in the top-left block, you don't incur that block's heat
-loss unless you leave that block and then return to it.)
-
-Because it is difficult to keep the top-heavy crucible going in a
-straight line for very long, it can move at most three blocks in a
-single direction before it must turn 90 degrees left or right. The
-crucible also can't reverse direction; after entering each city block,
-it may only turn left, continue straight, or turn right.
-
-Directing the crucible from the lava pool to the machine parts
-factory, but not moving more than three consecutive blocks in the same
-direction, what is the least heat loss it can incur?"
-
-LEO'S NOTES: Finally pathfinding! And this is a simple Dijkstra except
-for the twist: no more than three blocks in a single direction. Can I
-use the VISITED list in the Dijkstra to eliminate moves that would be
-the fourth in a direction? No. VISITED is just a list of points we've
+LEO'S NOTES: Finally pathfinding! And this is a Dijkstra with a twist:
+no more than three blocks in a single direction. Can I use the
+VISITED list in the Dijkstra to eliminate moves that would be the
+fourth in a direction? No. VISITED is just a list of points we've
 checked - it's a superset of the shortest path. Hmm.
 
 After spending a few days noodling around I think I've come up with a
-solution. Instead of a DISTANCES hash, I'm going to make a STATES hash
-that will maintain several conditions for every position on the map:
-DIST, PATH, VISITED. (And adding PREV so I can reconstruct the
-shortest path for post mortem debugging.)
+solution. Instead of just collecting vertices and costs I have to have
+a more elaborate EDGE state: grid position, direction, number of moves
+in the same direction. e.g.
 
-This will actually be faster than a visited list and I think I have to
-do this to satisfy the no more than three in a row rule. PATH will
-show the moves in a line that it took to get to a point. 'U 'D 'L
-'R. (Actually only 'H and 'V for horizontal and vertical are needed.)
+(list (cons row col) axis-of-movement, number-of-moves along that axis)
 
-I'll update the STATES hash whenever I check out a new point. Distance
-will be updated to the new, best distance, VISITED can be set to true
-when I pop that point off the priority queue. PATH is a little
-tricky. Each time I move from one CELL to another I'll note the move
-axis When the move is the same as the move to get to the previous
-cell, I'll push it to the PATH. If I'm making a turn I'll clear the
-path and start with the new direction. I think this works. The path in
-the originating cell shows the current best path. If we try another
-path it will be replaced.
+And for every EDGE I'll store it's calculated heat loss and whether
+it's been visited yet. I can do that in a global *STATE-HASH* Since
+every edge is a key in the hash I'll be tracking many more points. (as
+it turns out 157,146!) To reduce this number I'll only add an entry to
+*STATE-HASH* when I refer to it. (get-dist) (set-dist) (set-visited)
+and (visited?) create new *STATE-HASH* entries if one doesn't already
+exist. Just in time hashing!
 
-(After further thought I realized that since I can't backtrack i only
-need to track the direction of moves: horizontal or vertical. I use 'H
-and 'V.)
+I can simplify the four directions into just two: horizontal and
+vertical because I can't backtrack. That will also save me space and
+time.
 
-When there are three identical moves in the path, I can't move again
-in the same direction so that won't be offered as a potential next
-cell by LIST-SURROUNDS. LIST-SURROUNDS is the gatekeeper - it doesn't
-let VISITED cells or cells that would require a fourth move in the
-same direction through.
+The most important takeaway for future is that Dijkstra can be
+generalized for a variety of situations; modelling the states on the
+graph as needed. And, with it a function for next states and their
+costs, and a test for the target state. (For a generic A* I can
+include a heuristic function, as well. I might do that if this gets
+too slow.)
 
 ---------------------------------------------------------------------------- |#
 
@@ -97,21 +75,22 @@ same direction through.
     "4564679986453"
     "1224686865563"
     "2546548887735"
-    "4322674655533"))
+    "4322674655533")
+  "provided example in the problem")
 
-(defstruct (cell)
-  "saved state of a cell in the map"
+(defstruct (edge-state)
+  "saved state of an edge in the graph - an edge is (list (cons row col)
+direction move-count."
   (dist most-positive-fixnum :type integer) ; starts "infinitely" distant
-  (path '() :type list)                     ; straight line moves 'H or 'V
-  (prev (cons nil nil) :type cons)          ; track previous pos for path
-  (visited nil :type boolean))              ; visited yet?
+  (visited nil :type boolean))              ; not visited yet
 
-(defparameter *state* (make-hash-table :test 'equal)
-  "GLOBAL: hash table key: POS => value: CELL")
+(defparameter *state-hash* (Make-hash-table :test 'equal)
+  "GLOBAL: hash table  EDGE => EDGE-STATE")
 
-(defun parse-map (los)
-  "given a list of strings defining a map return a 2D array with each
- cell holding an integer from 1-9"
+(defun make-heat-loss-map (los)
+  "given a list of strings defining a heat loss map return a 2D array with each
+ position holding an integer from 1-9 representing the heat loss
+ experienced when entering that position"
   (let* ((width (length (first los)))
          (height (length los))
          (map (make-array (list width height) :element-type 'integer)))
@@ -122,6 +101,16 @@ same direction through.
               (digit-char-p (elt (nth row los) col))))
       (finally (return map)))))
 
+(defun pht (hash)
+  "utility to print a hash to terminal"
+  (iter (for (key value) in-hashtable hash)
+    (format t "~% ~A => ~A" key value)))
+
+;; Some mnemonic functions to help me remember how things work. An
+;; edge is (list (cons row col) dir moves) - direction is the
+;; direction from the vertex, moves is the count of moves so far in
+;; that direction
+
 (defun row (pos)
   "help me remember that row is the car in a position cons"
   (car pos))
@@ -130,270 +119,161 @@ same direction through.
   "help me remember that col is the cdr in a position cons"
   (cdr pos))
 
-(defun pht (hash)
-  (iter (for (key value) in-hashtable hash)
-    (format t "~% ~A => ~A" key value)))
+(defun origin (edge)
+  "given an edge (list origin dir moves) return origin"
+  (first edge))
 
-(defun get-value (pos map)
-  "returns the value at a point"
-  (aref map (row pos) (col pos)))
+(defun dir (edge)
+  "given an edge (list origin dir moves) return dir"
+  (second edge))
 
-;; several utility functiions for getting and setting the values in
-;; the cell struct.
+(defun moves (edge)
+  "given an edge (list origin dir moves) return moves"
+  (third edge))
 
-(defun get-dist (pos)
-  "returns the distance associated with pos in *state*"
-  (cell-dist (gethash pos *state*)))
+;; utility functions for getting and setting the values in
+;; the EDGE-STATE struct.
 
-(defun set-dist (pos distance)
-  "sets the distance of the position in *state*"
-  (let ((cell (gethash pos *state*)))
-    (setf (cell-dist cell) distance)
-    (setf (gethash pos *state*) cell)))
+(defun get-value (edge map)
+  "returns the value of the originating vertex"
+  (let ((pos (origin edge)))
+    (aref map (row pos) (col pos))))
 
-(defun get-path (pos)
-  "returns the path list followed to get to pos"
-  (cell-path (gethash pos *state*)))
+(defun get-dist (edge)
+  "returns the distance associated with EDGE in *STATE-HASH*"
+  (when (null (gethash edge *state-hash*))                ; doesn't exist yet
+    (setf (gethash edge *state-hash*) (make-edge-state))) ; so create it
+  (edge-state-dist (gethash edge *state-hash*)))
 
-(defun set-path (pos path)
-  "sets the path of the position in *state*"
-  (let ((cell (gethash pos *state*)))
-    (setf (cell-path cell) path)
-    (setf (gethash pos *state*) cell)))
+(defun set-dist (edge distance)
+  "sets the distance of the edge in *state-hash*"
+  (when (null (gethash edge *state-hash*))                ; doesn't exist yet
+    (setf (gethash edge *state-hash*) (make-edge-state))) ; so create it
+  (let ((es (gethash edge *state-hash*)))
+    (setf (edge-state-dist es) distance)
+    (setf (gethash edge *state-hash*) es)))
 
-(defun get-prev (pos)
-  "gets the previous position from a cell"
-  (let ((cell (gethash pos *state*)))
-    (if cell (cell-prev cell) nil)))
-
-(defun set-prev (pos prev)
-  "sets the previous position"
-  (let ((cell (gethash pos *state*)))
-    (setf (cell-prev cell) prev)
-    (setf (gethash pos *state*) cell)))
-
-(defun visited? (pos)
+(defun visited? (edge)
   "returns true if this pos has been visited"
-  (cell-visited (gethash pos *state*)))
+  (when (null (gethash edge *state-hash*))                ; doesn't exist yet
+    (setf (gethash edge *state-hash*) (make-edge-state))) ; so create it
+  (edge-state-visited (gethash edge *state-hash*)))
 
-(defun set-visited (pos)
-  "marks pos visited - returns updated cell"
-  (let ((cell (gethash pos *state*)))
-    (setf (cell-visited cell) t)
-    (setf (gethash pos *state*) cell)))
+(defun set-visited (edge)
+  "marks pos visited - returns updated edge-state "
+  (when (null (gethash edge *state-hash*))                ; doesn't exist yet
+    (setf (gethash edge *state-hash*) (make-edge-state))) ; so create it
 
-;; now some stuff to keep track of the heading directions
-(defun get-move-axis (curr next)
-  "given two adjacent points, return the new heading of the move from
-curr to next as 'H or 'V (for horiz or vert move)"
-  (if (equal (row curr) (row next)) 'H 'V))
-
-(defun new-path (curr next)
-  "if (first path) of current position is the same as the next move
- then we're still going in the same direction so push the new move,
-otherwise we've turned so replace path with the new move, returns
-updated path"
-  (let ((move (get-move-axis curr next)) ; what's the next move direction
-        (path (get-path curr)))          ; previous moves in a line
-
-    (if (equal move (first path))        ; still moving in same direction?
-        (setf path (push move path))     ; yes add this move to the path
-        (setf path (list move)))         ; else start new sequence
-
-    path))
+  (let ((es (gethash edge *state-hash*)))
+    (setf (edge-state-visited es) t)
+    (setf (gethash edge *state-hash*) es)))
 
 (defun list-surrounds (curr map max-moves)
   "The Gatekeeper. Given a point on a grid return a list of valid
-surrounding points in UP DOWN LEFT RIGHT order - eliminates already
-visited points and choices that would represent max-moves in the same
-direction"
-  (let* ((r (row curr))
-         (c (col curr))
+surrounding points - eliminates already visited points and choices
+that would represent max-moves in the same direction"
+  (let* ((r (row (origin curr)))
+         (c (col (origin curr)))
          (height (array-dimension map 0))
          (width (array-dimension map 1))
          (surrounds (list
-                     (cons (1- r) c)     ; up
-                     (cons (1+ r) c)     ; down
-                     (cons r (1- c))     ; left
-                     (cons r (1+ c)))))  ; right
+                     (list (cons r (1- c)) 'H)
+                     (list (cons r (1+ c)) 'H)
+                     (list (cons (1- r) c) 'V)
+                     (list (cons (1+ r) c) 'V))))
 
     ;; remove if off grid
     (setf surrounds
           (remove-if-not                ; on grid
-           #'(lambda (p) (and (< -1 (row p) height)
-                              (< -1 (col p) width)))
+           #'(lambda (s) (and (< -1 (row (origin s)) height)
+                              (< -1 (col (origin s)) width)))
            surrounds))
 
     ;; remove if previously visited
+    ;; (creates a hash entry if one doesn't exist)
     (setf surrounds
           (remove-if                    ; been here already
-           #'(lambda (p) (visited? p))
+           #'(lambda (s) (visited? s))
            surrounds))
+
+    ;; adjust moves
+    (setf surrounds
+          (mapcar #'(lambda (s)
+                      (if (equal (dir curr) (dir s))  ; moving in same dir?
+                          (append s (list (1+ (moves curr)))) ; increment moves
+                          (append s (list 1))))  ; otherwise reset it to 1
+                  surrounds))
 
     ;; remove if position would exceed max-moves in the same dir
     (setf surrounds
           (remove-if   ; exceeds max-moves in same direction
-           #'(lambda (p)
-               (> (length (new-path curr p)) max-moves))
+           #'(lambda (s) (> (moves s) max-moves))
            surrounds))
 
     ;; return filtered list
     surrounds))
 
-
-(declaim (inline find-shortest-path)) ; required by enqueue and dequeue
-
 (defun find-shortest-path (start end map max-in-a-row)
-  "uses Dijkstra's algorithm to find the smallest heat loss (hereinafter
-referred to as DISTANCE) from START to END on the map, avoiding moving
-in the same direction more than max times in a row, returns the lowest
-total distance possible"
-  (let ((height (array-dimension map 0))
-        (width (array-dimension map 1))
-        (curr start)   ; where we are so far
-        (distance 0)   ; distance traveled along best route
+  "uses Dijkstra's algorithm to find the smallest heat loss - hereinafter
+referred to as DISTANCE - from START to END on the map, avoiding
+moving in the same direction more than max times in a row, returns the
+lowest total distance possible"
+  (let ((curr nil)           ; current edge so far
+        (dirs (list 'H 'V))  ; possible axes of movement
+        (distance 0)         ; distance traveled along best route
         (q (make-instance 'he:priority-queue))) ; sorted by least dist
 
-    ;; set each position in states hash to cell defaults:
-    ;; "infinite" distance, empty path, empty prev, unvisited
-    ;; using the struct defaults above
-    (clrhash *state*)
-    (iter (for row below height)
-      (iter (for col below width)
-        (setf (gethash (cons row col) *state*) (make-cell))))
+    (clrhash *state-hash*)
 
-    ;; zero out starting point
-    (set-dist start 0)
-    ;; and prime the queue with it
-    (he:enqueue q start 0)
+    (iter (for d in dirs)
+      ;; zero out starting EDGES
+      (set-dist (list start d 0) 0)
+      ;; and prime the queue
+      (he:enqueue q (list start d 0) 0))
 
     ;; main loop - travel the map until end or empty queue
     (iter (while (he:peep-at-queue q)) ; still something in the queue
 
-      ;; get the nearest point on the queue
-      (setf curr (he:dequeue q))       ; next pos with lowest distance
+      ;; get the nearest EDGE on the queue
+      (setf curr (he:dequeue q))       ; next EDGE with lowest distance
       (setf distance (get-dist curr))  ; update distance
       (set-visited curr)               ; mark it visited
 
-      (when (equal curr end)           ; at end? return
+      (when (equal (origin curr) end)  ; at end? return
         (return-from find-shortest-path distance))
 
-      ;; check all surrounding positions we haven't visited and aren't
-      ;; more than max in the same direction (LIST-SURROUNDS ensures
-      ;; this) then enqueue any improved routes
+      ;; check all valid surrounding positions then enqueue any
+      ;; improved edges
       (iter (for surr in (list-surrounds curr map max-in-a-row))
         (let ((new-dist (+ distance (get-value surr map))))
-          (when (< new-dist (get-dist surr))                ; improvement?
+          (when (< new-dist (get-dist surr)) ; improvement?
             ;; save new, better, distance
             (set-dist surr new-dist)
-            ;; and how we got here (path)
-            (set-path surr (new-path curr surr))
-            ;; save previous pos for path reconstruction
-            (set-prev surr curr)
-            (he:enqueue q surr new-dist)))) ; enqueue it
+            ;; enqueue edge
+            (he:enqueue q surr new-dist))))
 
       ;; queue is empty - end loop. Shouldn't get here.
       (finally (error "Queue is empty")))))
-
-(declaim (notinline find-shortest-path))
 
 (defun Day17-1 (los max)
   (find-shortest-path (cons 0 0)                       ; start
                       (cons (1- (length los))
                             (1- (length (first los)))) ; end
-                      (parse-map los)                  ; map
+                      (make-heat-loss-map los)         ; map
                       max))                            ; max in a row
 
 (5a:test Day17-1-test
   (5a:is (= 102 (Day17-1 *test-data* 3))))
 
-;; for debugging - I'm getting a result that's too high. For some
-;; reason I'm returning a different (worse) path than the example
-(defun reconstruct-path (start end)
-  "returns the path from start to end along with associated cells"
-  (let ((route (list end))
-        (prev nil)
-        (cells (list (cons end (gethash end *state*)))))
 
-    (iter (while (not (equal (setf prev (get-prev (first route)))
-                             start)))
-      (push prev route)
-      (push (cons prev (gethash prev *state*)) cells)
-      (finally (return cells)))))
-
-(defun print-path ()
-  "for debugging: given a global *state* prints resulting path after
-running main routine"
-  (let ((path (reconstruct-path (cons 0 0) (cons 12 12)))
-        (map (parse-map *test-data*)))
-
-    (setf path ; strip off struct info
-          (iter (for cell in path)
-            (collect (first cell))))
-
-    (iter (for row below (array-dimension map 0))
-      (format t "~&")
-      (iter (for col below (array-dimension map 1))
-        (if (member (cons row col) path :test 'equal)
-            (format t "X")
-            (format t "~A" (aref map row col)))))))
-
-#|
-0123456789012
-
-2>>34^>>>1323 0
-32v>>>35v5623 1
-32552456v>>54 2
-3446585845v52 3
-4546657867v>6 4
-14385987984v4 5
-44578769877v6 6
-36378779796v> 7
-465496798688v 8
-456467998645v 9
-12246868655<v 0
-25465488877v5 1
-43226746555v> 2
-
-2413432311323
-3215453535623
-3255245654254
-3446585845452
-4546657867536
-1438598798454
-4457876987766
-3637877979653
-4654967986887
-4564679986453
-1224686865563
-2546548887735
-4322674655533
-
-My psth
-
-2..3...311323
-32...5....623
-325524565..54
-3446585845.52
-4546657867..6
-14385987984..
-445787698776.
-363787797965.
-46549679868..
-45646799864..
-122468686556.
-254654888773.
-432267465553.
-
-|#
 #| ----------------------------------------------------------------------------
 --- Part Two ---
 
 ---------------------------------------------------------------------------- |#
 
 ;; now solve the puzzle!
-;; (time (format t "The answer to AOC 2023 Day 17 Part 1 is ~a"
-;;              (day17-1 (uiop:read-file-lines *data-file*) 3)))
+(time (format t "The answer to AOC 2023 Day 17 Part 1 is ~a"
+              (day17-1 (uiop:read-file-lines *data-file*) 3)))
 
 ;; (time (format t "The answer to AOC 2023 Day 17 Part 2 is ~a"
 ;;	      (day17-2 (uiop:read-file-lines *data-file*))))
