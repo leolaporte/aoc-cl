@@ -303,6 +303,8 @@ get to this point. (NB: Homework for another day: from now on my
 generic Dijkstra sould return both edges and costs from the
 list-surrounds func.)
 
+Uh oh. Big screw up here. I haven't been counting all the edges in a move 4 as visited. This is going to take some brain surgery.
+
 ----------------------------------------------------------------------------|#
 
 (defparameter *test-data2*
