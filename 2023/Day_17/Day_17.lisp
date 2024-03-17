@@ -81,6 +81,7 @@ too slow.)
 (defstruct (edge-state)
   "saved state of an edge in the graph - an edge is (list (cons row col)
 direction move-count."
+  (prev '() :type list)                     ; the edge that got us here
   (dist most-positive-fixnum :type integer) ; starts "infinitely" distant
   (visited nil :type boolean))              ; not visited yet
 
@@ -133,7 +134,6 @@ direction move-count."
 
 ;; utility functions for getting and setting the values in
 ;; the EDGE-STATE struct.
-
 (defun get-value (edge grid)
   "returns the value of the originating vertex"
   (let ((pos (origin edge)))
@@ -152,6 +152,16 @@ direction move-count."
   (let ((es (gethash edge *state-hash*)))
     (setf (edge-state-dist es) distance)
     (setf (gethash edge *state-hash*) es)))
+
+(defun set-prev (edge prev)
+  "sets the previous position on the successful path"
+  (let ((es (gethash edge *state-hash*)))
+    (setf (edge-state-prev es) prev)
+    (setf (gethash edge *state-hash*) es)))
+
+(defun get-prev (edge)
+  "given an edge returns the previous edge"
+  (edge-state-prev (gethash edge *state-hash*)))
 
 (defun visited? (edge)
   "returns true if this pos has been visited"
@@ -253,6 +263,8 @@ lowest total distance possible"
           (when (< new-dist (get-dist surr)) ; improvement?
             ;; save new, better, distance
             (set-dist surr new-dist)
+            ;; keep track of how we got here
+            (set-prev surr curr)
             ;; enqueue edge
             (he:enqueue q surr new-dist))))
 
@@ -303,7 +315,13 @@ get to this point. (NB: Homework for another day: from now on my
 generic Dijkstra sould return both edges and costs from the
 list-surrounds func.)
 
-Uh oh. Big screw up here. I haven't been counting all the edges in a move 4 as visited. This is going to take some brain surgery.
+Uh oh. The examples work but the problem result is too low. When this
+happens I often look for more exaples on Reddit. I found five but it's
+only *test-data3* that fails. After examining its solution path I
+realized I'm allowing the Dijkstra to turn back (and those cells
+haven't been visited due to the 4 place jump). Erik does mention
+this. "The crucible also can't reverse direction;" Ah ha! That wasn't
+a problem in Part 1 but it is in Part 2. Easy to fix. I think.
 
 ----------------------------------------------------------------------------|#
 
@@ -324,7 +342,9 @@ Uh oh. Big screw up here. I haven't been counting all the edges in a move 4 as v
     "9999999991"
     "9999999991"
     "9999999991"
-    "9999999991"))
+    "9999999991")
+  "in my original implementation this returned 24 because it
+ backtracked from (4,5). I guess I shouldn't ever move backwards!")
 
 (defparameter *test-data4*
   '("1111199999999999"
@@ -380,7 +400,9 @@ from touching each point from start + 1 to end"
     (5a:is (= 14 (heat-loss (cons 0 0) (cons 5 0) grid)))))
 
 (defun list-ultra-surrounds (edge grid mini maxi)
-  "The Gatekeeper. Given the current state (an edge) return the next states to examine and the cost each adds as a list of (cons (list edge dir moves) cost)"
+  "The Gatekeeper. Given the current state (an edge) return the next
+states to examine and the cost each adds as a list of (cons (list edge
+dir moves) cost)"
   (let* ((curr-pos (origin edge)) ; starting position
          (r (row curr-pos))       ; starting row
          (c (col curr-pos))       ; starting column
@@ -398,75 +420,102 @@ from touching each point from start + 1 to end"
     ;; 2. in between 4 and 11 moves: go 1 in current direction or 4 in
     ;; new dir
     ;; 3. It's the first move on the grid (cnt = 0) so move 4
+    ;; oh and NO BACKTRACKING!
     (cond
       ((or (>= cnt maxi)     ;; moved 10 already so turn and go four
            (= cnt 0))        ;; first move!
-       (when (equal (dir edge) 'V) ; we have been moving vertically
-         (setf surrounds       ; so turn ...
-               (list
-                (let ((next-pos (cons r (- c mini)))) ; left 4
-                  (cons (list next-pos 'H mini)
-                        (heat-loss curr-pos next-pos grid)))
-                (let ((next-pos (cons r (+ c mini)))) ; right 4
-                  (cons (list next-pos 'H mini)
-                        (heat-loss curr-pos next-pos grid))))))
+       (cond ((or (equal (dir edge) 'U) (equal (dir edge) 'D)) ; moving vertically
+              (setf surrounds       ; so turn ...
+                    (list
+                     (let ((next-pos (cons r (- c mini)))) ; left 4
+                       (cons (list next-pos 'L mini)
+                             (heat-loss curr-pos next-pos grid)))
+                     (let ((next-pos (cons r (+ c mini)))) ; right 4
+                       (cons (list next-pos 'R mini)
+                             (heat-loss curr-pos next-pos grid))))))
 
-       (when (equal (dir edge) 'H) ; we have been moving horizontally
-         (setf surrounds       ; so turn ..
-               (list
-                (let ((next-pos (cons (- r mini) c))) ; up 4
-                  (cons (list next-pos 'V mini)
-                        (heat-loss curr-pos next-pos grid)))
-                (let ((next-pos (cons (+ r mini) c))) ; down 4
-                  (cons (list next-pos 'V mini)
-                        (heat-loss curr-pos next-pos grid)))))))
+             (t                   ; otherwise we have been moving horizontally
+              (setf surrounds     ; so turn ..
+                    (list
+                     (let ((next-pos (cons (- r mini) c))) ; up 4
+                       (cons (list next-pos 'U mini)
+                             (heat-loss curr-pos next-pos grid)))
+                     (let ((next-pos (cons (+ r mini) c))) ; down 4
+                       (cons (list next-pos 'D mini)
+                             (heat-loss curr-pos next-pos grid))))))))
 
       ;; in between 4 and 11 moves in this direction, move one in each dir
       ;; unless there's a turn in which case move four
+
       ((< (1- mini) cnt maxi)
-       (when (equal (dir edge) 'H)
-         (setf surrounds
-               (list
-                (let ((next-pos (cons r (1- c)))) ; left
-                  (cons (list next-pos 'H (1+ cnt))
-                        (heat-loss curr-pos next-pos grid)))
+       (cond
+         ((equal (dir edge) 'L)
+          (setf surrounds
+                (list
+                 (let ((next-pos (cons r (1- c)))) ; continue left
+                   (cons (list next-pos 'L (1+ cnt))
+                         (heat-loss curr-pos next-pos grid)))
 
-                (Let ((next-pos (cons r (1+ c)))) ; right
-                  (cons (list next-pos 'H (1+ cnt))
-                        (heat-loss curr-pos next-pos grid)))
+                 (let ((next-pos (cons (- r mini) c))) ; turn up
+                   (cons (list next-pos 'U mini)
+                         (heat-loss curr-pos next-pos grid)))
 
-                (let ((next-pos (cons (- r mini) c))) ; turn up
-                  (cons (list next-pos 'V mini)
-                        (heat-loss curr-pos next-pos grid)))
+                 (let ((next-pos (cons (+ r mini) c))) ; turn down
+                   (cons (list next-pos 'D mini)
+                         (heat-loss curr-pos next-pos grid))))))
 
-                (let ((next-pos (cons (+ r mini) c))) ; turn down
-                  (cons (list next-pos 'V mini)
-                        (heat-loss curr-pos next-pos grid))))))
+         ((equal (dir edge) 'R)
+          (setf surrounds
+                (list
+                 (let ((next-pos (cons r (1+ c)))) ; continue right
+                   (cons (list next-pos 'R (1+ cnt))
+                         (heat-loss curr-pos next-pos grid)))
 
-       (when (equal (dir edge) 'V)
-         (setf surrounds
-               (list
-                (let ((next-pos (cons (1- r) c))) ; up
-                  (cons (list next-pos 'V (1+ cnt))
-                        (heat-loss curr-pos next-pos grid)))
+                 (let ((next-pos (cons (- r mini) c))) ; turn up
+                   (cons (list next-pos 'U mini)
+                         (heat-loss curr-pos next-pos grid)))
 
-                (let ((next-pos (cons (1+ r) c))) ; down
-                  (cons (list next-pos 'V (1+ cnt))
-                        (heat-loss curr-pos next-pos grid)))
+                 (let ((next-pos (cons (+ r mini) c))) ; turn down
+                   (cons (list next-pos 'D mini)
+                         (heat-loss curr-pos next-pos grid))))))
 
-                (let ((next-pos (cons r (- c mini)))) ; turn left
-                  (cons (list next-pos 'H mini)
-                        (heat-loss curr-pos next-pos grid)))
+         ((equal (dir edge) 'U)
+          (setf surrounds
+                (list
+                 (let ((next-pos (cons (1- r) c))) ; continue up
+                   (cons (list next-pos 'U (1+ cnt))
+                         (heat-loss curr-pos next-pos grid)))
 
-                (let ((next-pos (cons r (+ c mini)))) ; turn right
-                  (cons (list next-pos 'H mini)
-                        (heat-loss curr-pos next-pos grid)))))))
+                 (let ((next-pos (cons r (- c mini)))) ; turn left
+                   (cons (list next-pos 'L mini)
+                         (heat-loss curr-pos next-pos grid)))
+
+                 (let ((next-pos (cons r (+ c mini)))) ; turn right
+                   (cons (list next-pos 'R mini)
+                         (heat-loss curr-pos next-pos grid))))))
+
+         ((equal (dir edge) 'D)
+          (setf surrounds
+                (list
+                 (let ((next-pos (cons (1+ r) c))) ; continue down
+                   (cons (list next-pos 'D (1+ cnt))
+                         (heat-loss curr-pos next-pos grid)))
+
+                 (let ((next-pos (cons r (- c mini)))) ; turn left
+                   (cons (list next-pos 'L mini)
+                         (heat-loss curr-pos next-pos grid)))
+
+                 (let ((next-pos (cons r (+ c mini)))) ; turn right
+                   (cons (list next-pos 'R mini)
+                         (heat-loss curr-pos next-pos grid))))))
+
+         (t (error "I don't know what direction we're going! ~A" (dir edge)))))
 
       (t (error "Count is out of bounds ~A" cnt)))
 
-    ;; ok we've generated the surrounds so now lets filter out the flops
-    ;; remember SURROUNDS is (list (cons edge heat-loss))
-    ;; remove if off grid
+    ;; ok we've generated the surrounds so now lets filter out the
+    ;; flops remember SURROUNDS is (list (cons edge heat-loss)) remove
+    ;; if off grid
     (setf surrounds
           (remove-if-not                ; on grid
            #'(lambda (s) (and (< -1 (row (origin (car s))) height)
@@ -488,9 +537,9 @@ from touching each point from start + 1 to end"
 referred to as DISTANCE - from START to END on the grid, avoiding
 moving in the same direction more than max times in a row, returns the
 lowest total distance possible"
-  (let ((curr nil)           ; current edge so far
-        (dirs (list 'H 'V))  ; possible axes of movement
-        (distance 0)         ; distance traveled along best route
+  (let ((curr nil)                ; current edge so far
+        (dirs (list 'U 'D 'L 'R)) ; possible axes of movement
+        (distance 0)              ; distance traveled along best route
         (q (make-instance 'he:priority-queue))) ; sorted by least dist
 
     (clrhash *state-hash*)
@@ -520,6 +569,8 @@ lowest total distance possible"
           (when (< new-dist (get-dist surr)) ; improvement?
             ;; save new, better, distance
             (set-dist surr new-dist)
+            ;; preserve path
+            (set-prev surr curr)
             ;; enqueue edge
             (he:enqueue q surr new-dist))))
 
@@ -540,6 +591,37 @@ lowest total distance possible"
   (5a:is (= 34 (Day17-2 *test-data3* 4 10))) ; from reddit
   (5a:is (= 51 (Day17-2 *test-data4* 4 10))) ;    "
   (5a:is (= 8 (Day17-2 *test-data5* 4 10)))) ;    "
+
+;; some diagnostics
+;; retrieve path - uses global *state-hash* after run
+;; produces success path of most recent run
+(defun get-path (los min max)
+  (let* ((height (length los))
+         (width (length (first los)))
+         (start (cons 0 0))
+         (end (cons (1- height) (1- width)))
+         (path '()))
+
+    (day17-2 los min max)
+
+    ;; first find the end entry and push it
+    (push
+     (edge-state-prev
+      (iter (for (key value) in-hashtable *state-hash*)
+        (when (equal (origin key) end)
+          (return value))))
+     path)
+
+    ;; now push each successive edge onto prev
+    (iter (while (not (equal (origin (first path)) start)))
+      (push (edge-state-prev
+             (gethash (first path) *state-hash*))
+            path))
+
+    ;; collect list of positions
+    (iter (for p in path)
+      (collect p))))
+
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 17 Part 1 is ~a"
