@@ -1,7 +1,7 @@
 ;;;; Day17.lisp
 ;;;; 2023 AOC Day 17 solution
 ;;;; Leo Laporte
-;;;; 5 March 2024
+;;;; 5-16 March 2024
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -58,7 +58,8 @@ generalized for a variety of situations; modelling the states on the
 graph as needed. And, with it a function for next states and their
 costs, and a test for the target state. (For a generic A* I can
 include a heuristic function, as well. I might do that if this gets
-too slow.)
+too slow. Nah. A* using manhattan distance didn't speed things up at
+all.)
 
 ---------------------------------------------------------------------------- |#
 
@@ -81,17 +82,18 @@ too slow.)
 (defstruct (edge-state)
   "saved state of an edge in the graph - an edge is (list (cons row col)
 direction move-count."
-  (prev '() :type list)                     ; the edge that got us here
-  (dist most-positive-fixnum :type integer) ; starts "infinitely" distant
-  (visited nil :type boolean))              ; not visited yet
+  (dist most-positive-fixnum :type integer)   ; starts "infinitely" distant
+  (hscore most-positive-fixnum :type integer) ; heuristic predicted dist
+  (visited nil :type boolean)                 ; not visited yet
+  (prev '() :type list))                      ; the edge that got us here
 
 (defparameter *state-hash* (Make-hash-table :test 'equal)
   "GLOBAL: hash table  EDGE => EDGE-STATE")
 
 (defun make-heat-loss-grid (los)
-  "given a list of strings defining a heat loss grid return a 2D array with each
- position holding an integer from 1-9 representing the heat loss
- experienced when entering that position"
+  "given a list of strings defining a heat loss grid return a 2D array
+with each position holding an integer from 1-9 representing the heat
+ loss experienced when entering that position"
   (let* ((width (length (first los)))
          (height (length los))
          (grid (make-array (list height width) :element-type 'integer)))
@@ -153,6 +155,20 @@ direction move-count."
     (setf (edge-state-dist es) distance)
     (setf (gethash edge *state-hash*) es)))
 
+(defun get-hscore (edge)
+  "returns the heuristic score associated with EDGE in *STATE-HASH*"
+  (when (null (gethash edge *state-hash*))                ; doesn't exist yet
+    (setf (gethash edge *state-hash*) (make-edge-state))) ; so create it
+  (edge-state-hscore (gethash edge *state-hash*)))
+
+(defun set-hscore (edge score)
+  "sets the heuristic score of the edge in *state-hash*"
+  (when (null (gethash edge *state-hash*))                ; doesn't exist yet
+    (setf (gethash edge *state-hash*) (make-edge-state))) ; so create it
+  (let ((es (gethash edge *state-hash*)))
+    (setf (edge-state-hscore es) score)
+    (setf (gethash edge *state-hash*) es)))
+
 (defun set-prev (edge prev)
   "sets the previous position on the successful path"
   (let ((es (gethash edge *state-hash*)))
@@ -177,7 +193,7 @@ direction move-count."
     (setf (edge-state-visited es) t)
     (setf (gethash edge *state-hash*) es)))
 
-(defun manhattan-distance (a b)
+(defun hscore (a b)
   "computes the manhattan distance between two points on a grid - A*
 heuristic for cl-heap"
   (+ (abs (- (row a) (row b))) (abs (- (col a) (col b)))))
@@ -239,11 +255,13 @@ lowest total distance possible"
 
     (clrhash *state-hash*)
 
-    (iter (for d in dirs)
-      ;; zero out starting EDGES
-      (set-dist (list start d 0) 0)
-      ;; and prime the queue
-      (he:enqueue q (list start d 0) 0))
+    (let ((hs (hscore start end)))
+      (iter (for d in dirs)
+        ;; zero out starting EDGES
+        (set-dist (list start d 0) 0)
+        (set-hscore (list start d 0) hs)
+        ;; and prime the queue
+        (he:enqueue q (list start d 0) hs)))
 
     ;; main loop - travel the grid until end or empty queue
     (iter (while (he:peep-at-queue q)) ; still something in the queue
@@ -263,10 +281,12 @@ lowest total distance possible"
           (when (< new-dist (get-dist surr)) ; improvement?
             ;; save new, better, distance
             (set-dist surr new-dist)
+            ;; save new heuristic score
+            (set-hscore surr (+ new-dist (hscore (origin surr) end)))
             ;; keep track of how we got here
             (set-prev surr curr)
             ;; enqueue edge
-            (he:enqueue q surr new-dist))))
+            (he:enqueue q surr (get-hscore surr)))))
 
       ;; queue is empty - end loop. Shouldn't get here.
       (finally (error "Queue is empty")))))
@@ -276,7 +296,7 @@ lowest total distance possible"
    (cons 0 0)                       ; start
    (cons (1- (length los))
          (1- (length (first los)))) ; end
-   (make-heat-loss-grid los)         ; grid
+   (make-heat-loss-grid los)        ; grid
    max))                            ; max in a row
 
 (5a:test Day17-1-test
@@ -302,7 +322,7 @@ moves < 4. So if we're going in a straight line still add 1 up to a
 max of 10. After 10 moves it will have to turn and move 4 moves on
 that axis.
 
-Mean while I have to have a new function to calculate the heat loss
+Meanwhile I have to have a new function to calculate the heat loss
 since I get loss from every block I pass through. So my new surrounds
 function will have to return both a new edge and the total heat loss
 up to now.
@@ -316,12 +336,14 @@ generic Dijkstra sould return both edges and costs from the
 list-surrounds func.)
 
 Uh oh. The examples work but the problem result is too low. When this
-happens I often look for more exaples on Reddit. I found five but it's
-only *test-data3* that fails. After examining its solution path I
+happens I often look for more examples on Reddit. I found five but
+it's only *test-data3* that fails. After examining its solution path I
 realized I'm allowing the Dijkstra to turn back (and those cells
 haven't been visited due to the 4 place jump). Erik does mention
 this. "The crucible also can't reverse direction;" Ah ha! That wasn't
-a problem in Part 1 but it is in Part 2. Easy to fix. I think.
+a problem in Part 1 but it is in Part 2. Easy to fix. I think. I will
+have to track all four directions now U D L R and that will double the
+size of the state-hash. Also doubles the running time.
 
 ----------------------------------------------------------------------------|#
 
@@ -544,11 +566,13 @@ lowest total distance possible"
 
     (clrhash *state-hash*)
 
-    (iter (for d in dirs)
-      ;; zero out starting EDGES
-      (set-dist (list start d 0) 0)
-      ;; and prime the queue
-      (he:enqueue q (list start d 0) 0))
+    (let ((hs (hscore start end)))
+      (iter (for d in dirs)
+        ;; zero out starting EDGES
+        (set-dist (list start d 0) 0)
+        (set-hscore (list start d 0) hs)
+        ;; and prime the queue
+        (he:enqueue q (list start d 0) hs)))
 
     ;; main loop - travel the grid until end or empty queue
     (iter (while (he:peep-at-queue q)) ; still something in the queue
@@ -569,10 +593,12 @@ lowest total distance possible"
           (when (< new-dist (get-dist surr)) ; improvement?
             ;; save new, better, distance
             (set-dist surr new-dist)
-            ;; preserve path
+            ;; save new heuristic score
+            (set-hscore surr (+ new-dist (hscore (origin surr) end)))
+            ;; keep track of how we got here
             (set-prev surr curr)
             ;; enqueue edge
-            (he:enqueue q surr new-dist))))
+            (he:enqueue q surr (get-hscore surr)))))
 
       ;; queue is empty - end loop. Shouldn't get here.
       (finally (error "Queue is empty")))))
@@ -633,3 +659,21 @@ lowest total distance possible"
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2023 Day 17 Part 1 is 847
+;; Evaluation took:
+;; 0.418 seconds of real time
+;; 0.418926 seconds of total run time (0.416315 user, 0.002611 system)
+;; [ Real times consist of 0.028 seconds GC time, and 0.390 seconds non-GC time. ]
+;; [ Run times consist of 0.028 seconds GC time, and 0.391 seconds non-GC time. ]
+;; 100.24% CPU
+;; 138,130,960 bytes consed
+
+;; The answer to AOC 2023 Day 17 Part 2 is 997
+;; Evaluation took:
+;; 2.078 seconds of real time
+;; 2.074592 seconds of total run time (2.043993 user, 0.030599 system)
+;; [ Real times consist of 0.196 seconds GC time, and 1.882 seconds non-GC time. ]
+;; [ Run times consist of 0.195 seconds GC time, and 1.880 seconds non-GC time. ]
+;; 99.86% CPU
+;; 397,185,824 bytes consed
