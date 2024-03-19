@@ -1,7 +1,7 @@
 ;;;; Day18.lisp
 ;;;; 2023 AOC Day 18 solution
 ;;;; Leo Laporte
-;;;; 16 March 2024
+;;;; 16-19 March 2024, Cabo San Lucas
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
