@@ -7,13 +7,14 @@
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :iterate :cl-ppcre :trivia))
+(ql:quickload '(:fiveam :iterate :cl-ppcre :trivia :serapeum :str))
 (use-package :iterate) ; use iter instead of LOOP
 
 (defpackage :day18
   (:use  #:cl :iterate)
   (:local-nicknames
    (:re :cl-ppcre)       ; regex
+   (:sr :serapeum)       ; utilities
    (:tr :trivia)         ; pattern matching
    (:5a :fiveam)))       ; testing framework
 
@@ -129,7 +130,12 @@ includes half the perimeter as well."
 
 (5a:test shoelace-test
   (5a:is (= 4 (shoelace (list (cons 0 2) (cons 2 2) (cons 2 0) (cons 0 0)))))
-  (5a:is (= 16 (shoelace (list (cons 0 0) (cons 4 0) (cons 4 4) (cons 0 4))))))
+  (5a:is (= 4 (shoelace (list (cons 0 0) (cons 2 0) (cons 2 2) (cons 0 2)))))
+  (5a:is (= 16 (shoelace (list (cons 0 0) (cons 4 0) (cons 4 4) (cons 0 4)))))
+  (5a:is (= 4 (shoelace (list-lagoon-vertices '("D 2 (#70c710)"
+                                                "R 2 (#0dc571)"
+                                                "U 2 (#5713f0)"
+                                                "L 2 (#d2c081)"))))))
 
 (defun day18-1 (los)
   "given a list of digging instructions return the total volume dug"
