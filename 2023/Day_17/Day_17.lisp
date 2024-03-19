@@ -1,7 +1,7 @@
 ;;;; Day17.lisp
 ;;;; 2023 AOC Day 17 solution
 ;;;; Leo Laporte
-;;;; 5-16 March 2024
+;;;; 5-16 March 2024, Cabo San Lucas, MX
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -25,8 +25,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
---- Day 17: Clumsy Crucible ---
---- Part One ---
+                   --- Day 17: Clumsy Crucible ---
+                           --- Part One ---
 
 LEO'S NOTES: Finally pathfinding! And this is a Dijkstra with a twist:
 no more than three blocks in a single direction. Can I use the
@@ -304,7 +304,7 @@ lowest total distance possible"
 
 #| ----------------------------------------------------------------------------
 
---- Part Two ---
+                           --- Part Two ---
 
 "Once an ultra crucible starts moving in a direction, it needs to move
 a minimum of four blocks in that direction before it can turn (or even
