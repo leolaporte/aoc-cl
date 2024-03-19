@@ -1,19 +1,22 @@
 ;;;; Day###.lisp
 ;;;; 2023 AOC Day ### solution
 ;;;; Leo Laporte
+;;;; Started:
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :cl-ppcre :trivia))
+(ql:quickload '(:fiveam :iterate :cl-ppcre :trivia :serapeum :str))
+(use-package :iterate) ; use iter instead of LOOP
 
 (defpackage :day###
-  (:use #:cl #:iterate)  ; use iter instead of LOOP
+  (:use  #:cl :iterate)
   (:local-nicknames
-   (:re :cl-ppcre)   ; regular expressions
-   (:tr :trivia)     ; pattern matching
-   (:5a :fiveam)))   ; testing
+   (:re :cl-ppcre)       ; regex
+   (:sr :serapeum)       ; utilities
+   (:tr :trivia)         ; pattern matching
+   (:5a :fiveam)))       ; testing framework
 
 (in-package :day###)
 
