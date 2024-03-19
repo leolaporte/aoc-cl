@@ -27,8 +27,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
---- Day 18: Lavaduct Lagoon ---
---- Part One ---
+                   --- Day 18: Lavaduct Lagoon ---
+                           --- Part One ---
 
 LEO'S NOTES: I think I can use my algorithm from Day 10 to calculate
 the inner area. Or a flood fill. But I'm worried about those
@@ -142,7 +142,7 @@ includes half the perimeter as well."
   (5a:is (= 62 (day18-1 *test-data*))))
 
 #| ----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "Each hexadecimal code is six hexadecimal digits long. The first five hexadecimal digits encode the distance in meters as a five-digit hexadecimal number. The last hexadecimal digit encodes the direction to dig: 0 means R, 1 means D, 2 means L, and 3 means U."
 
