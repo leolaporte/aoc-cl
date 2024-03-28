@@ -56,8 +56,7 @@ px =>
 
 If any chain of funcalls returns A then add (+ x m a s) to total.
 
-Ultimately it's just a problem of parsing. Let's go. Worked fine. But
-now on to Part 2.
+Ultimately it's just a problem of parsing. Let's go.
 
 ---------------------------------------------------------------------------- |#
 
@@ -307,7 +306,7 @@ and a list of TESTs (the hash value)."
 
         (otherwise (error "can't parse command string"))))
 
-    (values name (reverse tests))))
+    (values name (reverse tests))) ; order of tests is significant
 
 (defun build-tunnel (input-string)
   "given a list of strings describing a series of TESTS and an (unsed) list
@@ -323,7 +322,7 @@ of parts, return TUNNEL, a hash of TRANSIT structs"
         (setf (gethash name tunnel) transit)) ; build name=>func hash TUNNEL
       (finally (return tunnel)))))
 
-(defun slicer (boat transform)
+(defun slicer (boat transit)
   "given a boat structure, and a TRANSIT, return a list of boats
  that emerge with new ranges and destinations"
   )
