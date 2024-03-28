@@ -8,12 +8,15 @@
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :iterate :cl-ppcre :str :trivia :trivia.ppcre))
+(ql:quickload '(:serapeum :alexandria :fiveam :iterate
+                :cl-ppcre :str :trivia :trivia.ppcre)) ; useful libraries
 (use-package :iterate) ; use iter instead of LOOP
 
 (defpackage :day19
   (:use  #:cl :iterate)
   (:local-nicknames              ; not all of these are used every day
+   (:sr :serapeum)               ; misc utilities
+   (:ax :alexandria)             ; ditto
    (:re :cl-ppcre)               ; regex
    (:tr :trivia)                 ; pattern matching
    (:tp :trivia.ppcre)           ; regex in pattern matching
@@ -207,7 +210,7 @@ Ugh. So we have to whittle 4000^4 (256 trillion) possibilities to
 what? a solution that's somewhat lower. But how do we whittle?
 
 In effect I'll start a list of RANGES (0-4000 0-4000 0-4000 0-4000)
-through the FILTERS, starting at IN. When I reach {s<1351:px,qqz}, for
+through the TESTs, starting at IN. When I reach {s<1351:px,qqz}, for
 example, I'll split the RANGES into two: (0-4000 0-4000 0-4000 0-1350)
 which goes to PX and (0-4000 0-4000 0-4000 1351-4000) which goes to
 QQZ. At QQZ, {s>2770:qs,m<1801:hdj,R}, there will be multiple
@@ -219,10 +222,111 @@ split into (0-4000 0-4000 0-4000 1351-2770) which will become (0-4000
 process I will have some ranges in the A bucket which I can tally for
 the answer.
 
-So the first problem is to think about how I represent the RANGES and
-the FILTERS tree.
+Maybe a better metaphor is a Tunnel of Love. I'm sending a little BOAT
+down the TUNNEL where it will enter a successive series of TRANSITs
+to face a list of TESTs. Each test will whittle the number of
+possibilities down and/or shunt the boat to a new TRANSIT. The boat
+may split into multiple boats at each TRANSIT. At the end, each of
+the multitude of boats will reach one of two docks, either R, to be
+ignored, or A where all the ranges will be tallied up to provide the
+problem's answer.
+
+So the first issue is to think about how I represent the tunnel,
+tests, and boats.
+
+TUNNEL will be a hash-table of TRANSITs. Each TRANSIT will have a
+name symbol (e.g. in, qx, qrs) and a list of TESTs to be performed on
+the BOAT.
+
+TEST will be a structure encapsulating the information provided by
+the workflows: the category (or SEAT) affected, the operation (or
+SLICER) to be performed, and the RANGE split. Each test will also have
+a SHUNT which is where the subject BOAT will go next.
+
+BOATs will have four SEATs, each reflecting a range of numbers from
+START to END. Each boat will also have a NEXT slot reflecting the next
+TRANSIT (or R and A docks) that it is being sent to.
 
 ---------------------------------------------------------------------------- |#
+
+(defstruct (test)
+  "the workflow tests - each hash-table key has one or more tests. Tests
+with :num 0 will be jumps to either R A or another node"
+  (seat "" :type string)
+  (slicer "" :type string)
+  (range 0 :type fixnum)
+  (shunt nil :type symbol))
+
+(defstruct (boat)
+  "the little boats that will enter the tunnel of love, eventually
+ reaching the final docks R and A"
+  (next (intern "in") :type symbol) ; the next (or current) TRANSIT
+
+  (x-start 0 :type fixnum)          ; the low end of the range for seat X
+  (x-end 4000 :type fixnum)         ; the high end of the range for seat X, inclusive
+
+  (m-start 0 :type fixnum)          ; the low end of the range for seat M
+  (m-end 4000 :type fixnum)         ; the high end of the range for seat M
+
+  (a-start 0 :type fixnum)          ; the low end of the range for seat A
+  (a-end 4000 :type fixnum)         ; the high end of the range for seat A
+
+  (s-start 0 :type fixnum)          ; the low end of the range for seat S
+  (s-end 4000 :type fixnum))        ; the high end of the range for seat S
+
+(defun str-to-transit (code-str)
+  "given a string representing a process, turn it into a TRANSIT with a
+name symbol and a list of TEST structures. Returns NAME (the hash key)
+and a list of TESTs (the hash value)."
+
+  (let* ((parts (str:split "{" code-str))
+         (name (intern (first parts))) ; returns func name as symbol
+         (cmd-str (second parts))      ; given description of the func
+         (tests '()))                  ; returns list of test structs
+
+    (setf cmd-str (str:trim cmd-str :char-bag "}")) ; kill trailing }
+    (setf cmd-str (re:split "," cmd-str)) ; split into separate commands
+
+    ;; now walk the code-string
+    (iter (for test in cmd-str)
+      ;; two kinds of commands: > < and jump, R, or A
+      (tr:match test
+
+        ;; it's a < or >
+        ((tp:ppcre "([xmas])([<>])(\\d+):(\\w+)" seat slicer range shunt)
+         (push
+          (make-test :seat seat :slicer slicer
+                     :range (parse-integer range) :shunt (intern shunt))
+          tests))
+
+        ;; it's a bare result, R A or a key to jump to
+        ((tp:ppcre "^(\\w+)$" shunt)
+         (push
+          (make-test :shunt (intern shunt))
+          tests))
+
+        (otherwise (error "can't parse command string"))))
+
+    (values name (reverse tests))))
+
+(defun build-tunnel (input-string)
+  "given a list of strings describing a series of TESTS and an (unsed) list
+of parts, return TUNNEL, a hash of TRANSIT structs"
+  (let* ((input (re:split "\\n\\n" input-string)) ; split on empty line
+         (instructions (str:words (first input))) ; list of instruction strs
+         (tunnel (make-hash-table :test 'equal :size (length code))))
+
+    ;; process code
+    (iter (for str in instructions)
+      (multiple-value-bind (name transit)
+          (str-to-transit str) ; create a TRANSIT from code string
+        (setf (gethash name tunnel) transit)) ; build name=>func hash TUNNEL
+      (finally (return tunnel)))))
+
+(defun slicer (boat transform)
+  "given a boat structure, and a TRANSIT, return a list of boats
+ that emerge with new ranges and destinations"
+  )
 
 
 (5a:test day19-2-test
