@@ -3,6 +3,7 @@
 ;;;; Leo Laporte
 ;;;; Started: 19 March 2024, Cabo San Lucas, MX
 ;;;; Part 1 done: 26 March 2024, Petaluma, CA
+;;;; Part 2 done: 31 March 2024, Petaluma, CA
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -197,7 +198,7 @@ sum of all the part ratings that end up in the A bucket"
   (5a:is (= 19114 (day19-1 *test-data*))))
 
 #| ----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "Each of the four ratings (x, m, a, s) can have an integer value
 ranging from a minimum of 1 to a maximum of 4000. Of all possible
