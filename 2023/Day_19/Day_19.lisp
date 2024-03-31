@@ -234,13 +234,13 @@ So the first issue is to think about how I represent the tunnel,
 tests, and boats.
 
 TUNNEL will be a hash-table of TRANSITs. Each TRANSIT will have a
-name symbol (e.g. in, qx, qrs) and a list of TESTs to be performed on
+name (e.g. "in", "qx", "qrs") and a list of TESTs to be performed on
 the BOAT.
 
-TEST will be a structure encapsulating the information provided by
-the workflows: the category (or SEAT) affected, the operation (or
-SLICER) to be performed, and the RANGE split. Each test will also have
-a SHUNT which is where the subject BOAT will go next.
+TEST will be a structure encapsulating the information provided by the
+workflows: the category (or SEAT) affected, the operation (or
+SPLITTER) to be performed, and the RANGE split. Each test will also
+have a SHUNT which is where the subject BOAT will go next.
 
 BOATs will have four SEATs, each reflecting a range of numbers from
 START to END. Each boat will also have a NEXT slot reflecting the next
@@ -252,36 +252,35 @@ TRANSIT (or R and A docks) that it is being sent to.
   "the workflow tests - each hash-table key has one or more tests. Tests
 with :num 0 will be jumps to either R A or another node"
   (seat "" :type string)
-  (slicer "" :type string)
+  (splitter "" :type string)
   (range 0 :type fixnum)
-  (shunt nil :type symbol))
+  (shunt "" :type string))
 
 (defstruct (boat)
   "the little boats that will enter the tunnel of love, eventually
  reaching the final docks R and A"
-  (next (intern "in") :type symbol) ; the next (or current) TRANSIT
+  (next "in" :type string) ; the next (or current) TRANSIT
 
-  (x-start 0 :type fixnum)          ; the low end of the range for seat X
-  (x-end 4000 :type fixnum)         ; the high end of the range for seat X, inclusive
+  (x-start 0 :type fixnum)   ; the low end of the range for seat X
+  (x-end 4000 :type fixnum)  ; the high end of the range for seat X, inclusive
 
-  (m-start 0 :type fixnum)          ; the low end of the range for seat M
-  (m-end 4000 :type fixnum)         ; the high end of the range for seat M
+  (m-start 0 :type fixnum)   ; the low end of the range for seat M
+  (m-end 4000 :type fixnum)  ; the high end of the range for seat M
 
-  (a-start 0 :type fixnum)          ; the low end of the range for seat A
-  (a-end 4000 :type fixnum)         ; the high end of the range for seat A
+  (a-start 0 :type fixnum)   ; the low end of the range for seat A
+  (a-end 4000 :type fixnum)  ; the high end of the range for seat A
 
-  (s-start 0 :type fixnum)          ; the low end of the range for seat S
-  (s-end 4000 :type fixnum))        ; the high end of the range for seat S
+  (s-start 0 :type fixnum)   ; the low end of the range for seat S
+  (s-end 4000 :type fixnum)) ; the high end of the range for seat S
 
 (defun str-to-transit (code-str)
   "given a string representing a process, turn it into a TRANSIT with a
-name symbol and a list of TEST structures. Returns NAME (the hash key)
-and a list of TESTs (the hash value)."
-
+name and a list of TEST structures. Returns NAME (the hash key) and a
+list of TESTs (the hash value)."
   (let* ((parts (str:split "{" code-str))
-         (name (intern (first parts))) ; returns func name as symbol
-         (cmd-str (second parts))      ; given description of the func
-         (tests '()))                  ; returns list of test structs
+         (name  (first parts))      ; func name
+         (cmd-str (second parts))   ; given description of the func
+         (tests '()))               ; returns list of test structs
 
     (setf cmd-str (str:trim cmd-str :char-bag "}")) ; kill trailing }
     (setf cmd-str (re:split "," cmd-str)) ; split into separate commands
@@ -292,28 +291,28 @@ and a list of TESTs (the hash value)."
       (tr:match test
 
         ;; it's a < or >
-        ((tp:ppcre "([xmas])([<>])(\\d+):(\\w+)" seat slicer range shunt)
+        ((tp:ppcre "([xmas])([<>])(\\d+):(\\w+)" seat splitter range shunt)
          (push
-          (make-test :seat seat :slicer slicer
-                     :range (parse-integer range) :shunt (intern shunt))
+          (make-test :seat seat :splitter splitter
+                     :range (parse-integer range) :shunt shunt)
           tests))
 
         ;; it's a bare result, R A or a key to jump to
         ((tp:ppcre "^(\\w+)$" shunt)
          (push
-          (make-test :shunt (intern shunt))
+          (make-test :shunt shunt)
           tests))
 
         (otherwise (error "can't parse command string"))))
 
-    (values name (reverse tests))) ; order of tests is significant
+    (values name (reverse tests))))  ; order of tests is significant
 
 (defun build-tunnel (input-string)
   "given a list of strings describing a series of TESTS and an (unsed) list
 of parts, return TUNNEL, a hash of TRANSIT structs"
   (let* ((input (re:split "\\n\\n" input-string)) ; split on empty line
          (instructions (str:words (first input))) ; list of instruction strs
-         (tunnel (make-hash-table :test 'equal :size (length code))))
+         (tunnel (make-hash-table :test 'equal :size (length instructions))))
 
     ;; process code
     (iter (for str in instructions)
@@ -322,11 +321,237 @@ of parts, return TUNNEL, a hash of TRANSIT structs"
         (setf (gethash name tunnel) transit)) ; build name=>func hash TUNNEL
       (finally (return tunnel)))))
 
-(defun slicer (boat transit)
-  "given a boat structure, and a TRANSIT, return a list of boats
- that emerge with new ranges and destinations"
-  )
+;; ----------------------------------------------------------------------
+;; Parsing and structure building done - pass the boats thru the tunnel
+;; ----------------------------------------------------------------------
 
+;; first, a function to calculate generic passing and failing ranges
+(defun splitter (op border start end)
+  "given an op (< or >), a number representing the border, and the
+current start and end range from a boat, return two ranges PASS and
+FAIL"
+  (cond ((string= op "<")
+         (cond ((>= start border) (values nil (cons start end))) ; FAIL
+               ((< end border) (values (cons start end) nil))   ; PASS
+               (t (values (cons start (1- border))  ; pass range
+                          (cons border end)))))     ; fail range
+
+        ((string= op ">")
+         (cond ((<= end border) (values nil (cons start end)))  ; fail
+               ((> start border) (values (cons start end) nil)) ; pass
+               (t (values (cons (1+ border) end)     ;passing range
+                          (cons start border))))))) ;failing range
+
+(5a:test splitter-test
+  (5a:is (equal (splitter ">" 100 101 200)
+                (values (cons 101 200) nil)))
+  (5a:is (equal (splitter ">" 100 98 99)
+                (values nil (cons 98 99))))
+  (5a:is (equal (splitter ">" 100 98 101)
+                (values (cons 101 101) (cons 98 100))))
+
+  (5a:is (equal (splitter "<" 100 94 96)
+                (values (cons 94 96) nil)))
+  (5a:is (equal (splitter "<" 100 100 110)
+                (values nil (cons 100 110))))
+  (5a:is (equal (splitter "<" 100 98 101)
+                (values (cons 98 99) (cons 100 101)))))
+
+;; sends one boat through one test - returning passing and failing boats
+(defun test-boat (boat test)
+  "given a BOAT struct return two values with PASS and FAIL BOATS.
+
+ If the boat completely fails the test (NIL BOAT), if the entire range
+passes (BOAT NIL), otherwise return two boats one with a new next
+value and passing ranges, the other with the same next and the failing
+ranges. Never returns more than two boats"
+  (let ((seat (test-seat test))
+        (op (test-splitter test))
+        (range (test-range test))
+        (shunt (test-shunt test))
+
+        (pass-boat (copy-structure boat))  ; return with next & passing range
+        (fail-boat (copy-structure boat))) ; return with failing range
+
+    (when (zerop range)                            ; final test
+      (setf (boat-next boat) shunt) ; send it to next unchanged
+      (return-from test-boat (values boat nil)))  ; always pass
+
+    (tr:match seat ; which seat is test for?
+      ("x"
+       (multiple-value-bind (pass-range fail-range)
+           ;; get the split ranges (or nil) for pass and fail boats
+           (splitter op range (boat-x-start boat) (boat-x-end boat))
+
+         ;; adjust ranges and next
+         (if pass-range
+             ;; passed - so go to next TRANSIT with passing ranges
+             (progn
+               (setf (boat-next pass-boat) shunt)
+               (setf (boat-x-start pass-boat) (car pass-range))
+               (setf (boat-x-end pass-boat) (cdr pass-range)))
+             ;;else
+             (setf pass-boat nil))
+
+         ;; set failing ranges
+         (if fail-range
+             ;; leave shunt the same - this range failed the test
+             (progn
+               (setf (boat-x-start fail-boat) (car fail-range))
+               (setf (boat-x-end fail-boat) (cdr fail-range)))
+             ;; else
+             (setf fail-boat nil))))
+
+      ("m"
+       (multiple-value-bind (pass-range fail-range)
+           (splitter op range (boat-m-start boat) (boat-m-end boat))
+
+         (if pass-range
+             ;; passed - so go to next TRANSIT with (new?) pass ranges
+             (progn (setf (boat-next pass-boat) shunt)
+                    (setf (boat-m-start pass-boat) (car pass-range))
+                    (setf (boat-m-end pass-boat) (cdr pass-range)))
+             ;;else
+             (setf pass-boat nil))
+
+         (if fail-range
+             ;; leave shunt the same - this range failed the test
+             (progn (setf (boat-m-start fail-boat) (car fail-range))
+                    (setf (boat-m-end fail-boat) (cdr fail-range)))
+             ;; else
+             (setf fail-boat nil))))
+
+      ("a"
+       (multiple-value-bind (pass-range fail-range)
+           (splitter op range (boat-a-start boat) (boat-a-end boat))
+         (if pass-range
+             ;; passed - so go to next TRANSIT with (new?) pass ranges
+             (progn (setf (boat-next pass-boat) shunt)
+                    (setf (boat-a-start pass-boat) (car pass-range))
+                    (setf (boat-a-end pass-boat) (cdr pass-range)))
+             ;;else
+             (setf pass-boat nil))
+
+         (if fail-range
+             ;; leave shunt the same - this range failed the test
+             (progn (setf (boat-a-start fail-boat) (car fail-range))
+                    (setf (boat-a-end fail-boat) (cdr fail-range)))
+             ;; else
+             (setf fail-boat nil))))
+
+      ("s"
+       (multiple-value-bind (pass-range fail-range)
+           (splitter op range (boat-s-start boat) (boat-s-end boat))
+         (if pass-range
+             ;; passed - so go to next TRANSIT with (new?) pass ranges
+             (progn (setf (boat-next pass-boat) shunt)
+                    (setf (boat-s-start pass-boat) (car pass-range))
+                    (setf (boat-s-end pass-boat) (cdr pass-range)))
+             ;;else
+             (setf pass-boat nil))
+
+         (if fail-range
+             ;; leave shunt the same - this range failed the test
+             (progn (setf (boat-s-start fail-boat) (car fail-range))
+                    (setf (boat-s-end fail-boat) (cdr fail-range)))
+             ;; else
+             (setf fail-boat nil))))
+
+      (otherwise (error "Flawed test: ~A" test)))
+
+    (values pass-boat fail-boat)))
+
+(5a:test test-boat-test
+  (let ((tunnel (build-tunnel *test-data*)))
+    ;; "qs" => (#S(TEST :SEAT "s" :SPLITTER ">" :RANGE 3448 :SHUNT "A")
+    (5a:is (equalp (test-boat (make-boat) (first (gethash "qs" tunnel)))
+                   (values (make-boat :next "A" :s-start 3449)
+                           (make-boat :s-start 0 :s-end 3448))))
+
+    ;; "qqz" => (#S(TEST :SEAT "s" :SPLITTER ">" :RANGE 2770 :SHUNT "qs")
+    (5a:is (equalp (test-boat (make-boat) (first (gethash "qqz" tunnel)))
+                   (values (make-boat :next "qs" :s-start 2771)
+                           (make-boat :s-start 0 :s-end 2770))))
+
+    ;; second "pv" => #S(TEST :SEAT "" :SPLITTER "" :RANGE 0 :SHUNT "A"))
+    (5a:is (equalp (test-boat (make-boat) (second (gethash "pv" tunnel)))
+                   (values (make-boat :next "A") nil)))))
+
+(defun push-boat-through-transit (boat tunnel)
+  "given a BOAT structure, and a TUNNEL hash, push the BOAT through the
+next TRANSIT's multiple tests and return the list of BOATs that emerge"
+  (let ((tsts (gethash (boat-next boat) tunnel)) ; the tests in the transit
+        (processed '())                          ; boats that have passed through
+        (unprocessed boat)) ; remaining boats
+
+    (iter (while unprocessed)                ; still more work to do
+      (multiple-value-bind (pass fail)
+          (test-boat unprocessed (pop tsts)) ; run the first test
+        (when pass (push pass processed))    ; save passed range (if there is one)
+        (setf unprocessed fail))             ; re-process any fails
+      (finally (return processed)))))
+
+
+;; these are the critical tests for all of the above
+(5a:test push-boat-through-transit-test
+  (let ((tunnel (build-tunnel *test-data*)))
+    (5a:is (equalp (push-boat-through-transit (make-boat) tunnel)
+                   (list
+                    (make-boat :next "qqz" :s-start 1351 :s-end 4000)
+                    (make-boat :next "px" :s-start 0 :s-end 1350))))
+
+    (5a:is (equalp (push-boat-through-transit (make-boat :next "qqz") tunnel)
+                   (list
+                    (make-boat :next "R" :s-start 0 :s-end 2770
+                               :m-start 1801 :m-end 4000)
+                    (make-boat :next "hdj" :s-start 0 :s-end 2770
+                               :m-start 0 :m-end 1800)
+                    (make-boat :next "qs" :s-start 2771 :s-end 4000))))
+
+    (5a:is (equalp (push-boat-through-transit     ; all pass
+                    (make-boat :next "rfg" :s-start 5 :s-end 500) tunnel)
+                   (list
+                    (make-boat :next "gd" :s-start 5 :s-end 500))))
+
+    (5a:is (equalp (push-boat-through-transit     ; all fail
+                    (make-boat :next "qqz" :s-start 0 :s-end 10
+                               :m-start 2000 :m-end 2001)
+                    tunnel)
+                   (list
+                    (make-boat :next "R" :s-start 0 :s-end 10
+                               :m-start 2000 :m-end 2001 ))))))
+
+(defun sum-ranges (boats)
+  "given a list of boats return a number that represents the sum of all
+the ranges in each boat"
+  (apply #'+ (mapcar #'(lambda (b)
+                         (+
+                          (1+ (- (boat-x-end b) (boat-x-start b)))
+                          (1+ (- (boat-m-end b) (boat-m-start b)))
+                          (1+ (- (boat-a-end b) (boat-a-start b)))
+                          (1+ (- (boat-s-end b) (boat-s-start b)))))
+                     boats)))
+
+(5a:test sum-ranges-test
+  (5a:is (= 16004 (sum-ranges (list (make-boat))))))
+
+(defun day19-2 (los)
+  "given a list of strings representing a series of workflows, return the
+number of combinations of part ratings that will pass"
+  (let ((tunnel (build-tunnel los))      ; hash-table of tests
+        (unprocessed (list (make-boat))) ; start with one boat
+        (accepted '()))  ; collect all the ranges that make it through
+
+    (iter (while unprocessed)  ; while there are boats still in the tunnel
+      (let ((boats (push-boat-through-transit (pop unprocessed) tunnel)))
+        (dolist (b boats)   ; sort boats coming out of the transit
+          (let ((next (boat-next b)))
+            (cond ((equal next "A")
+                   (push b accepted))          ; passed! save it
+
+                  ((not (equal next "R"))      ; needs more work
+                   (push b unprocessed))))))
+      (finally (return (sum-ranges accepted)))))) ; processed all boats!
 
 (5a:test day19-2-test
   (5a:is (= 167409079868000 (day19-2 *test-data*))))
