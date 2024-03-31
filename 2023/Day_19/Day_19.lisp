@@ -246,6 +246,16 @@ BOATs will have four SEATs, each reflecting a range of numbers from
 START to END. Each boat will also have a NEXT slot reflecting the next
 TRANSIT (or R and A docks) that it is being sent to.
 
+It worked. As soon as I re-read the instructions and realized the
+ranges were from ONE to 4000 not ZERO to 4000 as I had assumed. D'oh!
+
+And, interesting note, using the hash-table of functions is MUCH
+faster, and uses MUCH less memory than converting the tests into
+LAMBDA strings (as I did in part 1). But I'm going to keep part one as
+it is, because it's fast enough, and I kind of like the clever
+implementation. For historic purposes, only. Note to self: always use
+hash-tables when possible!
+
 ---------------------------------------------------------------------------- |#
 
 (defstruct (test)
@@ -261,16 +271,16 @@ with :num 0 will be jumps to either R A or another node"
  reaching the final docks R and A"
   (next "in" :type string) ; the next (or current) TRANSIT
 
-  (x-start 0 :type fixnum)   ; the low end of the range for seat X
+  (x-start 1 :type fixnum)   ; the low end of the range for seat X
   (x-end 4000 :type fixnum)  ; the high end of the range for seat X, inclusive
 
-  (m-start 0 :type fixnum)   ; the low end of the range for seat M
+  (m-start 1 :type fixnum)   ; the low end of the range for seat M
   (m-end 4000 :type fixnum)  ; the high end of the range for seat M
 
-  (a-start 0 :type fixnum)   ; the low end of the range for seat A
+  (a-start 1 :type fixnum)   ; the low end of the range for seat A
   (a-end 4000 :type fixnum)  ; the high end of the range for seat A
 
-  (s-start 0 :type fixnum)   ; the low end of the range for seat S
+  (s-start 1 :type fixnum)   ; the low end of the range for seat S
   (s-end 4000 :type fixnum)) ; the high end of the range for seat S
 
 (defun str-to-transit (code-str)
@@ -379,6 +389,7 @@ ranges. Never returns more than two boats"
 
     (tr:match seat ; which seat is test for?
       ("x"
+
        (multiple-value-bind (pass-range fail-range)
            ;; get the split ranges (or nil) for pass and fail boats
            (splitter op range (boat-x-start boat) (boat-x-end boat))
@@ -466,12 +477,12 @@ ranges. Never returns more than two boats"
     ;; "qs" => (#S(TEST :SEAT "s" :SPLITTER ">" :RANGE 3448 :SHUNT "A")
     (5a:is (equalp (test-boat (make-boat) (first (gethash "qs" tunnel)))
                    (values (make-boat :next "A" :s-start 3449)
-                           (make-boat :s-start 0 :s-end 3448))))
+                           (make-boat :s-start 1 :s-end 3448))))
 
     ;; "qqz" => (#S(TEST :SEAT "s" :SPLITTER ">" :RANGE 2770 :SHUNT "qs")
     (5a:is (equalp (test-boat (make-boat) (first (gethash "qqz" tunnel)))
                    (values (make-boat :next "qs" :s-start 2771)
-                           (make-boat :s-start 0 :s-end 2770))))
+                           (make-boat :s-start 1 :s-end 2770))))
 
     ;; second "pv" => #S(TEST :SEAT "" :SPLITTER "" :RANGE 0 :SHUNT "A"))
     (5a:is (equalp (test-boat (make-boat) (second (gethash "pv" tunnel)))
@@ -498,14 +509,14 @@ next TRANSIT's multiple tests and return the list of BOATs that emerge"
     (5a:is (equalp (push-boat-through-transit (make-boat) tunnel)
                    (list
                     (make-boat :next "qqz" :s-start 1351 :s-end 4000)
-                    (make-boat :next "px" :s-start 0 :s-end 1350))))
+                    (make-boat :next "px" :s-start 1 :s-end 1350))))
 
     (5a:is (equalp (push-boat-through-transit (make-boat :next "qqz") tunnel)
                    (list
-                    (make-boat :next "R" :s-start 0 :s-end 2770
+                    (make-boat :next "R" :s-start 1 :s-end 2770
                                :m-start 1801 :m-end 4000)
-                    (make-boat :next "hdj" :s-start 0 :s-end 2770
-                               :m-start 0 :m-end 1800)
+                    (make-boat :next "hdj" :s-start 1 :s-end 2770
+                               :m-start 1 :m-end 1800)
                     (make-boat :next "qs" :s-start 2771 :s-end 4000))))
 
     (5a:is (equalp (push-boat-through-transit     ; all pass
@@ -514,18 +525,18 @@ next TRANSIT's multiple tests and return the list of BOATs that emerge"
                     (make-boat :next "gd" :s-start 5 :s-end 500))))
 
     (5a:is (equalp (push-boat-through-transit     ; all fail
-                    (make-boat :next "qqz" :s-start 0 :s-end 10
+                    (make-boat :next "qqz" :s-start 1 :s-end 10
                                :m-start 2000 :m-end 2001)
                     tunnel)
                    (list
-                    (make-boat :next "R" :s-start 0 :s-end 10
+                    (make-boat :next "R" :s-start 1 :s-end 10
                                :m-start 2000 :m-end 2001 ))))))
 
 (defun sum-ranges (boats)
   "given a list of boats return a number that represents the sum of all
 the ranges in each boat"
   (apply #'+ (mapcar #'(lambda (b)
-                         (+
+                         (*
                           (1+ (- (boat-x-end b) (boat-x-start b)))
                           (1+ (- (boat-m-end b) (boat-m-start b)))
                           (1+ (- (boat-a-end b) (boat-a-start b)))
@@ -533,7 +544,7 @@ the ranges in each boat"
                      boats)))
 
 (5a:test sum-ranges-test
-  (5a:is (= 16004 (sum-ranges (list (make-boat))))))
+  (5a:is (= (* 4000 4000 4000 4000)  (sum-ranges (list (make-boat))))))
 
 (defun day19-2 (los)
   "given a list of strings representing a series of workflows, return the
@@ -544,6 +555,7 @@ number of combinations of part ratings that will pass"
 
     (iter (while unprocessed)  ; while there are boats still in the tunnel
       (let ((boats (push-boat-through-transit (pop unprocessed) tunnel)))
+        ;;     (format t "~&Boats: ~A~&Unprocessed: ~A" boats unprocessed)
         (dolist (b boats)   ; sort boats coming out of the transit
           (let ((next (boat-next b)))
             (cond ((equal next "A")
@@ -560,8 +572,8 @@ number of combinations of part ratings that will pass"
 (time (format t "The answer to AOC 2023 Day 19 Part 1 is ~a"
 	      (day19-1 (str:from-file *data-file*))))
 
-;; (time (format t "The answer to AOC 2023 Day 19 Part 2 is ~a"
-;;	      (day19-2 (str:from-file *data-file*))))
+(time (format t "The answer to AOC 2023 Day 19 Part 2 is ~a"
+              (day19-2 (str:from-file *data-file*))))
 
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
@@ -569,11 +581,18 @@ number of combinations of part ratings that will pass"
 
 ;; The answer to AOC 2023 Day 19 Part 1 is 382440
 ;; Evaluation took:
-;; 0.344 seconds of real time
-;; 0.344194 seconds of total run time (0.336352 user, 0.007842 system)
-;; [ Real times consist of 0.012 seconds GC time, and 0.332 seconds non-GC time. ]
-;; [ Run times consist of 0.012 seconds GC time, and 0.333 seconds non-GC time. ]
-;; 100.00% CPU
+;; 0.493 seconds of real time
+;; 0.494820 seconds of total run time (0.484216 user, 0.010604 system)
+;; [ Real times consist of 0.040 seconds GC time, and 0.453 seconds non-GC time. ]
+;; [ Run times consist of 0.040 seconds GC time, and 0.455 seconds non-GC time. ]
+;; 100.41% CPU
 ;; 1,275 forms interpreted
-;; 6,922 lambdas converted
-;; 468,546,272 bytes consed
+;; 8,197 lambdas converted
+;; 661,798,336 bytes consed
+
+;; The answer to AOC 2023 Day 19 Part 2 is 136394217540123
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002290 seconds of total run time (0.002248 user, 0.000042 system)
+;; 100.00% CPU
+;; 2,602,736 bytes consed
