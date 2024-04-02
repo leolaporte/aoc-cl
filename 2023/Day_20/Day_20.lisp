@@ -60,8 +60,8 @@ will have different methods for each class.
 
 Each pulse send will be handled according to the rules for each kind
 of module which will output a list of the next pulses to send
-as (list (list to from type)). I need to track FROM for the Conveyor
-modules. (NB I'm not sure yet how to set up the Conveyor history)
+as (list (list to from type)). I'll collect all the NEXTs before I
+process them.
 
 On each button push, I'll accumulate a list of next pulses in a list
 called NEXT, counting all the 'HIGH and 'LOW sends as I do, until all
@@ -255,7 +255,8 @@ and a value being a struct of module type"
         (next '())
         (work '()))
 
-    (iter (for p below pushes) ; do 1000 times
+    ;; all set - let's get pushing
+    (iter (for p below pushes)
 
       ;; push button sending 'LOW to broadcaster to kick off
       (push
@@ -264,15 +265,23 @@ and a value being a struct of module type"
 
       ;; process all NEXT commands
       (iter (while next)
+        ;; count the pulses so far
         (incf low-pulses (count 'LOW next :key #'third))
         (incf high-pulses (count 'HIGH next :key #'third))
-        (setf work next) ; copy the next list
-        (setf next '())  ; then clear it for the next round
+
+        ;; copy next to work then clear next
+        (setf work next)
+        (setf next '())
+
+        ;; now process all the commands in work
         (iter (for command in work)
           (push
            (pulse-module (gethash (first command) modules)
                          (second command) (third command))
            next)))
+      ;; nothing more to do, push the button again!
+
+      ;; after all the button pushes, return answer
       (finally (return (* high-pulses low-pulses))))))
 
 (5a:test day20-1-test
@@ -285,13 +294,13 @@ and a value being a struct of module type"
 
 ---------------------------------------------------------------------------- |#
 
-  ;; now solve the puzzle!
-  ;; (time (format t "The answer to AOC 2023 Day 20 Part 1 is ~a"
-  ;;	      (day20-1 (uiop:read-file-lines *data-file*) 1000)))
+;; now solve the puzzle!
+;; (time (format t "The answer to AOC 2023 Day 20 Part 1 is ~a"
+;;	      (day20-1 (uiop:read-file-lines *data-file*) 1000)))
 
-  ;; (time (format t "The answer to AOC 2023 Day 20 Part 2 is ~a"
-  ;;	      (day20-2 (uiop:read-file-lines *data-file*))))
+;; (time (format t "The answer to AOC 2023 Day 20 Part 2 is ~a"
+;;	      (day20-2 (uiop:read-file-lines *data-file*))))
 
-  ;; ----------------------------------------------------------------------------
-  ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
-  ;; ----------------------------------------------------------------------------
+;; ----------------------------------------------------------------------------
+;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
+;; ----------------------------------------------------------------------------
