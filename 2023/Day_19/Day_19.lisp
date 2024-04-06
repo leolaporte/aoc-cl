@@ -198,7 +198,7 @@ sum of all the part ratings that end up in the A bucket"
   (5a:is (= 19114 (day19-1 *test-data*))))
 
 #| ----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "Each of the four ratings (x, m, a, s) can have an integer value
 ranging from a minimum of 1 to a maximum of 4000. Of all possible
