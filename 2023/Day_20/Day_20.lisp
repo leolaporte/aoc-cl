@@ -2,6 +2,7 @@
 ;;;; 2023 AOC Day 20 solution
 ;;;; Leo Laporte
 ;;;; Started: 31 March 2024
+;;;; Done: 6 April 2024
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -35,8 +36,8 @@
 
 
 #| ----------------------------------------------------------------------------
---- Day 20: Pulse Propagation ---
---- Part One ---
+                  --- Day 20: Pulse Propagation ---
+                           --- Part One ---
 
 "Here at Desert Machine Headquarters, there is a module with a single
 button on it called, aptly, the button module. When you push the
@@ -318,8 +319,8 @@ and a value being a struct of module type"
     modules))
 
 (defun push-button (modules)
-  "push button sending 'LOW to broadcaster, returns new state of modules
-after all the cascading pulses are done"
+  "push button sending 'LOW to broadcaster, modifies modules in place to
+reflect new state of modules after all the cascading pulses are done"
   (let ((next '())
         (work '()))
 
@@ -348,9 +349,7 @@ after all the cascading pulses are done"
           (setf next
                 (append
                  (send-pulse sender type module)
-                 next))))))
-
-  modules) ; return modified module hash-table
+                 next)))))))
 
 (defun day20-1 (los pushes)
   "given a list of strings describing a module based circuit, returns the
@@ -422,7 +421,7 @@ more general solution. I think it's likely that everybody's problem
 set ends in four conjunctions which feed a single conjunction which
 feeds rx. So I can make more general code to find that chokepoint. I
 guess I can assume that the problem sets have all the same structure -
-only the names have been changed to protect the solvers.
+only the names have been changed to annoy the solvers.
 
 ---------------------------------------------------------------------------- |#
 
@@ -449,7 +448,7 @@ mine."
                 (list "hd" "tn" "vc" "jx"))))
 
 (defun reset-modules (modules)
-  "given a hash table of modules - reset all FLIP-FLOP STATEs to 'OFF and CONJUNCTION HISTORYs to 'LOW. I need this because each time we push the button the modules hash table is changed. For each iteration of PULSE-UNTIL I need to be able to start with a clean slate."
+  "given a hash table of modules - reset all FLIP-FLOP STATEs to 'OFF and CONJUNCTION HISTORYs to 'LOW. I need this because each time we push the button the modules hash table is changed. For each iteration of PULSE-UNTIL I need to be able to start with a clean slate. Resets the hash table in place"
   (flet ((reset (mod)
            (cond ((equal (type-of mod) 'FLIP-FLOP)
                   (setf (state mod) 'OFF))
@@ -474,7 +473,7 @@ required"
     (reset-modules modules) ; clear modules
 
     ;; all set - let's get pushing
-    (iter (for pushes from 1) ; infinite!
+    (iter (for pushes from 1) ; to infinity and beyond!
 
       ;; push button sending 'LOW to broadcaster to kick off
       (setf next
