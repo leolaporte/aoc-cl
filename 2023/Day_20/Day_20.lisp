@@ -31,8 +31,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
---- Day 20: Pulse Propagation ---
---- Part One ---
+                  --- Day 20: Pulse Propagation ---
+                           --- Part One ---
 
 "Here at Desert Machine Headquarters, there is a module with a single
 button on it called, aptly, the button module. When you push the
@@ -93,7 +93,7 @@ the product of all the 'HIGH and 'LOW pulses sent.
     "%b -> con"
     "&con -> output"))
 
-(defparameter *debug* t)
+(defparameter *debug* t) ; display each pulse send when true
 
 ;; ----------------------------------------------------------------------
 ;; CLASSES
@@ -181,7 +181,7 @@ inputs, it sends a low pulse; otherwise, it sends a high pulse."))
   (:documentation "sends a 'HIGH or 'LOW TYPE pulse to a module named
  MOD from module SOURCE - the module will process the pulse according
  to its rules and output a list of next pulses to send as (list (list
- to from pulse-type))"))
+ source pulse-type destination))"))
 
 (defmethod send-pulse :before (source type (mod module))
   "before we process the pulse, make a record of it"
@@ -245,21 +245,18 @@ all the modules to send pulses to as (list (cons mod type))"
   (declare (ignore mod))
   ())
 
-;; (defmethod print-object ((mod module) stream)
-;;   "overrides the standard print-object to print more info in a human
-;; readable form"
-;;   (format stream "#<~S D>"
-;;           (type-of mod))
-;;   mod)
-
-;; (defmethod describe ((mod module))
-;;   "overides the standard describe to deliver more info in a human
-;;  readable form"
-;;   (format t "~&~S is a module of type ~S named ~A."
-;;           mod
-;;           (type-of mod)
-;;           (name mod))
-;;   mod)
+(defmethod print-object ((mod module) stream)
+  "overrides the standard print-object to print more info in a human
+  readable form"
+  (format stream "~%Type: ~S~&State: ~S~&Dests: ~S~&"
+          (type-of mod)
+          (tr:match (type-of mod)
+            ('FLIP-FLOP (state mod))
+            ('CONJUNCTION (history mod))
+            ('BROADCAST 'NA)
+            ('DEV-NULL 'NA))
+          (dests mod))
+  mod)
 
 ;; ----------------------------------------------------------------------
 ;; PARSER
@@ -316,59 +313,59 @@ and a value being a struct of module type"
 
     modules))
 
-(defun pht (hash)
-  "utility to print hashes"
-  (iter (for (key val) in-hashtable hash)
-    (format t "~%~S => ~S" key val)))
+(defun push-button (modules)
+  "push button sending 'LOW to broadcaster, returns new state of modules
+after all the cascading pulses are done"
+  (let ((next '())
+        (work '()))
+
+    (setf next
+          (append
+           (send-pulse
+            "button" 'LOW (gethash "broadcaster" modules))
+           next)) ; save output to NEXT list
+
+    ;; process all NEXT commands
+    (iter (while next)
+
+      ;; copy next to work then clear next
+      (setf work (copy-list next))
+      (setf next '())
+
+      ;; now process all the queued jobs in work
+      (iter (for job in work)
+        (let ((sender (first job))
+              (type (second job))
+              (module (gethash (third job) modules))) ; get actual module
+
+          (when (null module)                     ; catcher not pitcher
+            (setf module (gethash "rx" modules))) ; dest is bit-bucket
+
+          (setf next
+                (append
+                 (send-pulse sender type module)
+                 next))))))
+
+  modules) ; return modified module hash-table
 
 (defun day20-1 (los pushes)
   "given a list of strings describing a module based circuit, returns the
 product of all high and low pulses sent after PUSHES button
 presses (see the AoC page for a full explanation of what this does)"
-  (let ((modules (parse-modules los))
-        (next '())
-        (work '()))
+  (let ((modules (parse-modules los)))
 
     ;; clear high and low counts
     (setf (low-count (gethash "broadcaster" modules)) 0)
     (setf (high-count (gethash "broadcaster" modules)) 0)
 
     ;; all set - let's get pushing
-    (iter (for ps below pushes)
-
-      ;; push button sending 'LOW to broadcaster to kick off
-      (setf next
-            (append
-             (send-pulse
-              "button" 'LOW (gethash "broadcaster" modules))
-             next)) ; save output to NEXT list
-
-      ;; process all NEXT commands
-      (iter (while next)
-
-        ;; copy next to work then clear next
-        (setf work (copy-list next))
-        (setf next '())
-
-        ;; now process all the queued jobs in work
-        (iter (for job in work)
-          (let ((sender (first job))
-                (type (second job))
-                (module (gethash (third job) modules))) ; get actual module
-
-            (when (null module)                     ; catcher not pitcher
-              (setf module (gethash "rx" modules))) ; dest is bit-bucket
-
-            (setf next
-                  (append
-                   (send-pulse sender type module)
-                   next)))))
-
+    (iter (for push from 1 to pushes)
+      (push-button modules)
       (finally (return (* (high-count (gethash "broadcaster" modules))
                           (low-count (gethash "broadcaster" modules))))))))
 
 (5a:test day20-1-test
-(setf *debug* nil)
+  (setf *debug* nil)
   (5a:is (= 32 (day20-1 *example1* 1)))
   (5a:is (= 16 (day20-1 *example2* 1)))
   (5a:is (= 32000000 (day20-1 *example1* 1000)))
@@ -397,14 +394,14 @@ the repeating pattern. I guess. Let me think.
 I think I need to work backwards. First what condition has to happen
 to get a 'LOW to "rx"?
 
-Very specifically to MY particular problem set "rx" is fed by a
+Very specifically to MY particular problem set, "rx" is fed by a
 CONJUNCTION "dh" alone. To get "dh" to send a 'LOW we have to get its
 feeders (four CONJUNCTIONS tr xm dr nh) to send 'HIGH to 'dh'. Each of
 these has exactly one feeder, hd tn vc and jx, each a conjunction. So
 if each of (hd tr vc jx) sends 'LOW they'll trigger a cascade that
 ends in LOW for rx. hd tn vc and jx have multiple feeders each so we
 can't wait for all those to go LOW so the trail goes cold here. The
-chokepoints we're looking for then is hd tn vc and jx each sending a
+chokepoints we're looking for then are hd tn vc and jx each sending a
 LOW. Or conversely tr xm dr and nh each receiving a LOW so they'll
 send HIGH to dh so it sends a LOW to rx. So the solution involves
 finding how many pushes it takes to get LOW to tr xm dr and nh
@@ -421,33 +418,44 @@ more general solution. I think it's likely that everybody's problem
 set ends in four conjunctions which feed a single conjunction which
 feeds rx. So I can make more general code to find that chokepoint.
 
-
-
 ---------------------------------------------------------------------------- |#
 
-
-(defun find-chokepoint (los)
+(defun find-chokepoint (modules)
   "find the upstream feeders that send the appropriate pulses to start
 the chain to send a low to rx - CHEATING HERE - using hardwired values
 from inspecting my particular problem set - TK let's write this func"
-  (let ((modules (parse-modules los)))
-    (list "hd" "tn" "vc" "jx")))
+  (declare (ignore modules)) ; for now
+  (list "hd" "tn" "vc" "jx"))
 
-(defun get-chokepoint-pulses (points pulse-type los)
-  "given a list of points and a pulse-type, return the LCM of the number
-of button pushes each point takes to send the pulse-type"
-  (apply #'lcm
-         (iter (for p in points)
-           (collect (pulse-until p pulse-type los)))))
+(5a:test find-chokepoint-test
+  (5a:is (equal (find-chokepoint
+                 (parse-modules (uiop:read-file-lines *data-file*)))
+                (list "hd" "tn" "vc" "jx"))))
 
-(defun pulse-until (source pulse-type los)
-  "pulses until the SOURCE module sends the given PULSE-TYPE,
-return the number of button pushes required - rebuilds the module hash
-table each time to reset the state of each module - no sticky
-flip-flops!"
-  (let ((modules (parse-modules los))
-        (next '())
+(defun reset-modules (modules)
+  "given a hash table of modules - reset all FLIP-FLOP STATEs to 'OFF and CONJUNCTION HISTORYs to 'LOW. I need this because each time we push the button the modules hash table is changed. For each iteration of PULSE-UNTIL I need to be able to start with a clean slate."
+  (flet ((reset (mod)
+           (cond ((equal (type-of mod) 'FLIP-FLOP)
+                  (setf (state mod) 'OFF))
+
+                 ((equal (type-of mod) 'CONJUNCTION)
+                  (setf (history mod)
+                        (mapcar #'(lambda (m) (setf m (cons (car m) 'LOW)))
+                                (history mod)))))
+           mod))
+
+    (iter (for (name mod) in-hashtable modules)
+      (setf (gethash name modules)
+            (reset mod)))))
+
+(defun pulse-until (source pulse-type modules)
+  "resets modules to original state, then pulses until the SOURCE module
+sends the given PULSE-TYPE, return the number of button pushes
+required"
+  (let ((next '())
         (work '()))
+
+    (reset-modules modules) ; clear modules
 
     ;; all set - let's get pushing
     (iter (for pushes from 1) ; infinite!
@@ -486,12 +494,17 @@ flip-flops!"
                        next)))))))))
 
 (5a:test pulse-until-test
-  (5a:is (= 2 (pulse-until "a" 'LOW *example2*)))
-  (5a:is (= 2 (pulse-until  "inv" 'HIGH *example2*))))
+  (let ((mods (parse-modules *example2*)))
+    (5a:is (= 2 (pulse-until "a" 'LOW mods)))
+    (5a:is (= 2 (pulse-until  "inv" 'HIGH mods)))))
 
 (defun day20-2 (los)
-  (let ((feeders (find-chokepoint los)))
-    (get-chokepoint-pulses feeders 'LOW los)))
+  (let* ((modules (parse-modules los))
+         (feeders (find-chokepoint modules)))
+
+    (apply #'lcm
+           (iter (for module-name in feeders)
+             (collect (pulse-until module-name 'LOW modules))))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 20 Part 1 is ~a"
@@ -504,19 +517,18 @@ flip-flops!"
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; ----------------------------------------------------------------------------
 
-
 ;; The answer to AOC 2023 Day 20 Part 1 is 763500168
 ;; Evaluation took:
-;; 0.008 seconds of real time
-;; 0.008173 seconds of total run time (0.008083 user, 0.000090 system)
-;; 100.00% CPU
-;; 8,058,256 bytes consed
+;; 0.007 seconds of real time
+;; 0.007648 seconds of total run time (0.007515 user, 0.000133 system)
+;; 114.29% CPU
+;; 8,058,000 bytes consed
 
 ;; The answer to AOC 2023 Day 20 Part 2 is 207652583562007
 ;; Evaluation took:
-;; 0.126 seconds of real time
-;; 0.125901 seconds of total run time (0.125081 user, 0.000820 system)
-;; [ Real times consist of 0.006 seconds GC time, and 0.120 seconds non-GC time. ]
-;; [ Run times consist of 0.006 seconds GC time, and 0.120 seconds non-GC time. ]
-;; 100.00% CPU
-;; 121,660,144 bytes consed
+;; 0.103 seconds of real time
+;; 0.103532 seconds of total run time (0.102807 user, 0.000725 system)
+;; [ Real times consist of 0.003 seconds GC time, and 0.100 seconds non-GC time. ]
+;; [ Run times consist of 0.003 seconds GC time, and 0.101 seconds non-GC time. ]
+;; 100.97% CPU
+;; 121,528,608 bytes consed
