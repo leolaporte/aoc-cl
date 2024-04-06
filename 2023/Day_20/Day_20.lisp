@@ -30,9 +30,13 @@
 (defparameter *data-file* "~/cl/AOC/2023/Day_20/input.txt"
   "Downloaded from the AoC problem set")
 
+(defparameter *data-file2* "~/cl/AOC/2023/Day_20/input2.txt"
+  "ChocolateMilkMinisip's AoC problem set")
+
+
 #| ----------------------------------------------------------------------------
-                  --- Day 20: Pulse Propagation ---
-                           --- Part One ---
+--- Day 20: Pulse Propagation ---
+--- Part One ---
 
 "Here at Desert Machine Headquarters, there is a module with a single
 button on it called, aptly, the button module. When you push the
@@ -416,16 +420,28 @@ jx -> LOW -> nh -> HIGH /
 That solves it for my particular problem set, but I want to make a
 more general solution. I think it's likely that everybody's problem
 set ends in four conjunctions which feed a single conjunction which
-feeds rx. So I can make more general code to find that chokepoint.
+feeds rx. So I can make more general code to find that chokepoint. I
+guess I can assume that the problem sets have all the same structure -
+only the names have been changed to protect the solvers.
 
 ---------------------------------------------------------------------------- |#
 
 (defun find-chokepoint (modules)
   "find the upstream feeders that send the appropriate pulses to start
-the chain to send a low to rx - CHEATING HERE - using hardwired values
-from inspecting my particular problem set - TK let's write this func"
-  (declare (ignore modules)) ; for now
-  (list "hd" "tn" "vc" "jx"))
+the chain to send a low to rx. I'll go as far upstream as I can
+without exceeding four 'CONJUNCTIONS. This makes the extreme
+assumption that all the problem sets have the same final structure as
+mine."
+  (let ((current nil)
+        (next (list "rx")))
+
+    (iter (while (<= (length next) 4))
+      (setf current next)
+      (setf next
+            (iter (for mod in current)
+              (appending (find-feeders mod modules))))
+
+      (finally (return current)))))
 
 (5a:test find-chokepoint-test
   (5a:is (equal (find-chokepoint
@@ -505,6 +521,10 @@ required"
     (apply #'lcm
            (iter (for module-name in feeders)
              (collect (pulse-until module-name 'LOW modules))))))
+
+(5a:test day20-2-test
+  (5a:is (= 207652583562007 (day20-2 (uiop:read-file-lines *data-file*))))
+  (5a:is (= 224602953547789 (day20-2 (uiop:read-file-lines *data-file2*)))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 20 Part 1 is ~a"
