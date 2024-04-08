@@ -1,7 +1,8 @@
 ;;;; Day05.lisp
 ;;;; 2023 AOC Day 05 solution
 ;;;; Leo Laporte
-;;;; 16 December 2023 - 3 January 2024 (optimizing Part 2 was a b***h)
+;;;; 16 December 2023 - 3 January 2024
+;;;; (optimizing Part 2 was a b***h)
 
 ;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -26,8 +27,8 @@
   "Downloaded from the AoC problem set")
 
 #| -----------------------------------------------------------------------------
-            --- Day 5: If You Give A Seed A Fertilizer ---
-                           --- Part One ---
+--- Day 5: If You Give A Seed A Fertilizer ---
+--- Part One ---
 
 "The almanac (your puzzle input) lists all of the seeds that need to
 be planted. It also lists what type of soil to use with each kind of
@@ -162,7 +163,7 @@ return the closest seed location"
   (5a:is (= (Day05-1 *test-data*) 35)))
 
 #| -----------------------------------------------------------------------------
-                           --- Part Two ---
+--- Part Two ---
 
 "It looks like the seeds: line actually describes ranges of seed
 numbers. The values on the initial seeds: line come in pairs. Within
