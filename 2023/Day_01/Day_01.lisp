@@ -2,6 +2,7 @@
 ;;;; Day01.lisp
 ;;;; 2023 AOC Day 01 solution
 ;;;; Leo Laporte
+;;;; 16 December 2023
 
 ;; -----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -27,7 +28,6 @@
 #| -----------------------------------------------------------------------------
 
 Day 1: Trebuchet?!
-
 Part One
 
 On each line, the calibration value can be found by combining the first digit
@@ -71,7 +71,7 @@ two. So...
         sum (string-to-number s)))
 
 (5a:test Day_01-pt1-test
-         (5a:is (equal (Day_01-pt1 *test-data*) 142)))
+  (5a:is (equal (Day_01-pt1 *test-data*) 142)))
 
 
 #| -----------------------------------------------------------------------------
