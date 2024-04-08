@@ -84,10 +84,10 @@ can get. Which makes me very nervous for part 2.
   (5a:is (= 1320 (Day15-1 *sample*))))
 
 #| -------------------------------------------------------------------
-                           --- Part Two ---
+--- Part Two ---
 
 yada yada yada - lots of detailed instructions which boil
-down to: interpretg the provided data as a series of
+down to: interpret the provided data as a series of
 lenses. Store the lenses then return the total focusing
 power of the resulting configuration?
 
@@ -198,9 +198,9 @@ length of the lenses"
   (time (format t "The answer to AOC 2023 Day 15 Part 2 is ~a"
                 (day15-2 data))))
 
-;; ----------------------------------------------------------------------------
+;; -------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
-;; ----------------------------------------------------------------------------
+;; -------------------------------------------------------------------
 
 ;; The answer to AOC 2023 Day 15 Part 1 is 511257
 ;; Evaluation took:
