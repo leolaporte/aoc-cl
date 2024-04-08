@@ -27,8 +27,8 @@
 
 #| -----------------------------------------------------------------------------
 
-Day 1: Trebuchet?!
-Part One
+                          Day 1: Trebuchet?!
+                               Part One
 
 On each line, the calibration value can be found by combining the first digit
 and the last digit (in that order) to form a single two-digit number.
@@ -75,7 +75,7 @@ two. So...
 
 
 #| -----------------------------------------------------------------------------
-Part Two
+                               Part Two
 
 Your calculation isn't quite right. It looks like some of the digits are
 actually spelled out with letters: one, two, three, four, five, six, seven,
