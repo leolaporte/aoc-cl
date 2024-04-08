@@ -31,8 +31,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
---- Day 21: Step Counter ---
---- Part One ---
+                     --- Day 21: Step Counter ---
+                           --- Part One ---
 
 
 "he'd like to know which garden plots he can reach with exactly his
@@ -102,6 +102,21 @@ number of unique positions.
 
     (values map start)))
 
+(defun print-map (map)
+  "debugging tool - prints the current state of the map with . for
+unvisited garden plots, # for rocks, and O for visited plots"
+  (let ((height (car (gethash 'DIMS map)))
+        (width (cdr (gethash 'DIMS map))))
+
+    (iter (for row below height)
+      (format t "~&")
+      (iter (for col below width)
+        (let ((value (gethash (cons row col) map)))
+          (cond ((null value) (format t "#"))
+                ((equal value 'NO) (format t "."))
+                ((equal value 'YES) (format t "O"))
+                (t (error "There's something weird going on. ~A" value))))))))
+
 (defun add-posns (x y)
   "adds two positions together to give a third position: e.g. (add-posns (cons 5 5) (cons 0 -1)) returns (cons 5 4)"
   (cons (+ (row x) (row y))
@@ -127,20 +142,6 @@ map and are garden plots (not rocks) - backtracking allowed"
     (5a:is (equal (next-garden-plots (cons 5 4) map)
                   (list (cons 6 4) (cons 5 3) (cons 5 5))))))
 
-(defun print-map (map)
-  "debugging tool - prints the current state of the map with . for
- unvisited garden plots, # for rocks, and O for visited plots"
-  (let ((height (car (gethash 'DIMS map)))
-        (width (cdr (gethash 'DIMS map))))
-
-    (iter (for row below height)
-      (format t "~&")
-      (iter (for col below width)
-        (let ((char-at-pos (gethash (cons row col) map)))
-          (cond ((null char-at-pos) (format t "#"))
-                ((equal char-at-pos 'NO) (format t "."))
-                ((equal char-at-pos 'YES) (format t "O"))))))))
-
 (defun expand-neighbors (neighbors map)
   "given a list of positions as NEIGHBORS, return a list of unique
 positions on MAP that can be reached in one move"
@@ -149,10 +150,14 @@ positions on MAP that can be reached in one move"
     (appending (next-garden-plots n map) into ns)
     (finally (return (remove-duplicates ns :test 'equalp)))))
 
-(defun day21-1 (los max-steps)
+(defun day21-1 (los steps)
+  "given a map of garden plots described by a list of strings LOS, a
+starting position described in LOS, and the number of steps from START
+to take, return the number of garden plots that can be reached after
+that number of steps in any direction - backtracking allowed"
   (multiple-value-bind (map start) (make-map-hash los)
     (let ((neighbors (next-garden-plots start map))) ; first step
-      (iter (for steps from 1 below max-steps)       ; all the rest
+      (iter (for s from 2 to steps)                 ; all the rest
         ;; (print-map map)
         (setf neighbors (expand-neighbors neighbors map))
         (finally (return (length neighbors)))))))
@@ -161,13 +166,40 @@ positions on MAP that can be reached in one move"
   (5a:is (= 16 (day21-1 *test-data* 6))))
 
 #| ----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
+
+"The actual number of steps he needs to get today is exactly 26501365."
+
+Sunnuva b.
+
+"He also points out that the garden plots and rocks are set up so that
+the map repeats infinitely in every direction."
+
+Sobbing quietly.
+
+"Starting from the garden plot marked S on your infinite map, how many
+garden plots could the Elf reach in exactly 26501365 steps?"
+
+The large number of example solutions is clearly a hint.
 
 ---------------------------------------------------------------------------- |#
 
+(defun day21-2 (los steps)
+  )
+
+(5a:test dat21-2-test
+  (5a:is (= 16 (day21-2 los 6)))
+  (5a:is (= 50 (day21-2 los 10)))
+  (5a:is (= 1594 (day21-2 los 50)))
+  (5a:is (= 6536 (day21-2 los 100)))
+  (5a:is (= 167004 (day21-2 los 500)))
+  (5a:is (= 668697 (day21-2 los 1000)))
+  (5a:is (= 16733044 (day21-2 los 5000))))
+
+
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 21 Part 1 is ~a"
-	      (day21-1 (uiop:read-file-lines *data-file*) 64)))
+              (day21-1 (uiop:read-file-lines *data-file*) 64)))
 
 
 ;; (time (format t "The answer to AOC 2023 Day 21 Part 2 is ~a"
