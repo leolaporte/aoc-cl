@@ -36,8 +36,8 @@
 
 
 #| ----------------------------------------------------------------------------
---- Day 20: Pulse Propagation ---
---- Part One ---
+                  --- Day 20: Pulse Propagation ---
+                           --- Part One ---
 
 "Here at Desert Machine Headquarters, there is a module with a single
 button on it called, aptly, the button module. When you push the
@@ -375,7 +375,7 @@ presses (see the AoC page for a full explanation of what this does)"
   (5a:is (= 11687500 (day20-1 *example2* 1000))))
 
 #| ----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "Reset all modules to their default states. Waiting for all pulses to
 be fully handled after each button press, what is the fewest number of
