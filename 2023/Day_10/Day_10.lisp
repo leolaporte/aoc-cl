@@ -24,8 +24,8 @@
   "Downloaded from the AoC problem set")
 
 #| --------------------------------------------------------------------------
---- Day 10: Pipe Maze ---
---- Part One ---
+                      --- Day 10: Pipe Maze ---
+                           --- Part One ---
 
 You make a quick sketch of all of the surface pipes you can see (your
 puzzle input).
@@ -251,7 +251,7 @@ path and returning 1/2 that distance)"
   (5a:is (= (day10-1 *loop2*) 8)))
 
 #| -----------------------------------------------------------------------
---- Part Two
+                           --- Part Two ---
 
 "Figure out whether you have time to search for the nest by
 calculating the area within the loop. How many tiles are enclosed by
