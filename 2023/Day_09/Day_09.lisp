@@ -24,8 +24,8 @@
   "Downloaded from the AoC problem set")
 
 #| -----------------------------------------------------------------------------
---- Day 9: Mirage Maintenance ---
---- Part One ---
+                  --- Day 9: Mirage Maintenance ---
+                           --- Part One ---
 
 " Each line in the report contains the history of a single value. Your
 environmental report should include a prediction of the next value in
@@ -113,7 +113,7 @@ numbers"
   (5a:is (= (day09-1 *test-data*) 114)))
 
 #| -----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "Rather than adding a zero to the end and filling in the next values
 of each previous sequence, you should instead add a zero to the
