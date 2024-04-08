@@ -26,8 +26,8 @@
   "Downloaded from the AoC problem set")
 
 #| -----------------------------------------------------------------------------
---- Day 5: If You Give A Seed A Fertilizer ---
---- Part One ---
+            --- Day 5: If You Give A Seed A Fertilizer ---
+                           --- Part One ---
 
 "The almanac (your puzzle input) lists all of the seeds that need to
 be planted. It also lists what type of soil to use with each kind of
@@ -52,8 +52,7 @@ Transform searches for seed in the map, if seed is within the range of
 a map, transform it, otherwise return seed.
 
 Do this for each seed and return the lowest loc.
-nn-----------------------------------------------------------------------------
-|#
+----------------------------------------------------------------------------- |#
 
 (defparameter *test-data*
   '("seeds: 79 14 55 13"
@@ -163,7 +162,7 @@ return the closest seed location"
   (5a:is (= (Day05-1 *test-data*) 35)))
 
 #| -----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "It looks like the seeds: line actually describes ranges of seed
 numbers. The values on the initial seeds: line come in pairs. Within
@@ -371,7 +370,8 @@ value"
   (5a:is (equal (seed->location (parse-maps *test-data*) '((82 11))) 46)))
 
 (defun Day05-2 (los)
-  "given a list of strings representing a list of seeds and transformation maps return the closest seed location"
+  "given a list of strings representing a list of seeds and
+transformation maps return the closest seed location"
   (let ((maps (parse-maps los))
         (seeds (make-seeds (first los))))
 
