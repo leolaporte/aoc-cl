@@ -36,8 +36,8 @@
 
 
 #| ----------------------------------------------------------------------------
-                  --- Day 20: Pulse Propagation ---
-                           --- Part One ---
+--- Day 20: Pulse Propagation ---
+--- Part One ---
 
 "Here at Desert Machine Headquarters, there is a module with a single
 button on it called, aptly, the button module. When you push the
@@ -279,7 +279,7 @@ modules that send to it"
 (defun parse-modules (los)
   "given a list of strings describing a series of communication modules,
 create a hash-table with the keys being the module name as a string
-and a value being a struct of module type"
+and a value being a class of module type"
   (let ((modules (make-hash-table :test 'equal :size (length los))))
 
     (setf modules
@@ -375,7 +375,7 @@ presses (see the AoC page for a full explanation of what this does)"
   (5a:is (= 11687500 (day20-1 *example2* 1000))))
 
 #| ----------------------------------------------------------------------------
-                           --- Part Two ---
+--- Part Two ---
 
 "Reset all modules to their default states. Waiting for all pulses to
 be fully handled after each button press, what is the fewest number of
@@ -423,18 +423,22 @@ feeds rx. So I can make more general code to find that chokepoint. I
 guess I can assume that the problem sets have all the same structure -
 only the names have been changed to annoy the solvers.
 
+(Turns out you can set LIMIT in FIND-CHOKEPOINT to a pretty high
+number and it's still the same four endpoints. In my problem set the
+next highest limit is 30! This really IS a chokepoint!)
+
 ---------------------------------------------------------------------------- |#
 
-(defun find-chokepoint (modules)
+(defun find-chokepoint (modules limit)
   "find the upstream feeders that send the appropriate pulses to start
 the chain to send a low to rx. I'll go as far upstream as I can
-without exceeding four 'CONJUNCTIONS. This makes the extreme
+without exceeding limit 'CONJUNCTIONS. This makes the extreme
 assumption that all the problem sets have the same final structure as
 mine."
   (let ((current nil)
         (next (list "rx")))
 
-    (iter (while (<= (length next) 4))
+    (iter (while (<= (length next) limit))
       (setf current next)
       (setf next
             (iter (for mod in current)
@@ -444,7 +448,7 @@ mine."
 
 (5a:test find-chokepoint-test
   (5a:is (equal (find-chokepoint
-                 (parse-modules (uiop:read-file-lines *data-file*)))
+                 (parse-modules (uiop:read-file-lines *data-file*)) 20)
                 (list "hd" "tn" "vc" "jx"))))
 
 (defun reset-modules (modules)
@@ -515,7 +519,7 @@ required"
 
 (defun day20-2 (los)
   (let* ((modules (parse-modules los))
-         (feeders (find-chokepoint modules)))
+         (feeders (find-chokepoint modules 20)))
 
     (apply #'lcm
            (iter (for module-name in feeders)
