@@ -1,0 +1,48 @@
+(defsystem aoc2023
+           :author "Leo Laporte <leo@leo.fm>"
+           :maintainer "Leo Laporte <leo@leo.fm>"
+           :license "MIT"
+           :version "0.1"
+           :homepage "https://github.com/leolaporte/aoc-cl"
+           :description "Advent of Code solutions, for full problems visit https://adventofcode.com"
+
+           :depends-on
+           (:serapeum       ; handy utilities
+            :alexandria     ; same
+            :str            ; more string utilities
+            :fiveam         ; testing framework
+            :iterate        ; use iterate instead of LOOP
+            :cl-ppcre       ; regular expressions
+            :trivia         ; match
+            :trivia.ppcre)  ; match using regexp
+
+:components ((:module "AOC/2023"
+                :serial t
+                :components
+                ((:file "Day_01/day_01")
+                 (:file "Day_02/day_02")
+                 (:file "Day_03/day_03")
+                 (:file "Day_04/day_04")
+                 (:file "Day_05/day_05")
+                 (:file "Day_06/day_06")
+                 (:file "Day_07/day_07")
+                 (:file "Day_08/day_08")
+                 (:file "Day_09/day_09")
+                 (:file "Day_10/day_10")
+                 (:file "Day_11/day_11")
+                 (:file "Day_12/day_12")
+                 (:file "Day_13/day_13")
+                 (:file "Day_14/day_14")
+                 (:file "Day_15/day_15")
+                 (:file "Day_16/day_16")
+                 (:file "Day_17/day_17")
+                 (:file "Day_18/day_18")
+                 (:file "Day_19/day_19")
+                 (:file "Day_20/day_20")
+                 (:file "Day_21/day_21")
+                 (:file "Day_22/day_22")
+                 (:file "Day_23/day_23")
+                 (:file "Day_24/day_24")
+                 (:file "Day_25/day_25")))
+               (:module "test")
+               (:module "common")))

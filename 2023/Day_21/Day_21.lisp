@@ -14,25 +14,25 @@
 (defpackage :day21
   (:use  #:cl :iterate)
   (:local-nicknames              ; not all of these are used every day
-   (:sr :serapeum)               ; misc utilities
-   (:ax :alexandria)             ; ditto
-   (:re :cl-ppcre)               ; regex
-   (:tr :trivia)                 ; pattern matching
-   (:tp :trivia.ppcre)           ; regex in pattern matching
+   (:sr :serapeum)                      ; misc utilities
+   (:ax :alexandria)                    ; ditto
+   (:re :cl-ppcre)                      ; regex
+   (:tr :trivia)                        ; pattern matching
+   (:tp :trivia.ppcre)                  ; regex in pattern matching
    (:5a :fiveam)))               ; testing framework
 
-(in-package :day21)
+(in-package :day21) ; synchronize package and dir with C-c ~
 
 (setf 5a:*run-test-when-defined* t)  ; test as we go
 (declaim (optimize (debug 3)))       ; max debugging info
 ;; (declaim (optimize (speed 3))     ; max speed if needed
 
-(defparameter *data-file* "~/cl/AOC/2023/Day_21/input.txt"
+(defparameter *data-file* "input.txt"
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
-                     --- Day 21: Step Counter ---
-                           --- Part One ---
+--- Day 21: Step Counter ---
+--- Part One ---
 
 
 "he'd like to know which garden plots he can reach with exactly his
@@ -203,106 +203,88 @@ a pattern of some kind. First step is to rewrite neighbors from part 1
 to reflect in infinite grid... That wasn't too bad, and it didn't break
 part 1.
 
-I wonder if my sequence solver from Day 9 can help? Better yet - is
-there a polynomial that I can fit to the sequence of results? Turns
-out the Lagrange Polynomial algo is exactly what I want.
+So, can I generate a polynomial that I can fit to the sequence of
+results?  I'm going to assume there is (otherwise this problem is
+intractable in a reasonable time - sound familiar?).
+
+(study study study and watch
+https://www.youtube.com/watch?v=4AuV93LOPcE
+also this python notebook explanation is VERY helpful:
+https://github.com/derailed-dash/Advent-of-Code/blob/master/src/AoC_2023/Dazbo's_Advent_of_Code_2023.ipynb
 
 ---------------------------------------------------------------------------- |#
 
-(5a:test day21-1-test
-  (5a:is (= 16   (day21-1 *test-data* 6)))
-  (5a:is (= 50   (day21-1 *test-data* 10)))
-  (5a:is (= 1594 (day21-1 *test-data* 50)))
-  (5a:is (= 6536 (day21-1 *test-data* 100))))
-;; (5a:is (= 167004 (day21-1 *test-data* 500)))    ; takes too long
-;; (5a:is (= 668697 (day21-1 *test-data* 1000)))   ;   "
-;; (5a:is (= 16733044 (day21-1 *test-data* 5000))) :   "
+;; By examining the geometry of the provided input data it turns out
+;; because S is smack dab in the center of the tile it takes (floor
+;; width 2) steps to reach the edge, call it steps-to-edge. To get to
+;; the next edge we add the width of the square to that number
+;; (because each tile is the same), to get to the edge after that add
+;; (* width 2) and so on. It turns out - entirely by chance - that
+;; this progression can be solved by a polynomial for any number of
+;; edges.
 
-;; let's generate some starting values to feed (and test) the Newton
-(day21-1 (uiop:read-file-lines *data-file*) 65)               ; 3719
-(day21-1 (uiop:read-file-lines *data-file*) (+ 65 131))       ; 33190
-(day21-1 (uiop:read-file-lines *data-file*) (+ 65 (* 2 131))) ; 91987
-(day21-1 (uiop:read-file-lines *data-file*) (+ 65 (* 3 131))) ; 180110
-(day21-1 (uiop:read-file-lines *data-file*) (+ 65 (* 4 131))) ; 297559
-(day21-1 (uiop:read-file-lines *data-file*) (+ 65 (* 5 131))) ; 444334
+;; Use part 1 to provide the number of reachable plots for each of the
+;; first three edges - all we need for the polynomial is three points
+;; this is the slowest part of the solution
+(defun reachable-plots (los)
+  "given a map of garden plots that can repeat infinitely in every
+direction, return a list of the number of reachable plots for three
+tiles in the infinite set"
+  (let* ((width (length los))             ; size of base tile
+         (steps-to-edge (floor width 2))) ; starting at center
+    (iter (for i from 0 below 3)          ; first three tiles starting from S
+      (collect (day21-1 los (+ steps-to-edge (* width i)))))))
 
-(defun next-in-sequence (history)
-  "given a list of numbers return the next number in the sequence - using
-a Newton polynomial - this is the code from Day 9. Requires an even
-number of items in history"
-  (labels
-      ((build-sequence (loi)
-         ;; given a list of integers return a list of the
-         ;; differences between each number"
-         (cond ((null (rest loi)) nil)
-               (t (cons (- (second loi) (first loi))
-                        (build-sequence (rest loi)))))))
+(defun solve-quadratic (los steps)
+  "derive and solve the quadratic equation defined by the given plot map"
+  (let* ((rps (reachable-plots los) )    ; results for plots 0 1 2
+         (width (length los))            ; grid width
 
-    ;; loop updating seq and result each time
-    (do* ((seq history (build-sequence seq))
-          (sub-seqs (list seq) (push seq sub-seqs)))
+         ;; decompose the quadratic ax^2 + bx + c
+         (c (first rps))
+         (b (floor (- (* 4 (second rps))
+                      (* 3 c)
+                      (third rps))
+                   2))
+         (a (- (second rps)
+               c
+               b))
+         (tiles (floor (- steps (floor width 2)) width))) ; tiles to cross
 
-         ((every #'zerop seq)  ; all zeros?
-          ;; then return the sum of the last digits in all the
-          ;; sequences
-          (reduce #'+ (mapcar #'(lambda (l) (car (last l)))
-                              sub-seqs))))))
+    (+ (* a (expt tiles 2))
+       (* b tiles)
+       c)))
 
-(5a:test next-in-sequence-test
-  (5a:is (= 10 (next-in-sequence '(2 4 6 8))))
-  (5a:is (= 297559 (next-in-sequence '(3719 33190 91987 180110))))) ; works!
-
-(defun generate-steps (los count)
-  "given a square grid defined by LOS and the number of steps to
-generate, return a list of step counts up to COUNT"
-  (let* ((side (length los))
-         (base (floor side 2)))
-
-    (iter (for step from 0 below count)
-      (collecting (+ base (* step side))))))
-
-(5a:test generate-steps-test
-  (5a:is (equal (generate-steps *test-data* 10)
-                (list 5 16 27 38 49 60 71 82 93 104))))
-
-;; Now the code to use Lagrange to generate a polynomial function that
-;; will generate the next points in a series
-;;
-(defun lj (x j xs)
-  (let ((num 1)
-        (denom 1))
-    (iter (for m from 1 to (length xs))
-      (unless (= m j)
-        (setf num (* num (- x (nth m xs))))
-        (setf denom (* denom (- (nth j xs) (nth m xs)))))
-      (finally (return (/ num denom))))))
-
-(defun lagrange-poly (x xs ys)
-  (let ((result 0))
-    (iter (for j from 0 below (length ys))
-      (setf result (+ result (* (nth j ys) (lj x j xs))))
-      (finally (return result)))))
-
-
-(5a:test lagrange-poly-test
-  (let ((xs '(1 2 3 4))
-        (ys '(1 4 9 16)))
-    (lagrange-poly 2.5 xs ys)))
-
-(5a:test day21-2-test
-  (5a:is (= 668697 (day21-2 los 1000)))
-  (5a:is (= 16733044 (day21-2 los 5000))))
-
-
+(defun day21-2 (los steps)
+  "given a map of garden plots and the number of steps to take, return
+ the reachable garden plots at the end of the steps"
+  (solve-quadratic los steps))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 21 Part 1 is ~a"
               (day21-1 (uiop:read-file-lines *data-file*) 64)))
 
-
-;; (time (format t "The answer to AOC 2023 Day 21 Part 2 is ~a"
-;;	      (day21-2 (uiop:read-file-lines *data-file*))))
+(time (format t "The answer to AOC 2023 Day 21 Part 2 is ~a"
+	      (day21-2 (uiop:read-file-lines *data-file*) 26501365)))
 
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on M3-Max MacBook Pro with 64GB RAM
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2023 Day 21 Part 1 is 3574
+;; Evaluation took:
+;; 0.042 seconds of real time
+;; 0.042829 seconds of total run time (0.041792 user, 0.001037 system)
+;; [ Real times consist of 0.002 seconds GC time, and 0.040 seconds non-GC time. ]
+;; [ Run times consist of 0.002 seconds GC time, and 0.041 seconds non-GC time. ]
+;; 102.38% CPU
+;; 39,276,144 bytes consed
+
+;; The answer to AOC 2023 Day 21 Part 2 is 600090522932119
+;; Evaluation took:
+;; 7.673 seconds of real time
+;; 7.681426 seconds of total run time (7.502104 user, 0.179322 system)
+;; [ Real times consist of 0.829 seconds GC time, and 6.844 seconds non-GC time. ]
+;; [ Run times consist of 0.828 seconds GC time, and 6.854 seconds non-GC time. ]
+;; 100.10% CPU
+;; 6,376,053,776 bytes consed
