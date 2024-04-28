@@ -2,6 +2,7 @@
 ;;;; 2023 AOC Day 21 solution
 ;;;; Leo Laporte
 ;;;; Started: 6 April 2024, Petaluma, CA
+;;;; Finished: 27 April 2024
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -30,10 +31,12 @@
 (defparameter *data-file* "input.txt"
   "Downloaded from the AoC problem set")
 
-#| ----------------------------------------------------------------------------
---- Day 21: Step Counter ---
---- Part One ---
+(defparameter *data-file2* "input2.txt"
+  "Downloaded from the AoC problem set")
 
+#| ----------------------------------------------------------------------------
+                     --- Day 21: Step Counter ---
+                           --- Part One ---
 
 "he'd like to know which garden plots he can reach with exactly his
 remaining 64 steps.
@@ -184,7 +187,7 @@ that number of steps in any direction - backtracking allowed"
   (5a:is (= 16 (day21-1 *test-data* 6))))
 
 #| ----------------------------------------------------------------------------
---- Part Two ---
+                           --- Part Two ---
 
 "The actual number of steps he needs to get today is exactly 26501365."
 
@@ -210,7 +213,7 @@ intractable in a reasonable time - sound familiar?).
 (study study study and watch
 https://www.youtube.com/watch?v=4AuV93LOPcE
 also this python notebook explanation is VERY helpful:
-https://github.com/derailed-dash/Advent-of-Code/blob/master/src/AoC_2023/Dazbo's_Advent_of_Code_2023.ipynb
+https://github.com/derailed-dash/Advent-of-Code/blob/master/src/AoC_2023/Dazbo's_Advent_of_Code_2023.ipynb)
 
 ---------------------------------------------------------------------------- |#
 
@@ -219,26 +222,29 @@ https://github.com/derailed-dash/Advent-of-Code/blob/master/src/AoC_2023/Dazbo's
 ;; width 2) steps to reach the edge, call it steps-to-edge. To get to
 ;; the next edge we add the width of the square to that number
 ;; (because each tile is the same), to get to the edge after that add
-;; (* width 2) and so on. It turns out - entirely by chance - that
-;; this progression can be solved by a polynomial for any number of
-;; edges.
+;; (* width 2) and so on. It also turns out - entirely by chance I'm
+;; sure - that this progression can be solved by a polynomial for any
+;; number of edges.
+
+;; Also in an amazing coincidence, the provided number of steps is on
+;; an edge! and which edge? 2023 00. Wow!
 
 ;; Use part 1 to provide the number of reachable plots for each of the
 ;; first three edges - all we need for the polynomial is three points
-;; this is the slowest part of the solution
-(defun reachable-plots (los)
+;; this is the slowest part of the solution.
+(defun reachable-plots (los count)
   "given a map of garden plots that can repeat infinitely in every
-direction, return a list of the number of reachable plots for three
+direction, return a list of the number of reachable plots for COUNT
 tiles in the infinite set"
   (let* ((width (length los))             ; size of base tile
          (steps-to-edge (floor width 2))) ; starting at center
-    (iter (for i from 0 below 3)          ; first three tiles starting from S
+    (iter (for i from 0 below count)      ; for COUNT tiles starting from S
       (collect (day21-1 los (+ steps-to-edge (* width i)))))))
 
 (defun solve-quadratic (los steps)
   "derive and solve the quadratic equation defined by the given plot map"
-  (let* ((rps (reachable-plots los) )    ; results for plots 0 1 2
-         (width (length los))            ; grid width
+  (let* ((rps (reachable-plots los 3))  ; results for plots 0 1 2
+         (width (length los))           ; grid width
 
          ;; decompose the quadratic ax^2 + bx + c
          (c (first rps))
@@ -246,10 +252,10 @@ tiles in the infinite set"
                       (* 3 c)
                       (third rps))
                    2))
-         (a (- (second rps)
-               c
-               b))
-         (tiles (floor (- steps (floor width 2)) width))) ; tiles to cross
+         (a (- (second rps) c b))
+
+         ;; how many tiles to go?
+         (tiles (floor (- steps (floor width 2)) width)))
 
     (+ (* a (expt tiles 2))
        (* b tiles)
@@ -259,6 +265,9 @@ tiles in the infinite set"
   "given a map of garden plots and the number of steps to take, return
  the reachable garden plots at the end of the steps"
   (solve-quadratic los steps))
+
+(5a:test day21-2-test
+  (5a:is (= 639051580070841 (day21-2 (uiop:read-file-lines *data-file2*) 26501365))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2023 Day 21 Part 1 is ~a"
