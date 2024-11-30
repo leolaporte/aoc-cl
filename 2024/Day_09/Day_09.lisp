@@ -1,6 +1,6 @@
 ;;;; Day###.lisp
 ;;;; 2024 AOC Day ### solution
-;;;; Leo Laporte
+;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started:
 ;;;; Finished: 
 
