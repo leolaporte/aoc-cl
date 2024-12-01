@@ -53,23 +53,27 @@ What is the total distance between your lists?"
     "3   3"))
 
 (defun parse-data (los)
-  "takes a list of strings, each with two numbers, and returns a list of two lists containing the first and second digits in the strings"
-  (let ((first-col '())
-        (second-col '()))
+  "takes a list of strings, each with two numbers, and returns two lists
+containing the left and right digits in the strings"
+  (let ((left '())
+        (right '()))
 
     (dolist (digits los)
-      (let ((nums (re:split "\\s+" digits)))
-        (push (parse-integer (first nums)) first-col)
-        (push (parse-integer (second nums)) second-col)))
+      (let ((nums (re:split "\\s+" digits)))         ; split into two numbers
+        (push (parse-integer (first nums)) left)     ; create a list for
+        (push (parse-integer (second nums)) right))) ; each number col
 
-    (values (sort first-col #'<) (sort second-col #'<))))
+    (values (sort left #'<) (sort right #'<)))) ; return sorted lists
 
 (defun Day_01-1 (los)
-  (multiple-value-bind (col1 col2) (parse-data los)
-    (iter
-      (for x in col1)
-      (for y in col2)
-      (summing (abs (- x y))))))
+  "return the sum of the differences between the left and right
+ columns in a list of strings, each string containing two numbers:
+ LEFT and RIGHT"
+  (multiple-value-bind (left right) (parse-data los) ; get each column as list
+    (iter ; walk the lists
+      (for l in left)
+      (for r in right)
+      (summing (abs (- l r)))))) ; getting the sum of the differences
 
 (5a:test Day_01-1-test
   (5a:is (= 11 (Day_01-1 *example*))))
@@ -85,12 +89,14 @@ number of times that number appears in the right list."
 ---------------------------------------------------------------------------- |#
 
 (defun Day_01-2 (los)
-  (multiple-value-bind (col1 col2) (parse-data los)
-    (let ((res 0))
-      (dolist (x col1)
-        (setf res (+ res (* x (count x col2)))))
-
-      res)))
+  "given a list of strings with two numbers in each, return the sum of
+ the product of the first number in each column with the number of
+ times that number shows up in the second column"
+  (multiple-value-bind (left right) (parse-data los)
+    (let ((result 0))
+      (dolist (l left)
+        (setf result (+ result (* l (count l right)))))
+      result)))
 
 (5a:test Day_01-2-test
   (5a:is (= 31 (Day_01-2 *example*))))
