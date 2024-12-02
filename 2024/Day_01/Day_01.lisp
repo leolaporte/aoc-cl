@@ -29,8 +29,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
-                  --- Day 1: Historian Hysteria ---
-                           --- Part One ---
+--- Day 1: Historian Hysteria ---
+--- Part One ---
 
 "Pair up the numbers and measure how far apart they are. Pair up the
 smallest number in the left list with the smallest number in the right
@@ -41,6 +41,9 @@ To find the total distance between the left list and the right list,
 add up the distances between all of the pairs you found.
 
 What is the total distance between your lists?"
+
+LEO'S NOTES: Streamed this solution live at
+https://youtu.be/4q8jfZnRq30?si=iBwbknm8Xafu7WcD
 
 ---------------------------------------------------------------------------- |#
 
