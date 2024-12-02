@@ -40,6 +40,23 @@ Any two adjacent levels differ by at least one and at most three.
 
 How many reports are safe?"
 
+LEO's NOTES: Streamed this again...
+https://youtu.be/ihzF0jmiBf4?si=zDG8u1yjuTgJAnAb
+
+Nothing much to say here. Read the input into a list of
+newline separated strings, then turn each line into a list of
+integers (PARSE-REPORTS). Then, check items in the list to see if 1:
+all integers are either increasing or decreasing and 2: the difference
+between any successive ints is between 1 and 3. I'll create a
+predicate function, SAFE-REPORT?, to do the test.
+
+My original SAFE-REPORT worked but was a little convoluted. I
+converted it to a simple AND statement with inspiration from ynadji on
+reddit. https://www.reddit.com/user/ynadji/ (I had forgotten that I
+could use (apply #'> list) to test for an always ascending list!)
+
+The final function will test each report and return the number of safe
+reports.
 ---------------------------------------------------------------------------- |#
 
 (defparameter *example*
@@ -52,11 +69,13 @@ How many reports are safe?"
 
 (defun parse-reports (los)
   "reads a list of strings, each containing a set of number strings,
- and returns a list of number lists"
-  (let ((reports '()))
-    (dolist (str los)
-      (push (mapcar #'parse-integer (re:split "\\s+" str)) reports))
-    (reverse reports)))
+ and returns a list of integer lists"
+  (let ((reports '())) ; start with an empty list
+    (dolist (str los) ; for every string in the provided list of string
+      (push
+       (mapcar #'parse-integer (re:split "\\s+" str)) ; split then convert
+       reports)) ; add integer list to reports
+    (reverse reports))) ; return the populated list (after reversing)
 
 (defun safe-report? (lon)
   "returns true if the list of numbers is either increasing or decreasing
@@ -94,7 +113,11 @@ and always between one and three numbers apart"
 from an unsafe report would make it safe, the report instead counts as
 safe."
 
-
+LEO's NOTES: I can still use the parsing function from part 1 but I'll
+have to write a new predicate function, RELAXED-SAFE-REPORT?, to
+accomodate the new rule. And, as it turns out, I'll want a function
+that can remove a single item from a list by its index into the list,
+REMOVE-ITEM index list. The rest is a piece of cake.
 ---------------------------------------------------------------------------- |#
 
 (defun remove-item (index list)
