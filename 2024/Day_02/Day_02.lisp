@@ -59,7 +59,8 @@ How many reports are safe?"
     (reverse reports)))
 
 (defun safe-report? (lon)
-  "returns true if the list of numbers is either increasing or decreasing and always between one and three numbers apart"
+  "returns true if the list of numbers is either increasing or decreasing
+and always between one and three numbers apart"
   (and (or (apply #'> lon)                      ; always ascending
            (apply #'< lon))                     ; always descending
 
