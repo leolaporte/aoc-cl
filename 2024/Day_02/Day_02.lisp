@@ -61,13 +61,13 @@ How many reports are safe?"
 (defun safe-report? (lon)
   "returns true if the list of numbers is either increasing or decreasing
 and always between one and three numbers apart"
-  (and (or (apply #'> lon)                      ; always ascending
-           (apply #'< lon))                     ; always descending
+  (and (or (apply #'> lon)                        ; always ascending
+           (apply #'< lon))                       ; always descending
 
-       (every (lambda (x) (< 0 x 4))            ; differences always in range?
-              (loop for (a b) on lon by #'cdr   ; step through each pair
-                    when b                      ; ignore nil at end
-                      collect (abs (- a b)))))) ; list all the differences
+       (every (lambda (x) (< 0 x 4))              ; differences always in range?
+              (iter (for (a b) on lon by #'cdr)   ; step through each pair
+                (when b                           ; ignore nil at end
+                  (collecting (abs (- a b)))))))) ; list all the differences
 
 (5a:test safe-report?-t
   (let ((rpts (parse-reports *example*)))
