@@ -60,14 +60,13 @@ How many reports are safe?"
 
 (defun safe-report? (lon)
   "returns true if the list of numbers is either increasing or decreasing and always between one and three numbers apart"
-  (let ((direction (if (> (first lon) (second lon)) 'down 'up)))
-    (iter (for (x y) on lon by #'cdr)
-          (when (null y) (return-from safe-report? t))
-          (when (not (equal direction (if (> x y) 'down 'up)))
-            (return-from safe-report? nil))
-          (when (not (< 0 (abs (- x y)) 4))
-            (return-from safe-report?  nil))))
-  t)
+  (and (or (apply #'> lon)                      ; always ascending
+           (apply #'< lon))                     ; always descending
+
+       (every (lambda (x) (< 0 x 4))            ; differences always in range?
+              (loop for (a b) on lon by #'cdr   ; step through each pair
+                    when b                      ; ignore nil at end
+                      collect (abs (- a b)))))) ; list all the differences
 
 (5a:test safe-report?-t
   (let ((rpts (parse-reports *example*)))
@@ -111,13 +110,22 @@ safe."
 
 (defun relaxed-safe-report? (rpt)
   (when (safe-report? rpt)
-    (return-from relaxed-safe-report? t))
+    (return-from relaxed-safe-report? t))    ; naturally safe - return t
 
-  (iter (for i below (length rpt))
+  (iter (for i below (length rpt))           ; how about if we remove one digit?
     (when (safe-report? (remove-item i rpt))
       (return-from relaxed-safe-report? t)))
 
-  nil)
+  nil)                                       ; never safe
+
+(5a:test relaxed-safe-report?-t
+  (let ((rpts (parse-reports *example*)))
+    (5a:is-true (relaxed-safe-report? (first rpts)))
+    (5a:is-false (relaxed-safe-report? (second rpts)))
+    (5a:is-false (relaxed-safe-report? (third rpts)))
+    (5a:is-true (relaxed-safe-report? (fourth rpts)))
+    (5a:is-true (relaxed-safe-report? (fifth rpts)))
+    (5a:is-true (relaxed-safe-report? (sixth rpts)))))
 
 (defun Day_02-2 (reports)
   (let ((rpts (parse-reports reports)))
