@@ -29,8 +29,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
---- Day 1: Historian Hysteria ---
---- Part One ---
+                  --- Day 1: Historian Hysteria ---
+                           --- Part One ---
 
 "Pair up the numbers and measure how far apart they are. Pair up the
 smallest number in the left list with the smallest number in the right
@@ -53,8 +53,8 @@ What is the total distance between your lists?"
     "3   3"))
 
 (defun parse-data (los)
-  "takes a list of strings, each with two numbers, and returns two lists
-containing the left and right digits in the strings"
+  "takes a list of strings, each with two numbers, and returns two sorted
+lists containing the left and right digits in the strings"
   (let ((left '())
         (right '()))
 
@@ -67,8 +67,7 @@ containing the left and right digits in the strings"
 
 (defun Day_01-1 (los)
   "return the sum of the differences between the left and right
- columns in a list of strings, each string containing two numbers:
- LEFT and RIGHT"
+ columns in a list of strings, each string containing two numbers"
   (multiple-value-bind (left right) (parse-data los) ; get each column as list
     (iter ; walk the lists
       (for l in left)
