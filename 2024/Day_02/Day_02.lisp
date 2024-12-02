@@ -2,7 +2,7 @@
 ;;;; 2024 AOC Day 02 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started: 1 Dec 2024 9p
-;;;; Finished:1 Dec 2024 9:52
+;;;; Finished:1 Dec 2024 10:48p
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -29,9 +29,10 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
+--- Day 2: Red-Nosed Reports ---
 --- Part One ---
 
-"a report only counts as safe if both of the following are true:
+"A report only counts as safe if both of the following are true:
 
 The levels are either all increasing or all decreasing.
 
@@ -58,21 +59,21 @@ How many reports are safe?"
     (reverse reports)))
 
 (defun safe-report? (lon)
-  "returns true if the list of numbers is either increasing or decreasing and always between one and three numbers"
+  "returns true if the list of numbers is either increasing or decreasing and always between one and three numbers apart"
   (let ((direction (if (> (first lon) (second lon)) 'down 'up)))
     (iter (for (x y) on lon by #'cdr)
-      (when (null y) (return-from safe-report? t))
-      (when (not (equal direction (if (> x y) 'down 'up)))
-        (return-from safe-report? nil))
-      (when (not (< 0 (abs (- x y)) 4))
-        (return-from safe-report?  nil))))
+          (when (null y) (return-from safe-report? t))
+          (when (not (equal direction (if (> x y) 'down 'up)))
+            (return-from safe-report? nil))
+          (when (not (< 0 (abs (- x y)) 4))
+            (return-from safe-report?  nil))))
   t)
 
 (5a:test safe-report?-t
   (let ((rpts (parse-reports *example*)))
     (5a:is-true (safe-report? (first rpts)))
-    (5a:is-true (safe-report? (second rpts)))
-    (5a:is-true (safe-report? (third rpts)))
+    (5a:is-false (safe-report? (second rpts)))
+    (5a:is-false (safe-report? (third rpts)))
     (5a:is-false (safe-report? (fourth rpts)))
     (5a:is-false (safe-report? (fifth rpts)))
     (5a:is-true (safe-report? (sixth rpts)))))
@@ -98,7 +99,7 @@ safe."
 
 (defun remove-item (index list)
   "returns a list with the item at index removed"
-  (concatenate 'list (subseq list 0 index) (subseq list (1+ index))))
+  (append (subseq list 0 index) (subseq list (1+ index))))
 
 (5a:test remove-item-t
   (5a:is (equalp '(0 1 2 3 4) (remove-item 0 '(0 0 1 2 3 4))))
@@ -150,3 +151,8 @@ safe."
 ;; 0.001249 seconds of total run time (0.001182 user, 0.000067 system)
 ;; 100.00% CPU
 ;; 1,048,352 bytes consed
+
+;; --------Part 1--------   --------Part 2--------
+;; Day       Time   Rank  Score       Time   Rank  Score
+;; 2   00:57:52  13855      0   01:48:11  12571      0
+;; 1   00:47:09   9351      0   01:10:39   9932      0
