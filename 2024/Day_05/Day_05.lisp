@@ -1,7 +1,7 @@
 ;;;; Day05.lisp
 ;;;; 2024 AOC Day 05 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
-;;;; Started:
+;;;; Started: 4 Dec 2024 0900 Pacific
 ;;;; Finished:
 
 ;; ----------------------------------------------------------------------------
@@ -111,7 +111,7 @@ list of updates"
              (format t "~a => ~a~%" key value)) hash))
 
 (defun l2-is-a-member-of-l1? (lst1 lst2)
-  "returns true if every number in lst1 is also in lst2"
+  "returns true if every number in lst2 is also in lst1"
   (= (length lst2) (length (intersection lst1 lst2 :test 'equal))))
 
 (5a:test l2-is-a-member-of-l1?-t
