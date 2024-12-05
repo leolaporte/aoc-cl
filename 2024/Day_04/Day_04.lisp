@@ -79,9 +79,16 @@ Thanks to cyphase and Paul Holder for their help!
              (format t "~%~a => ~a~%" key value)) hash))
 
 (defparameter *directions*
-  (list ; the directions E S W N SW NE NW SE
-   (cons 1 0) (cons 0 1) (cons -1 0) (cons 0 -1)
-   (cons -1 -1) (cons 1 -1) (cons -1 1) (cons 1 1)))
+  (list
+   (cons -1 -1)                         ; NW
+   (cons 0 -1)                          ; N
+   (cons 1 -1)                          ; NE
+   (cons 1 0)                           ; E
+   (cons 1 1)                           ; SE
+   (cons 0 1)                           ; S
+   (cons -1 1)                          ; SW
+   (cons -1 0))                         ; W
+  "the eight directions, to be added to the point")
 
 (defun add-point (posn dir)
   "given a point and a direction, returns the position after moving
@@ -89,7 +96,7 @@ Thanks to cyphase and Paul Holder for their help!
   (cons (+ (car posn) (car dir)) (+ (cdr posn) (cdr dir))))
 
 (defun xmas-from-here? (posn dir string-hash)
-  "returns true if I can get an XMAS in this direction"
+  "returns true if I can get an XMAS in the given direction"
   (and (equal "X" (gethash posn string-hash)) ; stops right away if not X
        (equal "M" (gethash (add-point posn dir) string-hash))
        (equal "A" (gethash (add-point (add-point posn dir) dir) string-hash))
@@ -158,10 +165,10 @@ compare to solve this part!
 ---------------------------------------------------------------------------- |#
 
 (defparameter *masses* '("MSMS" "SMSM" "MMSS" "SSMM")
-  "these are the winning letters at the four corners: NW NE SW and SE")
+  "these are the valid letters at the four corners: NW NE SW and SE")
 
 (defun mas-from-here? (posn string-hash)
-  "returns true if I can get an X-MAS from current posn"
+  "returns true if we can reach an X-MAS from current posn"
   (when (not (equal (gethash posn string-hash) "A"))
     (return-from mas-from-here? nil)) ; has to start from an A square
 
