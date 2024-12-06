@@ -32,17 +32,38 @@
 --- Day 5: Print Queue ---
 --- Part One ---
 
-"The first section specifies the page ordering rules, one per line. The new pages for the safety manuals must be printed in a very specific order. The notation X|Y means that if both page number X and page number Y are to be produced as part of an update, page number X must be printed at some point before page number Y.
+"The first section specifies the page ordering rules, one per
+line. The new pages for the safety manuals must be printed in a very
+specific order. The notation X|Y means that if both page number X and
+page number Y are to be produced as part of an update, page number X
+must be printed at some point before page number Y.
 
 The second section specifies the page numbers of each update.
 
-To get the printers going as soon as possible, start by identifying which updates are already in the right order.
+To get the printers going as soon as possible, start by identifying
+which updates are already in the right order.
 
-What do you get if you add up the middle page number from those correctly-ordered updates?"
+What do you get if you add up the middle page number from those
+correctly-ordered updates?"
 
 LEO'S NOTES:
 
-There are two tasks. 1 Identify the correct updates. 2. Add the middle page number from each and return the result.
+There are two tasks.
+1 Identify the correct updates.
+2. Add the middle page number from each and return the result.
+
+Identifying the correct updates might be a little tricky. It looks
+like there's a lot of duplication in the page ordering rules so I'll
+turn them into a hash table with the key being a page number and the
+value a list of pages that should come after it.
+
+So how to find a bad update? When I look at a page in the update, if
+all the following pages in the update are in the pages in the rule for
+that page it's good, right? I can use INTERSECTION to see if that's
+the case.
+
+Most of the work is massaging the input into a useful form.
+
 ---------------------------------------------------------------------------- |#
 
 (defparameter *example*
@@ -73,7 +94,8 @@ There are two tasks. 1 Identify the correct updates. 2. Add the middle page numb
     "75,29,13"
     "75,97,47,61,53"
     "61,13,29"
-    "97,13,75,29,47"))
+    "97,13,75,29,47")
+  "provided in the problem description")
 
 (defun extract-numbers (string)
   "takes a string in the form 12|34 and returns a list of the two
@@ -85,8 +107,8 @@ There are two tasks. 1 Identify the correct updates. 2. Add the middle page numb
 and updates consisting of a list of comma separated numbers, the two
 parts separated by an empty line, return a hash table of rules and a
 list of updates"
-  (let* ((rules (make-hash-table :test 'equal)) ; the rules
-         (updates '())                      ; the updates
+  (let* ((rules (make-hash-table :test 'equal))         ; the rules
+         (updates '())                                  ; the updates
          (list-break (position "" los :test 'string=))) ; empty line in input
 
     ;; take the first half of the input and create the rules hash
@@ -102,7 +124,7 @@ list of updates"
     (iter (for i from (1+ list-break) below (length los)) ; now the second half
       (push (mapcar #'parse-integer (re:split "," (nth i los))) updates))
 
-    (values rules (reverse updates))))
+    (values rules (reverse updates)))) ; return rules and list of updates
 
 (defun ph (hash)
   "a little utility to display a hash table"
@@ -180,7 +202,10 @@ safe assumption.
   (sort update #'(lambda (x y) (member y (gethash x rules)))))
 
 (defun Day_05-2 (los)
-  "given a list of strings (our input) describing a set of rules for ordering pages and a list of pages (conisting of a list of page numbers) return the sum of the middle numbers of the out of order pages"
+  "given a list of strings (our input) describing a set of rules for
+ordering pages and a list of pages (conisting of a list of page
+numbers) return the sum of the middle numbers of the out of order
+pages"
   (multiple-value-bind (rules updates) (parse-rules-and-updates los)
     (iter (for u in updates)
       (when (not (right-order? u rules)) ; this one's out of order
@@ -214,4 +239,5 @@ safe assumption.
 ;; 100.00% CPU
 ;; 851,776 bytes consed
 
-;;;  I'm no longer including my timings because life intervened on Day 5 and I didn't get around to part two for a couple of days.
+;;;  I'm no longer including my timings because life intervened on Day
+;;;  5 and I didn't get around to part two for a couple of days.
