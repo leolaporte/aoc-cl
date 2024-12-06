@@ -2,7 +2,7 @@
 ;;;; 2024 AOC Day 05 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started: 4 Dec 2024 0900 Pacific
-;;;; Finished:
+;;;; Finished: 6 Dec 2024 0756
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
@@ -43,7 +43,6 @@ What do you get if you add up the middle page number from those correctly-ordere
 LEO'S NOTES:
 
 There are two tasks. 1 Identify the correct updates. 2. Add the middle page number from each and return the result.
-
 ---------------------------------------------------------------------------- |#
 
 (defparameter *example*
@@ -155,15 +154,64 @@ list of updates"
 #| ----------------------------------------------------------------------------
 --- Part Two ---
 
+"For each of the incorrectly-ordered updates, use the page ordering
+rules to put the page numbers in the right order.
+
+Find the updates which are not in the correct order. What do you get
+if you add up the middle page numbers after correctly ordering just
+those updates?"
+
+LEO'S NOTES:
+
+So the only thing to figure out here, is how to put the pages in the
+right order. I need to create a SORT-UPDATE function that will do
+this.
+
+SORT takes a predicate function that takes two numbers, x and y, and
+returns true if x should precede y. Hmm. Isn't that exactly what my
+rules hash does? I do have to assume that the provided input doesn't
+contain values that are not described by the rules, but that seems a
+safe assumption.
 ---------------------------------------------------------------------------- |#
+
+(defun sort-update (update rules)
+  "given an update and a set of sorting rules (our rules hash) return
+ a sorted update"
+  (sort update #'(lambda (x y) (member y (gethash x rules)))))
+
+(defun Day_05-2 (los)
+  "given a list of strings (our input) describing a set of rules for ordering pages and a list of pages (conisting of a list of page numbers) return the sum of the middle numbers of the out of order pages"
+  (multiple-value-bind (rules updates) (parse-rules-and-updates los)
+    (iter (for u in updates)
+      (when (not (right-order? u rules)) ; this one's out of order
+        (summing (update-middle (sort-update u rules)))))))
+
+(5a:test Day_05-2-test
+  (5a:is (= 123 (Day_05-2 *example*))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2024 Day 05 Part 1 is ~a"
-	      (day_05-1 (uiop:read-file-lines *data-file*))))
+              (day_05-1 (uiop:read-file-lines *data-file*))))
 
-;; (time (format t "The answer to AOC 2024 Day 05 Part 2 is ~a"
-;;	      (day_05-2 (uiop:read-file-lines *data-file*))))
+(time (format t "The answer to AOC 2024 Day 05 Part 2 is ~a"
+              (day_05-2 (uiop:read-file-lines *data-file*))))
 
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on an M4 Pro Mac mini with 64GB RAM
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2024 Day 05 Part 1 is 4281
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002832 seconds of total run time (0.002791 user, 0.000041 system)
+;; 150.00% CPU
+;; 786,112 bytes consed
+
+;; The answer to AOC 2024 Day 05 Part 2 is 5466
+;; Evaluation took:
+;; 0.003 seconds of real time
+;; 0.003108 seconds of total run time (0.003071 user, 0.000037 system)
+;; 100.00% CPU
+;; 851,776 bytes consed
+
+;;;  I'm no longer including my timings because life intervened on Day 5 and I didn't get around to part two for a couple of days.
