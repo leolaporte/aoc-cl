@@ -43,7 +43,6 @@ What do you get if you add up the middle page number from those correctly-ordere
 LEO'S NOTES:
 
 There are two tasks. 1 Identify the correct updates. 2. Add the middle page number from each and return the result.
-
 ---------------------------------------------------------------------------- |#
 
 (defparameter *example*
@@ -155,11 +154,58 @@ list of updates"
 #| ----------------------------------------------------------------------------
 --- Part Two ---
 
+"For each of the incorrectly-ordered updates, use the page ordering
+rules to put the page numbers in the right order.
+
+Find the updates which are not in the correct order. What do you get
+if you add up the middle page numbers after correctly ordering just
+those updates?"
+
+LEO'S NOTES:
+
+So the only thing to figure out here, is how to put the pages in the
+right order. I need to create a SORT-UPDATE function that will do
+this.
+
+Hmmm. I think I might be able to take advantage of a side effect of
+the INTERSECTION function. If the first list is in some sort of order,
+the intersection of the first and second is returned in the reverse of
+that order. So if I can use the rules hash to create an ordered list
+then INTERSECTION that list with the update to sort the
+update (I'll have to reverse it - but wait, the middle number will
+still be in the same spot - so I won't!)
+
+How do I create a canonical sort order from the rules hash??
+
+
 ---------------------------------------------------------------------------- |#
+
+(defun swap (i lst)
+  "swaps the items at i and (1+ i) in lst"
+  (cond ((zerop i) ; at front
+         (append (subseq lst 1 2) (subseq lst 0 1)
+                 (rest (rest lst)))) ; so swap first two
+
+        ((= i (1- (length lst))) ; at end of list
+         lst) ; so do nothing
+
+        (t (append (subseq lst 0 i) ; everywhere else
+                   (subseq lst (1+ i) (+ 2 i))
+                   (subseq lst i (1+ i))
+                   (subseq lst (+ 2 i))))))
+
+(defun find-first-error (update rules)
+  "return the position of the first out of order page in the update
+ according to the rules"
+
+
+(5a:test Day_05-2-test
+  (5a:is (= 123 (Day_05-2 *example*))))
+
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2024 Day 05 Part 1 is ~a"
-	      (day_05-1 (uiop:read-file-lines *data-file*))))
+              (day_05-1 (uiop:read-file-lines *data-file*))))
 
 ;; (time (format t "The answer to AOC 2024 Day 05 Part 2 is ~a"
 ;;	      (day_05-2 (uiop:read-file-lines *data-file*))))
