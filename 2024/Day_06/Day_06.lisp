@@ -1,29 +1,25 @@
-;;;; Day###.lisp
-;;;; 2024 AOC Day ### solution
+;;;; Day_06.lisp
+;;;; 2024 AOC Day 6 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started: 6 Dec 2024 0900 PST
-;;;; Finished:
+;;;; Finished: 8 Dec 2024 1700
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------
 
-(ql:quickload '(:fiveam :iterate :cl-ppcre :trivia :serapeum :str))
+(ql:quickload '(:fiveam :iterate))
 (use-package :iterate) ; use iter instead of LOOP
 
 (defpackage :day06
   (:use  #:cl :iterate)
   (:local-nicknames
-   (:re :cl-ppcre)       ; regex
-   (:sr :serapeum)       ; utilities
-   (:tr :trivia)         ; pattern matching
    (:5a :fiveam)))       ; testing framework
 
 (in-package :day06)
-
 (setf 5a:*run-test-when-defined* t)  ; test as we go
-(declaim (optimize (debug 3)))       ; max debugging info
-;; (declaim (optimize (speed 3))     ; max speed if needed
+;;(declaim (optimize (debug 3)))       ; max debugging info
+(declaim (optimize (speed 3)))     ; max speed if needed
 
 (defparameter *data-file* "~/cl/AOC/2024/Day_06/input.txt"
   "Downloaded from the AoC problem set")
@@ -67,7 +63,7 @@ counting moves, just unique positions.
     "......#..."))
 
 (defstruct (guard)
-  (posn (cons 0 0) :type list)
+  (posn (cons 6 4) :type cons)
   (heading 'N :type symbol))
 
 (defun parse-map (los)
@@ -95,22 +91,26 @@ counting moves, just unique positions.
   (maphash (lambda (key value)
              (format t "~a => ~a~%" key value)) hash))
 
-(defun move (posn heading)
+(defparameter *headings*
+  (list
+   (cons 'N '(0 -1))
+   (cons 'E '(1 0))
+   (cons 'S '(0 1))
+   (cons 'W '(-1 0)))
+  "an associative list of cardinal points and their offsets")
+
+(defun move-one (posn heading)
   "given a point and a heading, returns the position after moving
  one square in that heading"
-  (let* ((headings (list
-                    (cons 'N '(0 -1))
-                    (cons 'E '(1 0))
-                    (cons 'S '(0 1))
-                    (cons 'W '(-1 0))))
-         (dir (cdr (assoc heading headings))))
+  (let ((dir (cdr (assoc heading *headings*))))
     (cons (+ (car posn) (car dir)) (+ (cdr posn) (cadr dir)))))
 
-(defun move-guard (grd labmap)
+(defun move-guard (guard labmap)
   "given a guard and a map of the lab move the guard one move, return
- the new guard struct or NIL if off the map"
-  (let* ((heading (guard-heading grd))
-         (next-posn (move (guard-posn grd) heading)) ; next position
+ the new guard struct or NIL if off the map - does not modify guard"
+  (let* ((grd (copy-structure guard))  ; don't change guard
+         (heading (guard-heading grd))
+         (next-posn (move-one (guard-posn grd) heading)) ; next position
          (next-char (gethash next-posn labmap)))     ; char @ posn
     (cond ((null next-char) nil)  ; off map, done
 
@@ -118,7 +118,7 @@ counting moves, just unique positions.
            (setf (guard-posn grd) next-posn)
            grd)
 
-          ((equal next-char #\#)                       ; obstacle
+          ((equal next-char #\#)                  ; obstacle
            (setf (guard-heading grd)              ; turn right
                  (cond ((equal heading 'N) 'E)
                        ((equal heading 'E) 'S)
@@ -141,18 +141,28 @@ counting moves, just unique positions.
                                :heading 'N)))
     (5a:is-false  (move-guard (make-guard :posn (cons 3 0) :heading 'N) m))))
 
-(defun Day_06-1 (los)
-  (multiple-value-bind (g m) (parse-map los)
-    (do ((grd g (move-guard grd m))          ; moves every time through loop
-         (positions (list (guard-posn g))
-                    (push (guard-posn grd) positions))) ; add seen positions
+(defun get-all-positions (g m)
+  "given a starting point and a lab map return a list of all the
+unique positions the guard will visit before going off the map (the
+list consists of guard structs to also record headings for part 2)"
+  (do ((squares (list g)              ; include starting square
+                (push grd squares))   ; save new squares each loop
+       (grd (move-guard g m) (move-guard grd m))) ; move one square
 
-        ((null grd) ; moved off grid
-         (length (remove-duplicates positions :test 'equalp)))))) ; return
+      ;; return if off grid, otherwise loop
+      ((null grd) (reverse squares))))
+
+(defun Day_06-1 (los)
+  "given list of strings representing a guard and a lab map, counts all
+the positions the guard visits before she goes off the map"
+  (multiple-value-bind (g m) (parse-map los)
+    (length (remove-duplicates (get-all-positions g m)
+                               :test #'(lambda (x y)
+                                         (equalp (guard-posn x)
+                                                 (guard-posn y)))))))
 
 (5a:test Day_06-1-test
   (5a:is (= 41 (Day_06-1 *example*))))
-
 
 #| ----------------------------------------------------------------------------
 --- Part Two ---
@@ -163,14 +173,82 @@ obstruction?"
 
 LEO'S NOTES: OK now we're getting interesting.
 
+So from the example it looks like I don't have to consider ALL
+positions (although Eric implies so earlier) just positions the guard
+would encounter on her existing path. That narrows down the
+possibilities. I have all the guard's positions and accompanying
+headings from part 1 (well I modified part one to separate that out).
+
+So I can go through all the positions on the path, one by one, placing
+an obstacle there, then running the guard through her paces to see if
+she's in a loop using LOOP?
+
 ---------------------------------------------------------------------------- |#
+
+(defun loop? (g m)
+  "given a guard at the starting position and a modified hashmap of the
+lab floor, return t if the modified the map resultes in a loop"
+  (let ((visited '()))
+
+    (loop
+      (setf g (move-guard g m))
+
+      (when (null g)
+        (return-from loop? nil))
+
+      (when (member g visited :test 'equalp)
+        (return-from loop? t))
+
+      (push g visited))))
+
+(5a:test loop?-test
+  (multiple-value-bind (g m) (parse-map *example*)
+    (5a:is-false (loop? g m))
+    (setf (gethash (cons 3 6) m) #\#)
+    (5a:is-true (loop? g m))
+    (setf (gethash (cons 3 6) m) #\.)
+    (setf (gethash (cons 6 7) m) #\#)
+    (5a:is-true (loop? g m))
+    (setf (gethash (cons 6 7) m) #\.)
+    (setf (gethash (cons 7 7) m) #\#)
+    (5a:is-true (loop? g m))
+    (setf (gethash (cons 7 7) m) #\.)
+    (setf (gethash (cons 0 0) m) #\#)
+    (5a:is-false (loop? g m))
+    (setf (gethash (cons 0 0) m) #\.)
+    (setf (gethash (cons 1 8) m) #\#)
+    (5a:is-true (loop? g m))))
+
+(defun Day_06-2 (los)
+  "given a list of strings describing a lab map and starting position
+ of a guard, return the number of times a single obstacle can be
+ placed in the guard's path to create a loop"
+  (multiple-value-bind (g m) (parse-map los)
+    (let ((possibles
+            (remove (guard-posn g)   ; not the starting posn
+                    (mapcar #'(lambda (x) (guard-posn x))
+                            (get-all-positions g m))
+                    :test 'equalp))
+          (count 0))
+
+      (dolist (posn (remove-duplicates possibles :test 'equalp))
+        (let ((old-char (gethash posn m)))
+          (setf (gethash posn m) #\#)         ; insert obstacle
+          (when (loop? g m)
+            (incf count))
+          (setf (gethash posn m) old-char))) ; restore map
+
+      count)))
+
+(5a:test Day_06-2-test
+  (5a:is (= 6 (Day_06-2 *example*))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2024 Day 06 Part 1 is ~a"
               (day_06-1 (uiop:read-file-lines *data-file*))))
 
-;; (time (format t "The answer to AOC 2024 Day 06 Part 2 is ~a"
-;;	      (day_06-2 (uiop:read-file-lines *data-file*))))
+(time (format t "The answer to AOC 2024 Day 06 Part 2 is ~a"
+              (day_06-2 (uiop:read-file-lines *data-file*))))
 
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on an M4 Pro Mac mini with 64GB RAM
