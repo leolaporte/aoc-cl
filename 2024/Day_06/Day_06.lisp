@@ -62,6 +62,13 @@ counting moves, just unique positions.
     "#........."
     "......#..."))
 
+(defparameter *example2*
+  '(".##.."
+    "....#"
+    "....."
+    ".^.#."
+    "....."))
+
 (defstruct (guard)
   (posn (cons 6 4) :type cons)
   (heading 'N :type symbol))
@@ -183,6 +190,8 @@ So I can go through all the positions on the path, one by one, placing
 an obstacle there, then running the guard through her paces to see if
 she's in a loop using LOOP?
 
+It works but it takes 198 seconds for part two!
+
 ---------------------------------------------------------------------------- |#
 
 (defun loop? (g m)
@@ -241,7 +250,8 @@ lab floor, return t if the modified the map resultes in a loop"
       count)))
 
 (5a:test Day_06-2-test
-  (5a:is (= 6 (Day_06-2 *example*))))
+  (5a:is (= 6 (Day_06-2 *example*)))
+  (5a:is (= 1 (Day_06-2 *example2*))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2024 Day 06 Part 1 is ~a"
@@ -253,3 +263,19 @@ lab floor, return t if the modified the map resultes in a loop"
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on an M4 Pro Mac mini with 64GB RAM
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2024 Day 06 Part 1 is 4433
+;; Evaluation took:
+;; 0.087 seconds of real time
+;; 0.087853 seconds of total run time (0.087742 user, 0.000111 system)
+;; 101.15% CPU
+;; 2,748,800 bytes consed
+
+;; The answer to AOC 2024 Day 06 Part 2 is 1516
+;; Evaluation took:
+;; 198.128 seconds of real time
+;; 197.981299 seconds of total run time (197.485184 user, 0.496115 system)
+;; [ Real times consist of 0.024 seconds GC time, and 198.104 seconds non-GC time. ]
+;; [ Run times consist of 0.024 seconds GC time, and 197.958 seconds non-GC time. ]
+;; 99.93% CPU
+;; 839,229,504 bytes consed
