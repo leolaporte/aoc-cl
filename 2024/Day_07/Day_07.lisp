@@ -2,7 +2,7 @@
 ;;;; 2024 AOC Day ### solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started:
-;;;; Finished: 
+;;;; Finished:
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day

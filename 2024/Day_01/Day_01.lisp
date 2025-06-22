@@ -29,8 +29,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
-                  --- Day 1: Historian Hysteria ---
-                           --- Part One ---
+--- Day 1: Historian Hysteria ---
+--- Part One ---
 
 "Pair up the numbers and measure how far apart they are. Pair up the
 smallest number in the left list with the smallest number in the right
@@ -81,7 +81,7 @@ lists containing the left and right digits in the strings"
   (5a:is (= 11 (Day_01-1 *example*))))
 
 #| ----------------------------------------------------------------------------
-                           --- Part Two ---
+--- Part Two ---
 
 "you'll need to figure out exactly how often each number from the left
 list appears in the right list. Calculate a total similarity score by

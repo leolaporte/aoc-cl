@@ -29,8 +29,8 @@
   "Downloaded from the AoC problem set")
 
 #| ----------------------------------------------------------------------------
-                   --- Day 2: Red-Nosed Reports ---
-                           --- Part One ---
+--- Day 2: Red-Nosed Reports ---
+--- Part One ---
 
 "A report only counts as safe if both of the following are true:
 
@@ -107,7 +107,7 @@ and always between one and three numbers apart"
 
 
 #| ----------------------------------------------------------------------------
-                           --- Part Two ---
+--- Part Two ---
 
 "Now, the same rules apply as before, except if removing a single level
 from an unsafe report would make it safe, the report instead counts as
