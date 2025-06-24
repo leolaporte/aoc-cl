@@ -186,7 +186,8 @@ in part two since Eric would have made the drawing then worked
 backwards - so what if you just test to see if each robot is in a
 unique position. That would work very fast. Let's try.
 
-Wow! It's a big assumption but it worked! (My look for 5 in a row would have worked, too.)
+Wow! It's a big assumption but it worked! (My look for 5 in a row
+would have worked, too.)
 
 ---------------------------------------------------------------------------- |#
 
@@ -236,3 +237,19 @@ Wow! It's a big assumption but it worked! (My look for 5 in a row would have wor
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on an M4 Pro Mac mini with 64GB RAM
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2024 Day 14 Part 1 is 226236192
+;; Evaluation took:
+;; 0.000 seconds of real time
+;; 0.000438 seconds of total run time (0.000403 user, 0.000035 system)
+;; 100.00% CPU
+;; 131,040 bytes consed
+
+;; The answer to AOC 2024 Day 14 Part 2 is 8168
+;; Evaluation took:
+;; 0.279 seconds of real time
+;; 0.280537 seconds of total run time (0.275609 user, 0.004928 system)
+;; [ Real times consist of 0.012 seconds GC time, and 0.267 seconds non-GC time. ]
+;; [ Run times consist of 0.010 seconds GC time, and 0.271 seconds non-GC time. ]
+;; 100.72% CPU
+;; 639,741,680 bytes consed
