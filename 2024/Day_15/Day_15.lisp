@@ -44,16 +44,24 @@ LEO'S NOTES:
 Job one is to move all the boxes around.
 
 Let me think about how I want to process the input.  The map is a
-simple @dmgrid. I'll represent it as a one-dimensional vector for
-speed. (I anticipate a lot of moving around.)
+simple 2D grid. But it looks like there might be a lot of moving
+objects around, so instead of using a 2D array I'll represent the map
+as a one-dimensional vector for speed.
 
 The moves are just a series of characters. Keep them as a list of char.
 
-So that's parsing done. I'll have to return multiple values, including
-the "width" of the grid so I can convert x y positions into vector
-indices. (+ x (* y width))
+So that's parsing done. (well not exactly - I should have heeded
+Eric's warning about the input file. The examples all had the move
+instructions in a single line. The input did not. So all my examples
+worked, while the input did not because I was not executing all the
+moves. After tearing my hair out for a bit I asked Claude Code and it
+pinpointed the problem instantly. The fix was simple as outlined
+below.)
 
-I'll need a move routine that takes the hash-map, robot position,
+I'll have to return multiple values, including the "width" of the grid
+so I can convert x y positions into vector indices. (+ x (* y width))
+
+I'll need a move routine that takes the vector map, robot position,
 and a move command, then returns the modified hash map and new robot
 position. It will have to encapsulate the rules about pushing rocks
 and walls. Pushing rocks will also result in an update of the map
@@ -61,14 +69,14 @@ vector.
 
 Can I make move generic enough to work for both the robots and the
 rocks? If there's a rock in the way I have to move it in the same
-direction. If there's a wall there, neither the robot or the rock move,
-if there's a space there the robot and the rock(s) move one move in that
-direction. If there's a rock in the next space, however, then I repeat
-the rock move.
+direction. If there's a wall there, neither the robot or the rock
+move, if there's a space there the robot and the rock(s) move one move
+in that direction. If there's a rock in the next space, however, then
+I repeat the rock move.
 
 OK so basically I'm looking for the first open space in the direction
-of the move. If there is one, move the robot (and any intevening rocks)
-one move in that direction. If there isn't, don't move.
+of the move. If there is one, move the robot (and any intevening
+rocks) one move in that direction. If there isn't, don't move.
 
 I'll do this with three functions:
 
@@ -91,8 +99,8 @@ other items into the gap. i.e. '(@ O O .) -> '(. @ O O) or '(@ .) ->
 '(. @)
 
 After SLIDEing for every move instruction I'll have the final map and
-can do the simple GPS calculations. (Don't forget to include the wall
-tiles!)
+can do the simple GPS calculations.
+
 ----------------------------------------------------------------------------|#
 
 (defparameter *example*
@@ -118,7 +126,19 @@ tiles!)
     "#.OO.O.OO#"
     "#....O...#"
     "##########"
-    "" "<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<><<v<<<v^vv^v>^vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v<<<<v<^v>^<^^>>>^<v<v><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^^>v^<^v>v<>>v^v^<v>v^^<^^vv<<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^^><^><>>><>^^<<^^v>>><^<v>^<vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><^>><>^v<><^vvv<^^<><v<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^>^>>^v>vv>^<<^v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^<><^^>^^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>^<><<v>v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^"))
+    ""
+    "<vv>^<v^>v>^vv^v>v<>v^v<v<^vv<<<^><<><>>v<vvv<>^v^>^<<<>
+<<v<<<v^vv^v>^vvv<<^>^v^^><<>>><>^<<><^vv^^<>vvv<>><^^v>^>vv<>v
+<<<<v<^v>^<^^>>>^<v<v><>vv>v^v^<>><>>>><^^>vv>v<^^^>>v^v^<^^>v^
+^>v^<^v>v<>>v^v^<v>v^^<^^vv<<<v<^>>^^^^>>>v^<>vvv^><v<<<>^^^vv^
+<vvv>^>v<^^^^v<>^>vvvv><>>v^<<^^^^^^><^><>>><>^^<<^^v>>><^<v>^<
+vv>>v>>>^v><>^v><<<<v>>v<v<v>vvv>^<><<>^><^>><>^v<><^vvv<^^<><v
+<<<<<><^v<<<><<<^^<v<^^^><^>>^<v^><<<^>>^v<v^v<v^>^>>^v>vv>^<<^
+v<>><<><<v<<v><>v<^vv<<<>^^v^>^^>>><<^v>>v^v><^^>>^<>vv^<><^^>^
+^^<><vvvvv^v<v<<>^v<v>v<<^><<><<><<<^^<<<^<<>><<><^^^>^^<>^>v<>
+^^>vv<^v^v<vv>^<><v<^v>^^^>>>^^vvv^>vvv<>>>^<^>>>>>^<<^v>^vvv<>
+^<><<v>v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v
+><v^<vv<>v^<<^"))
 
 (defparameter *phaul*
   '("######"
@@ -143,7 +163,11 @@ tiles!)
     "#####.####.#@####....#"
     "....#......###..######"
     "....########.........."
-    ""    "^<<<^^^<<^<<v<<vvv>>>>>>>>>>>>>>>>^>v<<<<<<<<<<<<<<<<<^<<v>>>>>>>>>>>>>>>>>v>^<^>v<<<<<<<<<<<<<<<<^^^>>vv^^<<vvv>>>>>>>>>>>>>>>><<<<<<<<<<^^^<<<^<vvv^^<<vvv>>>>>>>>>>>>>>>v>^<<<<<<<<<<<<<<^^^^>^^<vvvvv^^<<vvv>>>>>>>>>>>>>>^>v<v>^<<<<<<<<<^^^<<<^^^>vv<<vvvv>>>>^^^<<<^<vvv^^<<vvv>>>>>>>>>>>>>>>")
+    ""
+    "^<<<^^^<<^<<v<<vvv>>>>>>>>>>>>>>>>^>v<<<<<<<<<<<<<<<<<^<<v>>>>>>>
+>>>>>>>>>>v>^<^>v<<<<<<<<<<<<<<<<^^^>>vv^^<<vvv>>>>>>>>>>>>>>>><<<<<<<<<<^^^
+<<<^<vvv^^<<vvv>>>>>>>>>>>>>>>v>^<<<<<<<<<<<<<<^^^^>^^<vvvvv^^<<vvv>>>>>>>>>
+>>>>>^>v<v>^<<<<<<<<<^^^<<<^^^>vv<<vvvv>>>>^^^<<<^<vvv^^<<vvv>>>>>>>>>>>>>>>")
   "an actual sokoban puzzle from Reddit")
 
 (defparameter *wall* #\#)
@@ -172,7 +196,7 @@ chars"
          (robot-posn 0) ; the position of the robot
 
          ;; The move instructions are the remaining lines of the
-         ;; input.  turn them into a list of moves as #\^ #\v etc.
+         ;; input. Turn them into a list of moves as #\^ #\v etc.
          ;; also remove any stray newlines (this was a bug in my first
          ;; try, all the examples had the moves in a single line,
          ;; while the input did not. At first I was only getting part
@@ -181,6 +205,7 @@ chars"
          (move-instructions
            (remove #\Newline
                    (coerce (apply #'concatenate 'string
+                                  ;; gotta get 'em ALL
                                   (nthcdr (1+ (length map-strings)) los))
                            'list))))
 
@@ -204,7 +229,7 @@ chars"
     (#\>  (1+ pos))
     (#\<  (1- pos))))
 
-(5a:test next-pos-test
+(5a:test next-pos-t
   (5a:is (= 1 (next-pos *right* 0 10)))
   (5a:is (= 11 (next-pos *down* 1 10)))
   (5a:is (= 1 (next-pos *up* 11 10)))
@@ -320,11 +345,21 @@ all the *BOX*es after executing all the moves"
 #| ----------------------------------------------------------------------------
 --- Part Two ---
 
+Hoo boy.
+
 ---------------------------------------------------------------------------- |#
+
+(defun day15-2 (los)
+  los
+  )
+
+(5a:test day15-2-test
+  (5a:is (= 9021 (day15-2 *big-example*))))
 
 ;; now solve the puzzle!
 (time (format t "The answer to AOC 2024 Day 15 Part 1 is ~a"
-	      (day15-1 (uiop:read-file-lines *data-file*))))
+              (day15-1 (uiop:read-file-lines *data-file*))))
+
 
 ;; (time (format t "The answer to AOC 2024 Day 15 Part 2 is ~a"
 ;;	      (day15-2 (uiop:read-file-lines *data-file*))))
