@@ -62,7 +62,7 @@ I'll have to return multiple values, including the "width" of the grid
 so I can convert x y positions into vector indices. (+ x (* y width))
 
 I'll need a move routine that takes the vector map, robot position,
-and a move command, then returns the modified hash map and new robot
+and a move command, then returns the modified vector map and new robot
 position. It will have to encapsulate the rules about pushing rocks
 and walls. Pushing rocks will also result in an update of the map
 vector.
@@ -203,7 +203,7 @@ chars"
          ;; of the move instructions. Claude Code found the problem
          ;; and let me know I was missing instructions. Sweet.)
          (move-instructions
-           (remove #\Newline
+           (remove #\Newline ; strip those stray CR LF etc.
                    (coerce (apply #'concatenate 'string
                                   ;; gotta get 'em ALL
                                   (nthcdr (1+ (length map-strings)) los))
@@ -330,9 +330,9 @@ all the *BOX*es after executing all the moves"
 
     (dolist (dir moves) ; go through moves one by one
       (multiple-value-bind (new-pos new-map)
-          (slide (next-positions map dir pos width) map)
+          (slide (next-positions map dir pos width) map) ; move
         (setf map new-map)    ; update map
-        (setf pos new-pos)))
+        (setf pos new-pos)))  ; update robot posn
 
     (calculate-gps map width)))
 
