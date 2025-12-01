@@ -11,16 +11,15 @@
 
 (setf fiveam:*run-test-when-defined* t) ; test when compiling test code (for quick iteration)
 
-#|
---- Part One ---
-...
-Fortunately, every present is a box (a perfect right rectangular prism),
-which makes calculating the required wrapping paper for each gift a little easier: find
-the surface area of the box, which is 2*l*w + 2*w*h + 2*h*l.
-The elves also need a little extra paper for each present: the area of the smallest side.
-How many total square feet of wrapping paper should they order?
-...
-|#
+#| --- Part One ---
+
+...  Fortunately, every present is a box (a perfect right rectangular
+prism), which makes calculating the required wrapping paper for each
+gift a little easier: find the surface area of the box, which is 2*l*w
++ 2*w*h + 2*h*l.  The elves also need a little extra paper for each
+present: the area of the smallest side.  How many total square feet of
+wrapping paper should they order?
+...  |#
 
 (defun wrapping-paper (dim)
   "Calculate the total wrapping paper needed given the dims"
@@ -52,7 +51,8 @@ How many total feet of ribbon should they order?
 |#
 
 (defun ribbon (dim)
-  "calculate the amount of ribbon needed to wrap a gift (the smallest perimeter plus the
+  "calculate the amount of ribbon needed to wrap a gift (the smallest
+perimeter plus the
 total volume of the gift)"
   (let ((d1 (elt dim 0))
 	(d2 (elt dim 1))
@@ -68,10 +68,11 @@ total volume of the gift)"
   (is (= (ribbon '(2 3 4)) (+ (+ 2 2 3 3) (* 2 3 4))))
   (is (= (ribbon '(1 1 10)) 14)))
 
-;; this is the only difficult part of the whole problem: massaging the data into a form I can use
+;; this is the only difficult part of the whole problem: massaging the
+;; data into a form I can use
 (defun parse-input (file)
   "Turn input file into a list of a list of dimensions stored as '(### ### ###) - sorted from low to high"
-  (mapcar #'(lambda (x) (sort x #'<))                         ; sort the dims from lowest to highest
+  (mapcar #'(lambda (x) (sort x #'<))  ; sort the dims from lowest to highest
 	  (mapcar #'(lambda (x) (mapcar #'parse-integer x))   ; turn the dim strs into numbers
 		  (mapcar #'(lambda (x) (uiop:split-string x :separator "x"))  ; split the dims on 'x'
 			  (str:words                 ; separate the string into a list of dim str
