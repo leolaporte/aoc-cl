@@ -38,18 +38,14 @@
 ;;
 ;; ---------------------------------------------------------------------------
 
-(defparameter *example* '("L68"
-                          "L30"
-                          "R48"
-                          "L5"
-                          "R60"
-                          "L55"
-                          "L1"
-                          "L99"
-                          "R14"
-                          "L82"))
+(defparameter *example*
+  '("L68" "L30" "R48" "L5" "R60" "L55" "L1" "L99" "R14" "L82"))
 
+;; I use these function type declarations from Serapeum to help keep
+;; me on the straight and narrow. (Plus they alert me to many dumb
+;; misteaks.)
 (sr:-> parse-input (list) list)
+
 (defun parse-input (input)
   "given a list of strings describing turns of a dial replace the strings
 with integers"
@@ -72,7 +68,7 @@ dial reaches 0 while making all the turns"
   (let ((instructions (parse-input input))
         (posn 50))                      ; dial starting position
 
-    (Iter (for i in instructions)
+    (iter (for i in instructions)
       (setf posn (next-position posn i))
       (counting (= posn 0)))))
 
@@ -84,7 +80,7 @@ dial reaches 0 while making all the turns"
 ;;                            --- Part Two --
 ;;
 ;; LEO'S NOTES: Now instead of counting the number of times the dial
-;; lands on zero we need to count the number of times it passes
+;; lands on zero I need to count the number of times it passes
 ;; zero. Note that some of the turns go around multiple times. R1000
 ;; would pass zero as many as 10 times.
 ;;
@@ -94,25 +90,24 @@ dial reaches 0 while making all the turns"
 (sr:-> count-zeros (number number) number)
 (defun count-zeros (posn turn)
   "given a current dial position and a positive or negative turn, return
-how many 0 are passed or landed on on a safe dial that goes from 0 to
+how many times 0 is passed or landed on on a safe dial that goes from 0 to
 99"
-  (if (< turn 0)
-      ;; turning to the left
+  (if (< turn 0)  ;; turning to the left
       ;; add first time around the dial..
-      (+ (if (or (zerop posn)           ; doesn't pass 0 on first turn
-                 (< 0 (next-position posn turn) posn)) ; first time still on dial
-             0 1)
+      (+ (if (or (zerop posn)  ; a 0 start does not pass 0 on first turn
+                 (< 0 (next-position posn turn) posn)) ; first turn passes 0?
+             0 1)                                      ; add 1 if it does
 
          ;; ... to subsequent turns around the dial
-         (truncate (abs turn) 100))
+         (truncate (- turn) 100))
 
       ;; else turning to the right
-      ;; add first time around the dial...
-      (+ (if (<= posn (next-position posn turn) 99) 0 1)
-         ;; ... to subsequent turns around the dial
+      (+ (if (<= posn (next-position posn turn) 99) 0 1) ; 1st turn passes 0?
+         ;; add that to subsequent turns
          (truncate turn 100))))
 
-;; I had to make a lot of tests for this - more trial and error than logic
+;; I had to make a lot of tests for this - more trial and error than
+;; logic
 (5a:test count-zeros-test
   (5a:is (= 0 (count-zeros 99 -98)))
   (5a:is (= 1 (count-zeros 99 -99)))
