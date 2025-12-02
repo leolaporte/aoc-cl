@@ -32,7 +32,7 @@
 ;;                              --- Part One ---
 ;;
 ;; LEO'S NOTES: We're given a string with a list of number
-;; ranges. We're to count the invalid ids in those ranges. An ID is
+;; ranges. We're to add up the invalid ids in those ranges. An ID is
 ;; invalid if it is "made only of some sequence of digits repeated
 ;; twice." Sounds like a job for regex.
 ;;
