@@ -45,11 +45,18 @@
 ;; characters. Sorry about the \\ - Common Lisp requires the \ to be
 ;; escaped... with \. In Perl or Python it would just be ^(\d+)\1$
 ;;
+;; Ah interesting refinement. Paul Holder asked about using lazy
+;; evaluation in the regex instead. \d+? instead of \d+ - and indeed
+;; it sped the search up by almost a tenth of a second. I don't think
+;; that's always going to be the case but because I am performing the
+;; SCAN millions of times in both parts it's a nice little
+;; improvement. Thanks, Paul!
+;;
 ;; ----------------------------------------------------------------------------
 
 (defparameter *example* "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659, 824824821-824824827,2121212118-2121212124")
 
-(defparameter *twice-repeated-sequence* (re:create-scanner "^(\\d+)\\1$")
+(defparameter *twice-repeated-sequence* (re:create-scanner "^(\\d+?)\\1$")
   "a regex for finding numbers consisting only of a twice repeating digit
 sequence e.g. 11 234234 56785678")
 
@@ -113,7 +120,7 @@ IDs within the range"
 ;; ----------------------------------------------------------------------------
 
 ;; The modified regex
-(defparameter *multiple-repeated-sequence* (re:create-scanner "^(\\d+)\\1+$")
+(defparameter *multiple-repeated-sequence* (re:create-scanner "^(\\d+?)\\1+$")
   "a regex for finding numbers consisting only of a repeating
 digit sequence e.g. 1111 234234234234 56785678567856785678")
 
@@ -137,18 +144,18 @@ digit sequence e.g. 1111 234234234234 56785678567856785678")
 
 ;; The answer to AOC 2025 Day 2 Part 1 is 23560874270
 ;; Evaluation took:
-;; 0.307 seconds of real time
-;; 0.309322 seconds of total run time (0.306807 user, 0.002515 system)
-;; [ Real times consist of 0.007 seconds GC time, and 0.300 seconds non-GC time. ]
-;; [ Run times consist of 0.007 seconds GC time, and 0.303 seconds non-GC time. ]
-;; 100.65% CPU
-;; 286,715,056 bytes consed
+;; 0.272 seconds of real time
+;; 0.273811 seconds of total run time (0.271361 user, 0.002450 system)
+;; [ Real times consist of 0.006 seconds GC time, and 0.266 seconds non-GC time. ]
+;; [ Run times consist of 0.006 seconds GC time, and 0.268 seconds non-GC time. ]
+;; 100.74% CPU
+;; 286,715,616 bytes consed
 
 ;; The answer to AOC 2025 Day 2 Part 2 is 44143124633
 ;; Evaluation took:
-;; 0.325 seconds of real time
-;; 0.326735 seconds of total run time (0.324710 user, 0.002025 system)
-;; [ Real times consist of 0.007 seconds GC time, and 0.318 seconds non-GC time. ]
-;; [ Run times consist of 0.007 seconds GC time, and 0.320 seconds non-GC time. ]
-;; 100.62% CPU
-;; 350,455,200 bytes consed
+;; 0.296 seconds of real time
+;; 0.297834 seconds of total run time (0.295704 user, 0.002130 system)
+;; [ Real times consist of 0.006 seconds GC time, and 0.290 seconds non-GC time. ]
+;; [ Run times consist of 0.006 seconds GC time, and 0.292 seconds non-GC time. ]
+;; 100.68% CPU
+;; 350,446,608 bytes consed
