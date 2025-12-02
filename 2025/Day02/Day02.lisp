@@ -42,8 +42,8 @@
 ;; means repeat that group, i.e. a doubled sequence. The ^ and $ are
 ;; anchors for the beginning and end of the string, thus we get a
 ;; doubled sequence and ONLY a doubled sequence, no extraneous
-;; characters. (Sorry about the \\ - Common Lisp requires the \ to be
-;; escaped... with \. In Perl or Python it would just be ^(\d+)\1$).
+;; characters. Sorry about the \\ - Common Lisp requires the \ to be
+;; escaped... with \. In Perl or Python it would just be ^(\d+)\1$
 ;;
 ;; ----------------------------------------------------------------------------
 
@@ -60,7 +60,6 @@ sequence e.g. 11 234234 56785678")
  list of integer pairs representing the start and end of a number
  range"
   (let ((digits (mapcar #'parse-integer (sr:words input))))
-
     (iter (for (x y) on digits by #'cddr)
       (collect (list x y)))))
 
@@ -75,11 +74,12 @@ invalid ID"
   (5a:is-false (valid-id? 38593859 *twice-repeated-sequence*))
   (5a:is-false (valid-id? 1111 *twice-repeated-sequence*))
   (5a:is-false (valid-id? 446446 *twice-repeated-sequence*))
-  (5a:is-true (valid-id? 4464467 *twice-repeated-sequence*)))
+  (5a:is-true (valid-id? 4464467 *twice-repeated-sequence*))
+  (5a:is-true (valid-id? 1 *twice-repeated-sequence*)))
 
 (sr:-> sum-invalid-ids (number number function) number)
 (defun sum-invalid-ids (start end regex)
-  "given a range from start to end inclusive, sum the invalid
+  "given a range from start to end inclusive, add up the invalid
 IDs within the range"
   (iter (for n from start to end)
     (summing
@@ -96,7 +96,6 @@ IDs within the range"
 (defun day02-1 (input regex)
   "count the number of invalid ids in the list of ID ranges provided by input"
   (let ((ranges (parse-input input)))
-
     (iter (for range in ranges)
       (summing (sum-invalid-ids (first range) (second range) regex)))))
 
