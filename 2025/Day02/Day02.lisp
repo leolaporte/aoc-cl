@@ -47,7 +47,7 @@
 ;;
 ;; Ah interesting refinement. Paul Holder asked about using lazy
 ;; evaluation in the regex instead. \d+? instead of \d+ - and indeed
-;; it sped the search up by almost a tenth of a second. I don't think
+;; it sped the search up in part 2 by 28 milliseconds. I don't think
 ;; that's always going to be the case but because I am performing the
 ;; SCAN millions of times in both parts it's a nice little
 ;; improvement. Thanks, Paul!
