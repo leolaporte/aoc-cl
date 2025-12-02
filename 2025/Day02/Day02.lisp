@@ -34,7 +34,7 @@
 ;; LEO'S NOTES: We're given a string with a list of number
 ;; ranges. We're to add up the invalid ids in those ranges. An ID is
 ;; invalid if it is "made only of some sequence of digits repeated
-;; twice." Sounds like a job for regex.
+;; twice." Sounds like a job for regular expressions.
 ;;
 ;; Regex for a doubled sequence would look like this: ^(\\d+)\\1$
 ;;
@@ -68,7 +68,7 @@ sequence e.g. 11 234234 56785678")
 invalid ID"
   (not (re:scan regex (write-to-string n))))
 
-(5a:test invalid-id?-test
+(5a:test valid-id?-test
   (5a:is-true (valid-id? 123456 *twice-repeated-sequence*))
   (5a:is-false (valid-id? 38593859 *twice-repeated-sequence*))
   (5a:is-false (valid-id? 1111 *twice-repeated-sequence*))
