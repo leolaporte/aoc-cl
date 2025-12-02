@@ -93,7 +93,7 @@ IDs within the range"
 
 (sr:-> day02-1 (string function) number)
 (defun day02-1 (input regex)
-  "count the number of invalid ids in the list of ID ranges provided by input"
+  "sum the invalid ids in the list of ID ranges provided by input"
   (let ((ranges (parse-input input)))
     (iter (for range in ranges)
       (summing (sum-invalid-ids (first range) (second range) regex)))))
