@@ -2,7 +2,7 @@
 ;;;; 2025 AOC Day 4 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started: 03 Dec 2025 at 22:30
-;;;; Finished:
+;;;; Finished: 04 Dec 2025 at 01:13
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
