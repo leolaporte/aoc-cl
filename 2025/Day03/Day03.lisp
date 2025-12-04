@@ -1,0 +1,170 @@
+;;;; Day03.lisp
+;;;; 2025 AOC Day 3 solution
+;;;; Common Lisp solutions by Leo Laporte (with lots of help)
+;;;; Started: 03 Dec 2025 at 06:22
+;;;; Finished: 04 Dec 2025 at 22:22
+
+;; ----------------------------------------------------------------------------
+;; Prologue code for setup - same every day
+;; ----------------------------------------------------------------------------
+
+(defpackage :aoc.2025.day03
+  (:use :cl :alexandria :iterate)      ; no prefix for these libraries
+  (:local-nicknames                    ; short prefixes for these
+   (:re :cl-ppcre)                     ; regex
+   (:5a :fiveam)                       ; test framework
+   (:sr :serapeum)                     ; CL extensions
+   (:tr :trivia)))                     ; pattern matching
+
+(in-package :aoc.2025.day03)
+
+(setf 5a:*run-test-when-defined* t)  ; test as we go
+(setf 5a:*verbose-failures* t)       ; show failing expression
+(sr:toggle-pretty-print-hash-table)  ; automatic pretty print for hashes
+(declaim (optimize (debug 3)))       ; max debugging info
+;; (declaim (optimize (speed 3))     ; max speed if needed
+
+(defparameter *data-file* "~/cl/AOC/2025/Day03/input.txt"
+  "Downloaded from the AoC problem set")
+
+;; ----------------------------------------------------------------------------
+;;                            --- Day 3: Lobby ---
+;;                              --- Part One ---
+;;
+;; LEO'S NOTES: Batteries represented as a list of strings of single digits. I
+;; need to find the two largest numbers in each string. That's the battery's
+;; joltage.  The solution is the sum of all the joltages.
+;;
+;; I'll create a base function, JOLTAGE, which will take a battery as a list of
+;; numbers, then find the largest two digits in it (using SORT? or MAX? sort
+;; will be simpler). Nope that won't work, because it isn't just the largest two
+;; digits, I have to preserve their order in the string. That's a little
+;; trickier. Oh and the last string introduces another issue. The largest
+;; possible result is 92 not 89. That redefines the problem. I need the largest
+;; value I can find given two numbers in order. So in the last battery, the 8s
+;; are irrelevant becasue they occur before the 9. Ahhh! And there's one more
+;; wrinkle. Exemplifies in the second string, if the largest digit is the last
+;; in the string it will have to be the ones digit and we'll have to find the
+;; tens digit in the string preceding it. Otherwise the largest digit is the
+;; tens digit and the largest following digit is the ones digit. I think I have
+;; it now...
+;;
+;; 1. Find the largest digit and make it the tens digit unless...  the largest
+;;    digit is the last digit. In that case make it the ones digit then find the
+;;    next largest digit in the list and make IT the tens digit.
+;;
+;; 2. Otherwise find the next largest digit and make it the ones digit.
+;;
+;; 3. Combine the tens digit with the ones digit to meke the total joltage.
+;;
+;; Turns out this is, in fact, a common interview question. The Algorithm is
+;; called Remove K Digits, as explained in this video:
+;; https://youtu.be/cFabMOnJaq0?si=r2EUrgKwWm5vnz0A - it's the same algorithim
+;; for both part one and two, just with a different number of digits. I'll
+;; rewrite part one so I can use it in part two. In this first part I'll turn on
+;; two batteries to get the maximum voltage. (In other words k is the battery
+;; length minus the number of batteries I want to turn on.)
+;;
+;; ----------------------------------------------------------------------------
+
+(defparameter *example* (list "987654321111111"
+                              "811111111111119"
+                              "234234234234278"
+                              "818181911112111"))
+
+(sr:-> maximize-joltage (string number) number)
+(defun maximize-joltage (bank on)
+  "light up ON batteries in the battery BANK to produce the largest amount of
+joltage"
+  (let ((to-remove (- (length bank) on))) ; how many do we remove from bank?
+
+    (iter (for digit in-string bank)
+      (with stack = '())                ; monotonically decreasing stack
+
+      (iter (while (and (> to-remove 0)             ; more to remove
+                        stack                       ; we have some digits
+                        (char< (car stack) digit))) ; next digit is larger
+        (pop stack)                                 ; dump smaller digit
+        (decf to-remove))                           ; that's one down!
+
+      (push digit stack)                ; now check next digit
+
+      (finally
+       (iter (repeat to-remove)         ; anything left to remove?
+         (pop stack))                   ; dump that many
+
+       (return (parse-integer (coerce (reverse stack) 'string)))))))
+
+(5a:test maximize-joltage-test
+  (5a:is (= 98 (maximize-joltage (first *example*) 2)))
+  (5a:is (= 89 (maximize-joltage (second *example*) 2)))
+  (5a:is (= 78 (maximize-joltage (third *example*) 2)))
+  (5a:is (= 92 (maximize-joltage (fourth *example*) 2))))
+
+(sr:-> day03-1 (list number) number)
+(defun day03-1 (battery-list on)
+  (iter (for bank in battery-list)
+    (summing (maximize-joltage bank on))))
+
+(5a:test day03-1-test
+  (5a:is (= 357 (day03-1 *example* 2))))
+
+;; ----------------------------------------------------------------------------
+;;                              --- Part Two --
+;;
+;; "now there will be 12 digits in each bank's maximize-joltage output instead of
+;; two"
+;;
+;; LEO'S NOTES: So I have to find the highest 12 digit value I can find using
+;; the digits in order. The same exceptions from part one apply. What if I get
+;; the length of the list, remove the lowest (- length 12) digits and keep the
+;; rest? No that won't work with the third battery in the example:
+;; "234234234234278" because it will remove a fourth 2 instead of the higher
+;; value 3. This is a logic puzzle - not a coding puzzle. The coding will be
+;; easy if I can figure out the rule.
+;;
+;; The value of the digit is related to its position, of course. You'd want the
+;; leftmost digit to be the highest leftmost digit in the original list. That's
+;; why you remove the 2 and 3 at the beginning of example 3. So I guess I should
+;; work from left to right removing any digit that is smaller than the digit to
+;; its right. Turns out this is the "Remove K Digits" algorithm. And it's the
+;; same as in part one. I've refactored part one and now all I have to do is
+;; change K for part two.
+;;
+;; ----------------------------------------------------------------------------
+
+(5a:test maximize-joltage-test          ; lighting up 12 batteries
+  (5a:is (= 987654321111 (maximize-joltage (first *example*) 12)))
+  (5a:is (= 811111111119 (maximize-joltage (second *example*) 12)))
+  (5a:is (= 434234234278 (maximize-joltage (third *example*) 12)))
+  (5a:is (= 888911112111 (maximize-joltage (fourth *example*) 12))))
+
+(5a:test day03-1-test
+  (5a:is (= 3121910778619 (day03-1 *example* 12))))
+
+;; ----------------------------------------------------------------------------
+
+;; now solve the puzzle!
+(time (format t "The answer to AOC 2025 Day 3 Part 1 is ~a"
+              (day03-1 (uiop:read-file-lines *data-file*) 2)))
+
+(time (format t "The answer to AOC 2025 Day 3 Part 2 is ~a"
+              (day03-1 (uiop:read-file-lines *data-file*) 12)))
+
+;; ----------------------------------------------------------------------------
+;; Timings with SBCL on a 2023 MacBook Pro M3 Max with 64GB RAM and Tahoe 26.1
+;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2025 Day 3 Part 1 is 16993
+;; Evaluation took:
+;; 0.000 seconds of real time
+;; 0.000586 seconds of total run time (0.000538 user, 0.000048 system)
+;; 100.00% CPU
+;; 330,256 bytes consed
+
+;; The answer to AOC 2025 Day 3 Part 2 is 168617068915447
+;; Evaluation took:
+;; 0.000 seconds of real time
+;; 0.000543 seconds of total run time (0.000529 user, 0.000014 system)
+;; 100.00% CPU
+;; 392,832 bytes consed
