@@ -36,11 +36,13 @@
 ;; accessed?
 ;;
 ;; The grid can be represented in many ways, a 2D array, 1D vector,
-;; hash-table. Mostly this first part isn't very demanding, but I'll opt for the
-;; two dimensional array of the map called GRID. I'll make a predicate called
-;; ACCESSIBLE? that given a position on the grid, returns true if there are
-;; fewer than four rolls of paper adjacent. We've been here before many times,
-;; it's pretty simple.
+;; hash-table. Mostly this first part isn't very demanding, so I'll opt for the
+;; most direct representation of the input, a two dimensional array called
+;; GRID. I'll make a predicate called ACCESSIBLE? that given a position on the
+;; grid, returns true if there are fewer than four rolls of paper
+;; adjacent.
+;;
+;; We've been here before many times in AoC, it's pretty straightforward.
 ;;
 ;; ----------------------------------------------------------------------------
 
@@ -56,8 +58,9 @@
                               "@.@.@@@.@."))
 
 (defparameter *adjacencies*
-  (list '(-1 0) '(-1 -1) '(0 -1) '(1 -1) '(1 0) '(1 1) '(0 1) '(-1 1))
-  "the eight directions starting with North and moving clockwise")
+  (list (cons -1 0) (cons -1 -1) (cons 0 -1) (cons 1 -1) ; N NE E SE
+        (cons 1 0) (cons 1 1) (cons 0 1) (cons -1 1))    ; S SW W NW
+  "the eight directions starting with north and moving clockwise")
 
 (sr:-> parse-input (list) array)
 (defun parse-input (input)
@@ -66,33 +69,33 @@ list - array indices are row/col"
   (let* ((rows (length input))
          (columns (length (first input)))
          (grid (make-array (list rows columns)
-                           :initial-element #\.
+                           :initial-element #\. ; fill it with empty squares
                            :element-type 'standard-char)))
 
     (iter (for y below rows)
       (iter (for x below columns)
         (when (char= #\@ (char (nth y input) x))
-          (setf (aref grid y x) #\@))))
+          (setf (aref grid y x) #\@)))) ; replace empty with paper roll
     grid))
 
 (sr:-> accessible? (cons array) boolean)
 (defun accessible? (posn grid)
   "given a position POSN expressed as (CONS Y X) and a 2D array called
-GRID, return true if there are fewer than four occupied positions in the
-eight directions."
-  (iter (for loc in *adjacencies*)
-    (let ((y (+ (car posn) (first loc)))
-          (x (+ (cdr posn) (second loc))))
+GRID, return true if there are fewer than four occupied positions in the eight
+point surrounding POSN"
+  (iter (for direction in *adjacencies*)
+    (let ((y (+ (car posn) (car direction)))
+          (x (+ (cdr posn) (cdr direction))))
 
       (when                             ; off the grid
           (or (not (< -1 y (array-dimension grid 0)))
-              (not  (< -1 x (array-dimension grid 1))))
+              (not (< -1 x (array-dimension grid 1))))
         (next-iteration))               ; so skip this direction
 
       ;; keep track of adjacent paper rolls
-      (counting (char= #\@ (aref grid y x)) into trues)
+      (counting (char= #\@ (aref grid y x)) into nearby-rolls)
 
-      (when (>= trues 4)                ; found four
+      (when (>= nearby-rolls 4)         ; found four
         (return nil))                   ; so fail
 
       (finally (return t)))))
@@ -106,7 +109,8 @@ eight directions."
 
 (sr:-> day04-1 (list) number)
 (defun day04-1 (input)
-  "counts the number of paper rolls on a grid that have fewer than four adjacent rolls"
+  "counts the number of paper rolls on a grid that have fewer than four adjacent
+rolls"
   (let ((grid (parse-input input)))
     (iter (for y below (array-dimension grid 0))
       (summing
@@ -131,14 +135,16 @@ eight directions."
   (iter (for y below (array-dimension grid 0))
     (appending
      (iter (for x below (array-dimension grid 1))
-       (when (char= #\@ (aref grid y x))
-         (when (accessible? (cons y x) grid)
-           (collecting (cons y x))))))))
+       (when (char= #\@ (aref grid y x))     ; is it a paper roll
+         (when (accessible? (cons y x) grid) ; it it accessible?
+           (collecting (cons y x))))))))     ; add its position to the list
 
 (sr:-> day04-2 (list) number)
 (defun day04-2 (input)
   "remove paper rolls until no more are accessible then return the number
-of rolls removed"
+of rolls removed - this uses the idiosyncratic Common Lisp DO loop but it's a
+standard, even fundamental, pattern in CL so I like to haul it out from time to
+time just to keep in shape."
   (do* ((grid (parse-input input))
         (accessibles (collect-accessibles grid) (collect-accessibles grid))
         (removed (length accessibles) (+ removed (length accessibles))))
