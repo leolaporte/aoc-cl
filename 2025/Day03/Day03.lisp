@@ -57,13 +57,21 @@
 ;;
 ;; 3. Combine the tens digit with the ones digit to meke the total joltage.
 ;;
-;; Turns out this is, in fact, a common interview question. The Algorithm is
+;; Turns out this is, in fact, a common interview question. The algorithm is
 ;; called Remove K Digits, as explained in this video:
-;; https://youtu.be/cFabMOnJaq0?si=r2EUrgKwWm5vnz0A - it's the same algorithim
-;; for both part one and two, just with a different number of digits. I'll
-;; rewrite part one so I can use it in part two. In this first part I'll turn on
-;; two batteries to get the maximum voltage. (In other words k is the battery
-;; length minus the number of batteries I want to turn on.)
+;; https://youtu.be/cFabMOnJaq0?si=r2EUrgKwWm5vnz0A
+;;
+;; And here's the beauty part: it's the same algorithim for both part one and
+;; two! I'll rewrite part one, creating MAXIMIZE-JOLTAGE that takes a single
+;; battery bank string and the number of batteries to turn on and returns the
+;; highest possible joltage as a string. I can use it in both part one and two
+;; simply by changing the number of batteries to turn on. Woo hoo. I am glad I
+;; did the manual work in part one because it helped me understand the
+;; generalized algorithm better.
+;;
+;; Now, after refactoring, in this first part I'll turn on two batteries to get
+;; the maximum voltage. (In other words k is the battery length minus the number
+;; of batteries I want to turn on.)
 ;;
 ;; ----------------------------------------------------------------------------
 
@@ -72,7 +80,7 @@
                               "234234234234278"
                               "818181911112111"))
 
-(sr:-> maximize-joltage (string number) number)
+(sr:-> maximize-joltage (string number) string)
 (defun maximize-joltage (bank on)
   "light up ON batteries in the battery BANK to produce the largest amount of
 joltage"
@@ -93,18 +101,18 @@ joltage"
        (iter (repeat to-remove)         ; anything left to remove?
          (pop stack))                   ; dump that many
 
-       (return (parse-integer (coerce (reverse stack) 'string)))))))
+       (return (coerce (reverse stack) 'string))))))
 
 (5a:test maximize-joltage-test
-  (5a:is (= 98 (maximize-joltage (first *example*) 2)))
-  (5a:is (= 89 (maximize-joltage (second *example*) 2)))
-  (5a:is (= 78 (maximize-joltage (third *example*) 2)))
-  (5a:is (= 92 (maximize-joltage (fourth *example*) 2))))
+  (5a:is (equal "98" (maximize-joltage (first *example*) 2)))
+  (5a:is (equal "89" (maximize-joltage (second *example*) 2)))
+  (5a:is (equal "78" (maximize-joltage (third *example*) 2)))
+  (5a:is (equal "92" (maximize-joltage (fourth *example*) 2))))
 
 (sr:-> day03-1 (list number) number)
 (defun day03-1 (battery-list on)
   (iter (for bank in battery-list)
-    (summing (maximize-joltage bank on))))
+    (summing (parse-integer (maximize-joltage bank on)))))
 
 (5a:test day03-1-test
   (5a:is (= 357 (day03-1 *example* 2))))
@@ -134,10 +142,10 @@ joltage"
 ;; ----------------------------------------------------------------------------
 
 (5a:test maximize-joltage-test          ; lighting up 12 batteries
-  (5a:is (= 987654321111 (maximize-joltage (first *example*) 12)))
-  (5a:is (= 811111111119 (maximize-joltage (second *example*) 12)))
-  (5a:is (= 434234234278 (maximize-joltage (third *example*) 12)))
-  (5a:is (= 888911112111 (maximize-joltage (fourth *example*) 12))))
+  (5a:is (equal "987654321111" (maximize-joltage (first *example*) 12)))
+  (5a:is (equal "811111111119" (maximize-joltage (second *example*) 12)))
+  (5a:is (equal "434234234278" (maximize-joltage (third *example*) 12)))
+  (5a:is (equal "888911112111" (maximize-joltage (fourth *example*) 12))))
 
 (5a:test day03-1-test
   (5a:is (= 3121910778619 (day03-1 *example* 12))))
