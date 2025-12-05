@@ -84,7 +84,8 @@ ingredients"
 
 (sr:-> day05-1 (list) number)
 (defun day05-1 (input)
-  "given a list of ingredients and a list of ranges of fresh ingredients return the total number of fresh ingredients."
+  "given a list of ingredients and a list of ranges of fresh ingredients return
+the total number of fresh ingredients."
   (let ((fresh 0))
     (multiple-value-bind (ranges ingredients) (parse-input input)
       (iter (for i in ingredients)
@@ -100,16 +101,16 @@ ingredients"
 ;; ----------------------------------------------------------------------------
 ;;                              --- Part Two --
 ;;
-;; "How many ingredient IDs are considered to be fresh according to the fresh
-;; ingredient ID ranges?"
+;; "How many ingredient IDs are considered to be fresh according to the
+;; fresh ingredient ID ranges?"
 ;;
-;; LEO'S NOTES: Wow. Easy but sloooooooow. OK I can't expand the ranges, so I
-;; just have to figure out where they overlap then take the length of the
+;; LEO'S NOTES: Wow. Easy but sloooooooow. OK I can't expand the ranges, so
+;; I just have to figure out where they overlap then take the length of the
 ;; remaining ranges.
 ;;
-;; I went to bed with part 2 unfinished but I had a dream in which I explained
-;; the solution to someone! The dream wasn't fully accurate but it was very
-;; close.
+;; I went to bed with part 2 unfinished but I had a dream in which I
+;; explained the solution to someone! The dream wasn't fully accurate but it
+;; was very close.
 ;;
 ;; The trick is to merge all overlapping ranges then sum the lengths of each
 ;; range. I wrote OVERLAP? to test whether ranges overlap (which I later
@@ -119,11 +120,12 @@ ingredients"
 ;; require ranges that are sorted - both by start and end. Fortunately the
 ;; built-in sort is very fast.
 ;;
-;; I discovered the overlapping range issue when the test passed but the final
-;; answer was too low. Paul Holder provided a perverse example which
-;; demonstrated the issue with ranges within ranges as well as the need to sort
-;; by both start and finish. The final function MERGE-ALL-RANGES recursively
-;; works through the sorted ranges and merges them down as much as possible. T
+;; I discovered the overlapping range issue when the test passed but the
+;; final answer was too low. Paul Holder provided a perverse example which
+;; demonstrated the issue with ranges within ranges as well as the need to
+;; sort by both start and finish. The final function MERGE-ALL-RANGES
+;; recursively works through the sorted ranges and merges them down as much
+;; as possible. T
 ;;
 ;; ----------------------------------------------------------------------------
 
@@ -155,8 +157,8 @@ ingredients"
 
 (sr:-> merge-ranges (list list) list)
 (defun merge-ranges (r1 r2)
-  "merges two overlapping number pairs into a single list - assumes r1 and r2 are
-sorted by end then start"
+  "merges two overlapping number pairs into a single list - assumes r1 and r2
+are sorted by end then start"
   (if (and (<= (first r1) (first r2)) (<= (second r2) (second r1)))
       ;; r2 is within r1
       (list (first r1) (second r1))
@@ -178,8 +180,8 @@ returns MERGE, a list of all pairs reduced to non-overlapping pairs, assumes
          (reverse (push (first ranges) merged)))
 
         ((overlap? (first ranges) (first (rest ranges)))
-         ;; merge the overlaps then continue with the merged range and the rest
-         ;; of the list
+         ;; merge the overlaps then continue with the merged range and the
+         ;; rest of the list
          (merge-all-ranges
           (cons (merge-ranges (first ranges) (first (rest ranges)))
                 (rest (rest ranges))) merged))
