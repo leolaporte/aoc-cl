@@ -125,7 +125,7 @@ the total number of fresh ingredients."
 ;; demonstrated the issue with ranges within ranges as well as the need to
 ;; sort by both start and finish. The final function MERGE-ALL-RANGES
 ;; recursively works through the sorted ranges and merges them down as much
-;; as possible. T
+;; as possible.
 ;;
 ;; ----------------------------------------------------------------------------
 
