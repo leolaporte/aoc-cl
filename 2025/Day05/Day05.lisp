@@ -135,7 +135,8 @@ the total number of fresh ingredients."
                                "2-8"
                                "2-14"
                                "2-20")
-  "a pervere example from Paul Holder with ranges WITHIN ranges")
+  "a perverse example from Paul Holder with ranges WITHIN ranges and requiring
+a secondary sort (first ends, then starts)")
 
 (sr:-> overlap? (list list) boolean)
 (defun overlap? (r1 r2)
