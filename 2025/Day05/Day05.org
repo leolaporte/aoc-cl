@@ -12,6 +12,7 @@ Day 5 of Advent of Code 2025: Cafeteria
 
 Part Two: How many total ingredients could be fresh (as described by the ranges).
 
+
 * Approach
 
 ** Part 1
