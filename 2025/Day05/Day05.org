@@ -86,6 +86,8 @@ The overlapping range issue was discovered when the test passed but the final an
                               "32"))
 #+end_src
 
+#+RESULTS:
+
 * Part 1: Count Fresh Ingredients
 
 ** Parsing Functions
@@ -114,6 +116,8 @@ ingredients"
   (<= (first range) num (second range)))
 #+end_src
 
+#+RESULTS:
+
 ** Tests for Helper Functions
 
 #+begin_src lisp
@@ -124,6 +128,14 @@ ingredients"
   (5a:is-false (in-range? 9 '(10 15)))
   (5a:is-false (in-range? 16 '(10 15))))
 #+end_src
+
+#+RESULTS:
+:
+: Running test IN-RANGE?-TEST .....
+:  Did 5 checks.
+:     Pass: 5 (100%)
+:     Skip: 0 ( 0%)
+:     Fail: 0 ( 0%)
 
 ** Solution Function
 
@@ -142,12 +154,22 @@ the total number of fresh ingredients."
     fresh))
 #+end_src
 
+#+RESULTS:
+
 ** Tests
 
 #+begin_src lisp
 (5a:test day05-1-test
   (5a:is (= 3 (day05-1 *example*))))
 #+end_src
+
+#+RESULTS:
+:
+: Running test DAY05-1-TEST .
+:  Did 1 check.
+:     Pass: 1 (100%)
+:     Skip: 0 ( 0%)
+:     Fail: 0 ( 0%)
 
 * Part 2: Merge Overlapping Ranges
 
@@ -163,6 +185,8 @@ the total number of fresh ingredients."
   "a perverse example from Paul Holder with ranges WITHIN ranges and requiring
 a secondary sort (first ends, then starts)")
 #+end_src
+
+#+RESULTS:
 
 ** Range Merging Functions
 
@@ -208,6 +232,8 @@ returns MERGE, a list of all pairs reduced to non-overlapping pairs, assumes
          (merge-all-ranges (rest ranges) merged))))
 #+end_src
 
+#+RESULTS:
+
 ** Tests for Range Functions
 
 #+begin_src lisp
@@ -237,6 +263,28 @@ returns MERGE, a list of all pairs reduced to non-overlapping pairs, assumes
                 (list '(3 5) '(6 18) '(19 20)))))
 #+end_src
 
+#+RESULTS:
+#+begin_example
+
+Running test OVERLAP?-TEST ......
+ Did 6 checks.
+    Pass: 6 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+
+Running test MERGE-RANGES-TEST ...
+ Did 3 checks.
+    Pass: 3 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+
+Running test MERGE-ALL-RANGES-TEST ....
+ Did 4 checks.
+    Pass: 4 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+#+end_example
+
 ** Solution Function
 
 #+begin_src lisp
@@ -253,6 +301,8 @@ returns MERGE, a list of all pairs reduced to non-overlapping pairs, assumes
          (apply #'+ _)))                                ; add lengths
 #+end_src
 
+#+RESULTS:
+
 ** Tests
 
 #+begin_src lisp
@@ -261,16 +311,29 @@ returns MERGE, a list of all pairs reduced to non-overlapping pairs, assumes
   (5a:is (= 100 (day05-2 *example2*))))
 #+end_src
 
+#+RESULTS:
+:
+: Running test DAY05-2-TEST ..
+:  Did 2 checks.
+:     Pass: 2 (100%)
+:     Skip: 0 ( 0%)
+:     Fail: 0 ( 0%)
+
 * Run Solutions
 
 #+begin_src lisp
 ;; now solve the puzzle!
-(time (format t "The answer to AOC 2025 Day 5 Part 1 is ~a"
+(time (format t "~%The answer to AOC 2025 Day 5 Part 1 is ~a"
               (day05-1 (uiop:read-file-lines *data-file*))))
 
-(time (format t "The answer to AOC 2025 Day 5 Part 2 is ~a"
+(time (format t "~%The answer to AOC 2025 Day 5 Part 2 is ~a"
               (day05-2 (uiop:read-file-lines *data-file*))))
 #+end_src
+
+#+RESULTS:
+:
+: The answer to AOC 2025 Day 5 Part 1 is 509
+: The answer to AOC 2025 Day 5 Part 2 is 336790092076620
 
 * Performance Results
 

@@ -101,16 +101,16 @@ the total number of fresh ingredients."
 ;; ----------------------------------------------------------------------------
 ;;                              --- Part Two --
 ;;
-;; "How many ingredient IDs are considered to be fresh according to the
-;; fresh ingredient ID ranges?"
+;; "How many ingredient IDs are considered to be fresh according to the fresh
+;; ingredient ID ranges?"
 ;;
-;; LEO'S NOTES: Wow. Easy but sloooooooow. OK I can't expand the ranges, so
-;; I just have to figure out where they overlap then take the length of the
+;; LEO'S NOTES: Wow. Easy but sloooooooow. OK I can't expand the ranges, so I
+;; just have to figure out where they overlap then take the length of the
 ;; remaining ranges.
 ;;
-;; I went to bed with part 2 unfinished but I had a dream in which I
-;; explained the solution to someone! The dream wasn't fully accurate but it
-;; was very close.
+;; I went to bed with part 2 unfinished but I had a dream in which I explained
+;; the solution to someone! The dream wasn't fully accurate but it was very
+;; close.
 ;;
 ;; The trick is to merge all overlapping ranges then sum the lengths of each
 ;; range. I wrote OVERLAP? to test whether ranges overlap (which I later
@@ -120,12 +120,11 @@ the total number of fresh ingredients."
 ;; require ranges that are sorted - both by start and end. Fortunately the
 ;; built-in sort is very fast.
 ;;
-;; I discovered the overlapping range issue when the test passed but the
-;; final answer was too low. Paul Holder provided a perverse example which
-;; demonstrated the issue with ranges within ranges as well as the need to
-;; sort by both start and finish. The final function MERGE-ALL-RANGES
-;; recursively works through the sorted ranges and merges them down as much
-;; as possible.
+;; I discovered the overlapping range issue when the test passed but the final
+;; answer was too low. Paul Holder provided a perverse example which
+;; demonstrated the issue with ranges within ranges as well as the need to sort
+;; by both start and finish. The final function MERGE-ALL-RANGES recursively
+;; works through the sorted ranges and merges them down as much as possible.
 ;;
 ;; ----------------------------------------------------------------------------
 
@@ -158,13 +157,10 @@ a secondary sort (first ends, then starts)")
 
 (sr:-> merge-ranges (list list) list)
 (defun merge-ranges (r1 r2)
-  "merges two overlapping number pairs into a single list - assumes r1 and r2
-are sorted by end then start"
-  (if (and (<= (first r1) (first r2)) (<= (second r2) (second r1)))
-      ;; r2 is within r1
-      (list (first r1) (second r1))
-      ;; else r1 and r2 partially overlap
-      (list (first r1) (second r2))))
+  "merges two overlapping ranges into a single range that encompasses them both"
+  (let ((points (flatten (list r1 r2))))
+    (list (apply #'min points)
+          (apply #'max points))))
 
 (5a:test merge-ranges-test
   (5a:is (equal (merge-ranges '(1 5) '(5 10)) '(1 10)))
@@ -234,14 +230,14 @@ returns MERGE, a list of all pairs reduced to non-overlapping pairs, assumes
 
 ;; The answer to AOC 2025 Day 5 Part 1 is 509
 ;; Evaluation took:
-;; 0.003 seconds of real time
-;; 0.003049 seconds of total run time (0.002995 user, 0.000054 system)
-;; 100.00% CPU
-;; 397,648 bytes consed
+;; 0.002 seconds of real time
+;; 0.002734 seconds of total run time (0.002685 user, 0.000049 system)
+;; 150.00% CPU
+;; 401,680 bytes consed
 
 ;; The answer to AOC 2025 Day 5 Part 2 is 336790092076620
 ;; Evaluation took:
 ;; 0.001 seconds of real time
-;; 0.001579 seconds of total run time (0.001559 user, 0.000020 system)
-;; 200.00% CPU
-;; 393,136 bytes consed
+;; 0.001319 seconds of total run time (0.001294 user, 0.000025 system)
+;; 100.00% CPU
+;; 393,120 bytes consed

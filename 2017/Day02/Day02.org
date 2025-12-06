@@ -1,0 +1,116 @@
+#+: AOC 2017 Day 2 - Title
+#+AUTHOR: Leo Laporte
+#+DATE: 05 December 2025
+#+PROPERTY: header-args:lisp :tangle ~/cl/AOC/2017/Day02/Day02.lisp :comments link :mkdirp yes
+#+auto_tangle: t
+
+* Problem Description
+
+Paste problem description here
+
+* Solution Approach
+
+Describe your approach to solving this problem
+
+* Package Setup
+
+#+begin_src lisp
+;;;; Day02.lisp
+;;;; 2017 AOC Day 2 solution
+;;;; Common Lisp solutions by Leo Laporte (with lots of help)
+;;;; Started: 05 December 2025
+;;;; Finished:
+
+(defpackage :aoc.2017.day02
+  (:use :cl :alexandria :iterate)      ; no prefix for these libraries
+  (:local-nicknames                    ; short prefixes for these
+   (:re :cl-ppcre)                     ; regex
+   (:5a :fiveam)                       ; test framework
+   (:sr :serapeum)                     ; CL extensions
+   (:tr :trivia)))                     ; pattern matching
+
+(in-package :aoc.2017.day02)
+
+(setf 5a:*run-test-when-defined* t)  ; test as we go
+(setf 5a:*verbose-failures* t)       ; show failing expression
+(sr:toggle-pretty-print-hash-table)  ; automatic pretty print for hashes
+(declaim (optimize (debug 3)))       ; max debugging info
+;; (declaim (optimize (speed 3))     ; max speed if needed
+
+(defparameter *data-file* "~/cl/AOC/2017/Day02/input.txt"
+  "Downloaded from the AoC problem set")
+#+end_src
+
+* Part One
+
+** Notes
+
+Your notes about Part 1
+
+** Example Data
+
+#+begin_src lisp
+(defparameter *example* (list $7))
+#+end_src
+
+** Solution
+
+#+begin_src lisp
+(sr:-> day02-1 (list) number)
+(defun day02-1 (input)
+  "Solve Part 1 of Day 2."
+
+  )
+#+end_src
+
+** Test
+
+#+begin_src lisp
+(5a:test day02-1-test
+  (5a:is (= 0 (day02-1 *example*))))
+#+end_src
+
+** Run Part 1
+
+#+begin_src lisp :results output
+;; Uncomment to run:
+;; (time (format t "The answer to AOC 2017 Day 2 Part 1 is ~a"
+;;               (day02-1 (uiop:read-file-lines *data-file*))))
+#+end_src
+
+* Part Two
+
+** Notes
+
+Your notes about Part 2
+
+** Solution
+
+#+begin_src lisp
+(sr:-> day02-2 (list) number)
+(defun day02-2 (input)
+  "Solve Part 2 of Day 2."
+  0
+  )
+#+end_src
+
+** Test
+
+#+begin_src lisp
+(5a:test day02-2-test
+  (5a:is (= 0 (day02-2 *example*))))
+#+end_src
+
+** Run Part 2
+
+#+begin_src lisp :results output
+;; Uncomment to run:
+;; (time (format t "The answer to AOC 2017 Day 2 Part 2 is ~a"
+;;               (day02-2 (uiop:read-file-lines *data-file*))))
+#+end_src
+
+* Performance
+
+#+begin_src lisp
+;; Timings with SBCL on a 2023 MacBook Pro M3 Max with 64GB RAM and Tahoe 26.1
+#+end_src
