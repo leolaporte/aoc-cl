@@ -1,21 +1,20 @@
-;; [[file:Day06.org::*Prologue - Setup][Prologue - Setup:1]]
 ;;;; Day06.lisp
 ;;;; 2025 AOC Day 6 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started: 06 Dec 2025 at 11:15
-;;;; Finished:
+;;;; Finished: Mon Dec  8 15:45:41 2025
 
 ;; ----------------------------------------------------------------------------
 ;; Prologue code for setup - same every day
 ;; ----------------------------------------------------------------------------
 
 (defpackage :aoc.2025.day06
-            (:use :cl :alexandria :iterate)      ; no prefix for these libraries
-            (:local-nicknames                    ; short prefixes for these
-             (:re :cl-ppcre)                     ; regex
-             (:5a :fiveam)                       ; test framework
-             (:sr :serapeum)                     ; CL extensions
-             (:tr :trivia)))                     ; pattern matching
+  (:use :cl :alexandria :iterate)      ; no prefix for these libraries
+  (:local-nicknames                    ; short prefixes for these
+   (:re :cl-ppcre)                     ; regex
+   (:5a :fiveam)                       ; test framework
+   (:sr :serapeum)                     ; CL extensions
+   (:tr :trivia)))                     ; pattern matching
 
 (in-package :aoc.2025.day06)
 
@@ -27,16 +26,28 @@
 
 (defparameter *data-file* "~/cl/AOC/2025/Day06/input.txt"
   "Downloaded from the AoC problem set")
-;; Prologue - Setup:1 ends here
 
-;; [[file:Day06.org::*Example Data][Example Data:1]]
+
+;; ----------------------------------------------------------------------------
+;;                      --- Day 6: Trash Compactor ---
+;;                              --- Part One ---
+;;
+;; LEO'S NOTES: Hmmm. Seems easy. Too easy. I've got a bad feeling about this.
+;; I'll =PARSE-INPUT= into two values, an array of lists, each list will contain
+;; all the integers from the columns, and then a list of operand strings. The
+;; problem is practically done by then. I just apply each operand to its
+;; respective column and sum the results. The list will be very long with the
+;; provided data but I don't think 1000 digits lists are particularly
+;; problematic. Let's see.
+;;
+;; ----------------------------------------------------------------------------
+
 (defparameter *example* (list "123 328  51 64 "
                               " 45 64  387 23 "
                               "  6 98  215 314"
                               "*   +   *   +  "))
-;; Example Data:1 ends here
 
-;; [[file:Day06.org::*Parser][Parser:1]]
+
 (sr:-> parse-input (list) (values array list))
 (defun parse-input (input)
   "given a list of strings, return two values, an array of integers by column
@@ -55,14 +66,7 @@ and a list of strings representing operators"
 
     ;; return array of lists of integers by column and list of operators
     (values digits (sr:tokens (lastcar input)))))
-;; Parser:1 ends here
 
-;; [[file:Day06.org::parse-test][parse-test]]
-(multiple-value-bind (digits operators) (parse-input *example*)
-  (format t "Digits: ~S~%Operators: ~S~%" digits operators))
-;; parse-test ends here
-
-;; [[file:Day06.org::*Solution][Solution:1]]
 (sr:-> day06-1 (list) number)
 (defun day06-1 (input)
   "given a list of strings of digits and a final string of operators, produce
@@ -77,38 +81,46 @@ work is done in the parsing"
         (ecase (char (nth col operators) 0)
           (#\+ (apply #'+ (aref digits col)))
           (#\* (apply #'* (aref digits col))))))))
-;; Solution:1 ends here
 
-;; [[file:Day06.org::part-1-test][part-1-test]]
 (5a:test day06-1-test
   (5a:is (= 4277556 (day06-1 *example*))))
-;; part-1-test ends here
 
-;; [[file:Day06.org::operator-column-test][operator-column-test]]
-(defun opstarts (input)
-  (let* ((rows (1- (length input)))
-         (op-string (nth rows input))
-         (column-starts '()))
+;; ----------------------------------------------------------------------------
+;;                              --- Part Two ---
+;;
+;; LEO'S NOTES:
+;; Frickin' cephalpods. They're as bad as the lanternfish. So it turns out that the
+;; columns are digit by digit. And spaces are significant. This is going to require
+;; a completely different parser. I think the final function can remain mostly the
+;; same as long as the parsing is done correctly.
+;;
+;; In fact, I can pretty much use the same parser with slight
+;; modifications. Instead of using =WORDS= to extract the digits I'll step through
+;; the string a column at a time, replacing spaces with zeroes and putting in the
+;; single digits.
+;;
+;; This is simple. Right? Right? Well not exactly. The integers to process are
+;; combinations of all the digits in the column. So...
+;;
+;; #+begin_example
+;; 64
+;; 23
+;; 314
+;; +
+;; #+end_example
+;;
+;; ends up being: 623 + 431 + 4. So I will have to chunk up the columns and then
+;; index into them. A bit more complicated.
+;;
+;; The real question is how can I determine when to begin a new column? Is the
+;; width consistent? Alas no. Examining the input file shows that operands are
+;; usually separated by four columns but not always (unlike the example - tricky!)
+;;
+;; Is a new column always begun by an operator? Can I use them as an anchor? First,
+;; a test to see if the operators do really match the start of the columns...
+;;
+;; ----------------------------------------------------------------------------
 
-    ;; use op-string to determine column start and end
-    (iter (for i below (length op-string))
-      (when (not (char= #\space (char op-string i)))
-        (push i column-starts)))        ; push column start
-
-    (reverse column-starts)))
-
-;; print the operator start list for *example*
-(format t "Ops starts for *example*: ~a~%~%" (opstarts *example*))
-
-;; compare the input to the operators (well just the first 70 characters)
-(format t "First 70 chars of input: ~%~a~%~a~%~a~%~a~%~a~%"
-        (subseq (first (uiop:read-file-lines *data-file*)) 0 70)
-        (subseq (second (uiop:read-file-lines *data-file*)) 0 70)
-        (subseq (third (uiop:read-file-lines *data-file*)) 0 70)        (subseq (fourth (uiop:read-file-lines *data-file*)) 0 70)
-        (subseq (nth 4 (uiop:read-file-lines *data-file*)) 0 70))
-;; operator-column-test ends here
-
-;; [[file:Day06.org::cephlapod-parse][cephlapod-parse]]
 (sr:-> cephalapod-parse (list) array)
 (defun cephalapod-parse (input)
   "given a list of strings, return a 2D array with number strings grouped by column"
@@ -134,27 +146,7 @@ work is done in the parsing"
                 (push (subseq line start (first rest))
                       (aref grid row group)))))
       grid)))
-;; cephlapod-parse ends here
 
-;; [[file:Day06.org::lisp-063930][lisp-063930]]
-(format t "Example: ~%~a" (cephalapod-parse *example*))
-;; lisp-063930 ends here
-
-;; [[file:Day06.org::arrange-cols][arrange-cols]]
-(let ((arr (cephalapod-parse *example*)))
-(iter (for col below (array-dimension arr 1))
-    (collect
-       (iter (for row below (array-dimension arr 0))
-          (collect (car (aref arr row col)))))))
-;; arrange-cols ends here
-
-;; [[file:Day06.org::row2strings][row2strings]]
-(let ((arr (cephalapod-parse *example*)))
-       (iter (for col below (array-dimension arr 1))
-          (print (car (aref arr col 0)))))
-;; row2strings ends here
-
-;; [[file:Day06.org::process-col][process-col]]
 (sr:-> process-cols (list) number)
 (defun process-cols (row)
   "Given a list of strings representing a row, with each number aligned with
@@ -178,7 +170,6 @@ column."
       (#\+ (apply #'+ numbers))
       (#\* (apply #'* numbers)))))
 
-
 (5a:test process-cols-test
   (5a:is (= (process-cols '("123 "
                             " 45 "
@@ -196,9 +187,7 @@ column."
                             "23 "
                             "314"
                             "+  ")) (+ 623 431 4))))
-;; process-col ends here
 
-;; [[file:Day06.org::*Solution][Solution:1]]
 (sr:-> day06-2 (list) number)
 (defun day06-2 (input)
   (let* ((grid (cephalapod-parse input)) ; make 2D array of input
@@ -214,28 +203,16 @@ column."
 
 (5a:test day06-2-test
   (5a:is (= 3263827 (day06-2 *example*))))
-;; Solution:1 ends here
 
-;; [[file:Day06.org::Solutions][Solutions]]
+;; ----------------------------------------------------------------------------
 ;; now solve the puzzle!
+
 (time (format t "The answer to AOC 2025 Day 6 Part 1 is ~a~%"
               (day06-1 (uiop:read-file-lines *data-file*))))
 
 (time (format t "The answer to AOC 2025 Day 6 Part 2 is ~a~%"
- 	      (day06-2 (uiop:read-file-lines *data-file*))))
+              (day06-2 (uiop:read-file-lines *data-file*))))
 
-
-;; The answer to AOC 2025 Day 6 Part 1 is 5873191732773
-;; Evaluation took:
-;; 0.002 seconds of real time
-;; 0.002700 seconds of total run time (0.002671 user, 0.000029 system)
-;; 150.00% CPU
-;; 447,056 bytes consed
-
-;; The answer to AOC 2025 Day 6 Part 2 is 11386445308378
-;; Evaluation took:
-;; 0.000 seconds of real time
-;; 0.000997 seconds of total run time (0.000972 user, 0.000025 system)
-;; 100.00% CPU
-;; 1,677,952 bytes
-consed
+;; ----------------------------------------------------------------------------
+;; Timings with SBCL on a 2023 MacBook Pro M3 Max with 64GB RAM and Tahoe 26.1
+;; ----------------------------------------------------------------------------

@@ -372,7 +372,7 @@ Looking good. Now I just have to put it all together.
 :     Skip: 0 ( 0%)
 :     Fail: 0 ( 0%)
 
-Very nice the test passes. But I get an out-of-bounds error on the data. Ah I see the problem. When I transpose the array I'm using row col instead of col row - that makes it out of bounds. That worked because I accidentally swapped rows and cols in the iter clauses (which only worked in the *example* because it's a square - the data is most definitely not square!). Swapped the iter clauses  and used the proper  (aref arr row col) and it works again. All done. And it only took two days!
+Very nice the test passes. But I get an out-of-bounds error on the data. Ah I see the problem. When I transpose the array I'm using row col instead of col row - that makes it out of bounds. That worked because I accidentally swapped rows and cols in the iter clauses (which only worked in the *example* because it's a square - the data is most definitely not square!). Swapped the iter clauses  and used the proper  (aref arr row col) and it works again. All done. And it only took two days! At least the solution to part 2 took 0 seconds!
 
 **  Solutions
 #+name: Solutions
