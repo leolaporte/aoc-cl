@@ -221,6 +221,21 @@ column."
 (time (format t "The answer to AOC 2025 Day 6 Part 1 is ~a~%"
               (day06-1 (uiop:read-file-lines *data-file*))))
 
- (time (format t "The answer to AOC 2025 Day 6 Part 2 is ~a~%"
+(time (format t "The answer to AOC 2025 Day 6 Part 2 is ~a~%"
  	      (day06-2 (uiop:read-file-lines *data-file*))))
-;; Solutions ends here
+
+
+;; The answer to AOC 2025 Day 6 Part 1 is 5873191732773
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002700 seconds of total run time (0.002671 user, 0.000029 system)
+;; 150.00% CPU
+;; 447,056 bytes consed
+
+;; The answer to AOC 2025 Day 6 Part 2 is 11386445308378
+;; Evaluation took:
+;; 0.000 seconds of real time
+;; 0.000997 seconds of total run time (0.000972 user, 0.000025 system)
+;; 100.00% CPU
+;; 1,677,952 bytes
+consed
