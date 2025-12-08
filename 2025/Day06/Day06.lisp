@@ -216,3 +216,17 @@ column."
 ;; ----------------------------------------------------------------------------
 ;; Timings with SBCL on a 2023 MacBook Pro M3 Max with 64GB RAM and Tahoe 26.1
 ;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2025 Day 6 Part 1 is 5873191732773
+;; Evaluation took:
+;; 0.002 seconds of real time
+;; 0.002105 seconds of total run time (0.002067 user, 0.000038 system)
+;; 100.00% CPU
+;; 576,512 bytes consed
+
+;; The answer to AOC 2025 Day 6 Part 2 is 11386445308378
+;; Evaluation took:
+;; 0.001 seconds of real time
+;; 0.001045 seconds of total run time (0.001025 user, 0.000020 system)
+;; 100.00% CPU
+;; 1,505,872 bytes consed
