@@ -88,16 +88,16 @@ work is done in the parsing"
 ;; ----------------------------------------------------------------------------
 ;;                              --- Part Two ---
 ;;
-;; LEO'S NOTES:
-;; Frickin' cephalpods. They're as bad as the lanternfish. So it turns out that the
-;; columns are digit by digit. And spaces are significant. This is going to require
-;; a completely different parser. I think the final function can remain mostly the
-;; same as long as the parsing is done correctly.
+;; LEO'S NOTES: Frickin' cephalpods. They're as bad as the lanternfish. So it
+;; turns out that the columns are digit by digit. And spaces are
+;; significant. This is going to require a completely different parser. I think
+;; the final function can remain mostly the same as long as the parsing is done
+;; correctly.
 ;;
 ;; In fact, I can pretty much use the same parser with slight
-;; modifications. Instead of using =WORDS= to extract the digits I'll step through
-;; the string a column at a time, replacing spaces with zeroes and putting in the
-;; single digits.
+;; modifications. Instead of using =WORDS= to extract the digits I'll step
+;; through the string a column at a time, replacing spaces with zeroes and
+;; putting in the single digits.
 ;;
 ;; This is simple. Right? Right? Well not exactly. The integers to process are
 ;; combinations of all the digits in the column. So...
@@ -114,10 +114,12 @@ work is done in the parsing"
 ;;
 ;; The real question is how can I determine when to begin a new column? Is the
 ;; width consistent? Alas no. Examining the input file shows that operands are
-;; usually separated by four columns but not always (unlike the example - tricky!)
+;; usually separated by four columns but not always (unlike the example -
+;; tricky!)
 ;;
-;; Is a new column always begun by an operator? Can I use them as an anchor? First,
-;; a test to see if the operators do really match the start of the columns...
+;; Is a new column always begun by an operator? Can I use them as an anchor?
+;; First, a test to see if the operators do really match the start of the
+;; columns...
 ;;
 ;; ----------------------------------------------------------------------------
 
