@@ -54,13 +54,13 @@
 ;; Step one is to re-write the PARSE-INPUT into MAKE-GRID which makes
 ;; a 2D array instead of a sparse hash because I need to track all the
 ;; possible paths through the grid.
-
+;;
 ;; Then, working a line at a time using MOVE-DOWN-ONE, I'll pass through the
 ;; array doing two things, filling in the Pascal's triangle to count the paths
-;; for part 2. Part one wants the number of splits which I can do by changing
-;; touched splitters from #\^ to #\X, then counting the Xs. The whole thing can
-;; be done in a single pass through the array! Nice! And blindingly fast, to
-;; boot!
+;; for part 2. Part one wants the number of splits that the tachyons hit along
+;; the way, which I can do by changing touched splitters from #\^ to #\X, then
+;; counting the Xs. The whole thing can be done in a single pass through the
+;; array! Nice! And blindingly fast, to boot!
 ;;
 ;; ----------------------------------------------------------------------------
 
@@ -144,7 +144,7 @@ results of moving from the starting row to the next row on the map"
             ((numberp nxt)
              (setf (aref grid (1+ row) col) (+ nxt curr)))
 
-            ;; emcurry space - replace it with curr
+            ;; empty space - replace it with curr
             ((char= nxt #\.)
              (setf (aref grid (1+ row) col) curr))
 
@@ -160,10 +160,10 @@ results of moving from the starting row to the next row on the map"
                    (setf (aref grid (1+ row) (1- col)) curr))) ; else replace
 
              (when (in-grid? (cons (1+ row) (1+ col)) grid) ; right in grid?
-               (if (numberp (aref grid (1+ row) (1+ col)))
-                   (setf (aref grid (1+ row) (1+ col))
+               (if (numberp (aref grid (1+ row) (1+ col)))  ; is it a num?
+                   (setf (aref grid (1+ row) (1+ col))      ; then save the sum
                          (+ curr (aref grid (1+ row) (1+ col))))
-                   (setf (aref grid (1+ row) (1+ col)) curr))))
+                   (setf (aref grid (1+ row) (1+ col)) curr)))) ; otherwise curr
 
             (t (error "Unexpected grid item in MOVE-DOWN-ONE!")))))))
 
@@ -178,7 +178,7 @@ grid"
         (splitters 0)
         (paths 0))
 
-    ;; work the grid for paths and splitter counts
+    ;; work down the grid for paths and splitter counts
     (iter (for line below (1- (array-dimension grid 0))) ; all but last line
       (setf grid (move-down-one line grid)))
 
@@ -189,13 +189,14 @@ grid"
               (iter (for col below (array-dimension grid 1))
                 (counting (equal #\X (aref grid row col)))))))
 
+    ;; and add up the total paths followed
     (setf paths
           (let ((last-row (1- (array-dimension grid 0))))
             (iter (for col below (array-dimension grid 1))
               (when (numberp (aref grid last-row col))
                 (summing (aref grid last-row col))))))
 
-    (values splitters paths)))
+    (values splitters paths)))          ; return both values
 
 (5a:test day07-test
   (multiple-value-bind  (splitters paths) (day07 *example*)
