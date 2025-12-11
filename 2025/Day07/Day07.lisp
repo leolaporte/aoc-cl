@@ -125,7 +125,7 @@ knows what evil lurks in the real data"
 ;; Now the base function MOVE-DOWN-ONE. Given a row on the grid it checks for
 ;; any numbers in the row (there will always be at least one). For every number
 ;; on the row, N, check the same column on the row below. If it's a #\. just put
-;; N in that positon and continue. If it's a number add N to it and put the
+;; N in that position and continue. If it's a number add N to it and put the
 ;; result in the column below. If it's a #\^ replace it with an #\X and add N to
 ;; the columns to the left and right of #\^ - or if those columns contain a
 ;; #\. put N in those positions. Once the entire row has been processed, return
