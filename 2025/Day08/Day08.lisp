@@ -245,12 +245,14 @@ to solve part 1"
 (5a:test union-find-test
   (let ((uf (make-union-find)))
     ;; Initially separate
-    (5a:is-true (uf-union uf 'a 'b))  ; returns T, now connected
-    (5a:is-false (uf-union uf 'a 'b))  ; returns NIL, already connected
-    (5a:is-true (uf-union uf 'c 'd))
-    (5a:is-true (uf-union uf 'b 'c))  ; connects {a,b} with {c,d}
-    (5a:is-false (uf-union uf 'a 'd))  ; all in same component now
-    (5a:is-true (equal (list 4) (uf-component-sizes uf '(a b c d))))))
+    (5a:is-true (uf-union uf 'a 'b))    ; conected
+    (5a:is-false (uf-union uf 'a 'b))   ; loop
+    (5a:is-true (uf-union uf 'c 'd))    ; new junction
+    (5a:is-true (uf-union uf 'b 'c))    ; connects {a,b} with {c,d}
+    (5a:is-false (uf-union uf 'a 'd))   ; a and d are already in UF
+    (5a:is-true (equal (list 4) (uf-component-sizes uf '(a b c d))))
+    (sr:pretty-print-hash-table (car uf))
+    (sr:pretty-print-hash-table (cdr uf))))
 
 ;;  OK now I have all the pieces in place. KRUSKAL does all the work of solving
 ;;  part one - using the algotithm described above.
