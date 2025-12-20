@@ -110,7 +110,7 @@ nearest integer between the two"
 ;; easier to sort.
 (sr:-> get-all-edges (vector) list)
 (defun get-all-edges (junctions)
-  "Return a list of (distance j1 j2) for all pairs, sorted by distance."
+  "return a list of (distance j1 j2) for all pairs, sorted by distance"
   (let* ((len (length junctions))
          (edges nil))
     (iter (for i below len)
@@ -190,15 +190,15 @@ nearest integer between the two"
 
 (sr:-> make-union-find () cons)
 (defun make-union-find ()
-  "Create a new union-find structure, a CONS of two hash-tables with the key =
+  "create a new union-find structure, a CONS of two hash-tables with the key =
 parent -> value =rank"
   (cons (make-hash-table :test 'equalp) ; parent
         (make-hash-table :test 'equalp))) ; rank
 
 (sr:-> find-root (cons atom) atom)
 (defun find-root (uf node)
-  "Find the root of NODE with path compression. Recurses up the tree until it finds
-the root."
+  "find the root of NODE with path compression. Recurses up the tree until it finds
+the root"
   (let ((parent (car uf)))
     ;; Initialize node if not seen
     (unless (gethash node parent)
@@ -211,9 +211,9 @@ the root."
 
 (sr:-> uf-union? (cons atom atom) boolean)
 (defun uf-union? (uf node1 node2)
-  "Union the sets containing NODE1 and NODE2 - if they can be combined without
+  "union the sets containing NODE1 and NODE2 - if they can be combined without
 creating a cycle update UF and return t, otherwise return nil - this has the
-side-effect of updating the UF structure - ideally this would be factored out."
+side-effect of updating the UF structure - ideally this would be factored out"
   (let* ((parent (car uf))
          (rank (cdr uf))
          (root1 (find-root uf node1))
@@ -235,7 +235,7 @@ side-effect of updating the UF structure - ideally this would be factored out."
 
 (sr:-> uf-component-sizes (cons list) list)
 (defun uf-component-sizes (uf nodes)
-  "Return a list of component sizes for all NODES in union-find UF - we need this
+  "return a list of component sizes for all NODES in union-find UF - we need this
 to solve part 1"
   (let ((size-map (make-hash-table :test 'equalp)))
     (iter (for node in nodes)
@@ -259,8 +259,8 @@ to solve part 1"
 ;;  part one - using the algorithm described above.
 (sr:-> kruskal (list fixnum) list)
 (defun kruskal (edges max-edges)
-  "Process up to MAX-EDGES edges using Kruskal's algorithm.
-   Returns (component-sizes last-j1 last-j2)."
+  "process up to MAX-EDGES edges using Kruskal's algorithm
+   returns (component-sizes last-j1 last-j2)"
   (let ((uf (make-union-find))
         (nodes nil)
         (last-j1 nil)
@@ -283,7 +283,7 @@ to solve part 1"
 
 (sr:-> day08-1 (list fixnum) fixnum)
 (defun day08-1 (input max-edges)
-  "Given a list of junction boxes, INPUT, return the result of multiplying
+  "given a list of junction boxes, INPUT, return the result of multiplying
  together the three largest possible circuits that can be built by connecting
  the MAX-EDGES closest pairs. Uses Kruskal's algorithm with Union-Find."
   (let* ((junctions (parse-input input))
@@ -331,7 +331,7 @@ to solve part 1"
 
 (sr:-> day08-2 (list) fixnum)
 (defun day08-2 (input)
-  "Find the pair that connects all junction boxes into a single circuit.
+  "find the pair that connects all junction boxes into a single circuit.
    Return the product of the X coordinates of that pair."
   (let* ((junctions (parse-input input))
          (edges (get-all-edges junctions))
