@@ -212,7 +212,8 @@ the root."
 (sr:-> uf-union? (cons atom atom) boolean)
 (defun uf-union? (uf node1 node2)
   "Union the sets containing NODE1 and NODE2 - if they can be combined without
-creating a cycle update UF and return t, otherwise return nil - this has the side-effect of updating the UF structure - ideally this would be factored out."
+creating a cycle update UF and return t, otherwise return nil - this has the
+side-effect of updating the UF structure - ideally this would be factored out."
   (let* ((parent (car uf))
          (rank (cdr uf))
          (root1 (find-root uf node1))
@@ -255,7 +256,7 @@ to solve part 1"
     (sr:pretty-print-hash-table (cdr uf))))
 
 ;;  OK now I have all the pieces in place. KRUSKAL does all the work of solving
-;;  part one - using the algotithm described above.
+;;  part one - using the algorithm described above.
 (sr:-> kruskal (list fixnum) list)
 (defun kruskal (edges max-edges)
   "Process up to MAX-EDGES edges using Kruskal's algorithm.
@@ -275,7 +276,7 @@ to solve part 1"
         (pushnew j1 nodes :test 'equalp)
         (pushnew j2 nodes :test 'equalp)
         ;; Union the nodes
-        (uf-union uf j1 j2)
+        (uf-union uf j1 j2)             ; modifies UF in place
         (setf last-j1 j1 last-j2 j2)
         (incf edges-processed)))
     (values (uf-component-sizes uf nodes) last-j1 last-j2)))
@@ -350,7 +351,7 @@ to solve part 1"
             (j2 (third edge)))
         (while (> components 1))
         (when (uf-union uf j1 j2)
-          ;; This edge merged two separate components
+          ;; edge merged j1 j2 - uf updated in place
           (decf components)
           (setf last-j1 j1 last-j2 j2))))
 
