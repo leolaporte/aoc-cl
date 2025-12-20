@@ -1,0 +1,1253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+<!-- 2025-12-19 Fri 21:59 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>&lrm;</title>
+<meta name="author" content="Leo Laporte" />
+<meta name="generator" content="Org Mode" />
+<style type="text/css">
+  #content { max-width: 60em; margin: auto; }
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #e6e6e6;
+    border-radius: 3px;
+    background-color: #f2f2f2;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: auto;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    padding: 3px;
+    color: #555;
+    background-color: #f2f2f299;
+  }
+  pre.src:hover:before { display: inline; margin-top: 14px;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-authinfo::before { content: 'Authinfo'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'JavaScript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { }
+</style>
+<script>
+  window.MathJax = {
+    tex: {
+      ams: {
+        multlineWidth: '85%'
+      },
+      tags: 'ams',
+      tagSide: 'right',
+      tagIndent: '.8em'
+    },
+    chtml: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    svg: {
+      scale: 1.0,
+      displayAlign: 'center',
+      displayIndent: '0em'
+    },
+    output: {
+      font: 'mathjax-modern',
+      displayOverflow: 'overflow'
+    }
+  };
+</script>
+
+<script
+  id="MathJax-script"
+  async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+</head>
+<body>
+<div id="content" class="content">
+<div id="table-of-contents" role="doc-toc">
+<h2>Table of Contents</h2>
+<div id="text-table-of-contents" role="doc-toc">
+<ul>
+<li><a href="#org79e9a19">1. &mdash; Day 8: Playground ---</a>
+<ul>
+<li><a href="#org747c058">1.1. Started:  Thu Dec 11 15:51:26 2025</a></li>
+</ul>
+</li>
+<li><a href="#orgfc7ab83">2. Package Setup</a></li>
+<li><a href="#orga70f006">3. Part One</a>
+<ul>
+<li><a href="#orgacb860f">3.1. Notes for Part One</a></li>
+<li><a href="#org15b746b">3.2. Example Data</a></li>
+<li><a href="#orge81e4fb">3.3. defstruct junction</a></li>
+<li><a href="#org7ddfd59">3.4. parse-input()</a></li>
+<li><a href="#org3696d55">3.5. dist()</a></li>
+<li><a href="#orgb5d87d5">3.6. get-dists()</a></li>
+<li><a href="#orge2d5b4e">3.7. sort-pairs-by-distance()</a></li>
+<li><a href="#org303d083">3.8. Pause to study up on trees</a></li>
+<li><a href="#orgf5a1f6e">3.9. Kruskal&rsquo;s Algorithm to the rescue</a>
+<ul>
+<li><a href="#org36949b7">3.9.1. Create a forest (a set of trees) initially consisting of a separate single-vertex tree for each vertex in the input graph. (DONE)</a></li>
+<li><a href="#org6291f98">3.9.2. Sort the graph edges by weight. (DONE)</a></li>
+<li><a href="#orgb2d3125">3.9.3. Loop through the edges of the graph, in ascending sorted order by their weight.</a></li>
+</ul>
+</li>
+<li><a href="#org9fecde6">3.10. A Fresh Start with Union-Find</a>
+<ul>
+<li><a href="#org624ef7c">3.10.1. Union-Find Implementation</a></li>
+<li><a href="#orgccbf431">3.10.2. get-all-edges()</a></li>
+<li><a href="#orgef86212">3.10.3. kruskal()</a></li>
+<li><a href="#orge93d71c">3.10.4. Solution</a></li>
+<li><a href="#org8af8e54">3.10.5. Test</a></li>
+<li><a href="#org1a87d7e">3.10.6. Part one finished: Sat Dec 13 16:00:55 2025</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#org4969b31">4. Part Two</a>
+<ul>
+<li><a href="#orge19b607">4.1. Notes</a></li>
+<li><a href="#org38ff962">4.2. Solution</a></li>
+<li><a href="#orga642042">4.3. Test</a></li>
+<li><a href="#orgf7727ec">4.4. Part two finished: Fri 19 Dec 2025 08:55:40 PM PST</a></li>
+<li><a href="#orgac55621">4.5. Reflections</a></li>
+</ul>
+</li>
+<li><a href="#orgd756367">5. Run Solutions and Timings</a></li>
+</ul>
+</div>
+</div>
+<p>
+#+: AOC 2025 Day 8 - Playground
+</p>
+<div id="outline-container-org79e9a19" class="outline-2">
+<h2 id="org79e9a19"><span class="section-number-2">1.</span> &mdash; Day 8: Playground ---</h2>
+<div class="outline-text-2" id="text-1">
+</div>
+<div id="outline-container-org747c058" class="outline-3">
+<h3 id="org747c058"><span class="section-number-3">1.1.</span> Started:  Thu Dec 11 15:51:26 2025</h3>
+</div>
+</div>
+<div id="outline-container-orgfc7ab83" class="outline-2">
+<h2 id="orgfc7ab83"><span class="section-number-2">2.</span> Package Setup</h2>
+<div class="outline-text-2" id="text-2">
+<div class="org-src-container">
+<pre class="src src-lisp" id="org54ef5da"><code><span style="color: #d0a070; font-style: italic;">;;;; </span><span style="color: #d0a070; font-style: italic;">Day08.lisp
+</span><span style="color: #d0a070; font-style: italic;">;;;; </span><span style="color: #d0a070; font-style: italic;">2025 AOC Day 8 solution
+</span><span style="color: #d0a070; font-style: italic;">;;;; </span><span style="color: #d0a070; font-style: italic;">Common Lisp solutions by Leo Laporte (with lots of help)
+</span><span style="color: #d0a070; font-style: italic;">;;;; </span><span style="color: #d0a070; font-style: italic;">Started: Thu Dec 11 15:51:26 2025
+</span><span style="color: #d0a070; font-style: italic;">;;;; </span><span style="color: #d0a070; font-style: italic;">Finished: Fri 19 Dec 2025 08:55:40 PM PST
+</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defpackage</span> <span style="color: #b6a0ff; font-weight: bold;">:aoc.2025.day08</span>
+  <span style="color: #6c6;">(</span><span style="color: #feacd0; font-weight: bold;">:use</span> <span style="color: #feacd0; font-weight: bold;">:cl</span> <span style="color: #feacd0; font-weight: bold;">:alexandria</span> <span style="color: #feacd0; font-weight: bold;">:iterate</span><span style="color: #6c6;">)</span>      <span style="color: #d0a070; font-style: italic;">; no prefix for these libraries
+</span>  <span style="color: #6c6;">(</span><span style="color: #feacd0; font-weight: bold;">:local-nicknames</span>                    <span style="color: #d0a070; font-style: italic;">; short prefixes for these
+</span>   <span style="color: #69f;">(</span><span style="color: #feacd0; font-weight: bold;">:re</span> <span style="color: #feacd0; font-weight: bold;">:cl-ppcre</span><span style="color: #69f;">)</span>                     <span style="color: #d0a070; font-style: italic;">; regex
+</span>   <span style="color: #69f;">(</span><span style="color: #feacd0; font-weight: bold;">:5a</span> <span style="color: #feacd0; font-weight: bold;">:fiveam</span><span style="color: #69f;">)</span>                       <span style="color: #d0a070; font-style: italic;">; test framework
+</span>   <span style="color: #69f;">(</span><span style="color: #feacd0; font-weight: bold;">:sr</span> <span style="color: #feacd0; font-weight: bold;">:serapeum</span><span style="color: #69f;">)</span>                     <span style="color: #d0a070; font-style: italic;">; CL extensions
+</span>   <span style="color: #69f;">(</span><span style="color: #feacd0; font-weight: bold;">:tr</span> <span style="color: #feacd0; font-weight: bold;">:trivia</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>                     <span style="color: #d0a070; font-style: italic;">; pattern matching
+</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">in-package</span> <span style="color: #feacd0; font-weight: bold;">:aoc.2025.day08</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span>setf 5a:*run-test-when-defined* t<span style="color: #c66;">)</span>  <span style="color: #d0a070; font-style: italic;">; test as we go
+</span><span style="color: #c66;">(</span>setf 5a:*verbose-failures* t<span style="color: #c66;">)</span>       <span style="color: #d0a070; font-style: italic;">; show failing expression
+</span><span style="color: #c66;">(</span>sr:toggle-pretty-print-hash-table<span style="color: #c66;">)</span>  <span style="color: #d0a070; font-style: italic;">; automatic pretty print for hashes
+</span><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">declaim</span> <span style="color: #6c6;">(</span>optimize <span style="color: #69f;">(</span>debug 3<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>       <span style="color: #d0a070; font-style: italic;">; max debugging info
+</span><span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">(declaim (optimize (speed 3))     ; max speed if needed
+</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defparameter</span> <span style="color: #79a8ff;">*data-file*</span> <span style="color: #00c06f;">"~/cl/AOC/2025/Day08/input.txt"</span>
+  <span style="color: #bfebe0; font-style: italic;">"Downloaded from the AoC problem set"</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga70f006" class="outline-2">
+<h2 id="orga70f006"><span class="section-number-2">3.</span> Part One</h2>
+<div class="outline-text-2" id="text-3">
+</div>
+<div id="outline-container-orgacb860f" class="outline-3">
+<h3 id="orgacb860f"><span class="section-number-3">3.1.</span> Notes for Part One</h3>
+<div class="outline-text-3" id="text-3-1">
+<p>
+These numbers represent &ldquo;junction boxes&rdquo; with X Y Z coordinates in a 3D
+space. We (well the elves) want to connect the junction boxes that are closest
+together in a straight line (i.e. Euclidean distance). So
+</p>
+
+<p>
+\[d(p,q)=\sqrt{(p_{1}-q_{1})^{2}+(p_{2}-q_{2})^{2}+(p_{3}-q_{3})^{2}}\]
+</p>
+
+<p>
+Or in Lisp: (dist p q) = (sqrt (+ (expt (- xp xq) 2)  (expt (- yp yq) 2)  (expt (- zp zq) 2)
+</p>
+
+<p>
+Once we connect the two closest junction boxes to form a circuit, we look for
+the next two. If any are already in a circuit the new junction points are added
+to that circuit. And continue until we&rsquo;ve connected all the points up to the
+limit (10 for the example, 1000 for the input).
+</p>
+
+<p>
+Then multiply the largest 3 circuits (by the number of junction boxes in the
+circuit) to get the answer. In the example it&rsquo;s (5x4x2) or 40.
+</p>
+
+<p>
+The problem asks us to &ldquo;connect together the 1000 pairs of junction boxes which
+are closest together. Afterward, what do you get if you multiply together the
+sizes of the three largest circuits?&rdquo;
+</p>
+</div>
+</div>
+<div id="outline-container-org15b746b" class="outline-3">
+<h3 id="org15b746b"><span class="section-number-3">3.2.</span> Example Data</h3>
+<div class="outline-text-3" id="text-3-2">
+<div class="org-src-container">
+<pre class="src src-lisp"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defparameter</span> <span style="color: #79a8ff;">*example*</span> <span style="color: #6c6;">(</span>list <span style="color: #00c06f;">"162,817,812"</span>
+                              <span style="color: #00c06f;">"57,618,57"</span>
+                              <span style="color: #00c06f;">"906,360,560"</span>
+                              <span style="color: #00c06f;">"592,479,940"</span>
+                               <span style="color: #00c06f;">"352,342,300"</span>
+                              <span style="color: #00c06f;">"466,668,158"</span>
+                              <span style="color: #00c06f;">"542,29,236"</span>
+                              <span style="color: #00c06f;">"431,825,988"</span>
+                              <span style="color: #00c06f;">"739,650,466"</span>
+                              <span style="color: #00c06f;">"52,470,668"</span>
+                              <span style="color: #00c06f;">"216,146,977"</span>
+                              <span style="color: #00c06f;">"819,987,18"</span>
+                              <span style="color: #00c06f;">"117,168,530"</span>
+                              <span style="color: #00c06f;">"805,96,715"</span>
+                              <span style="color: #00c06f;">"346,949,466"</span>
+                              <span style="color: #00c06f;">"970,615,88"</span>
+                              <span style="color: #00c06f;">"941,993,340"</span>
+                              <span style="color: #00c06f;">"862,61,35"</span>
+                              <span style="color: #00c06f;">"984,92,344"</span>
+                              <span style="color: #00c06f;">"425,690,689"</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defparameter</span> <span style="color: #79a8ff;">*example2*</span> <span style="color: #6c6;">(</span>list <span style="color: #00c06f;">"1,1,2"</span>
+                               <span style="color: #00c06f;">"2,14,4"</span>
+                               <span style="color: #00c06f;">"2,5,6"</span>
+                               <span style="color: #00c06f;">"3,4,11"</span>
+                               <span style="color: #00c06f;">"5,8,10"</span>
+                               <span style="color: #00c06f;">"1,2,7"</span>
+                               <span style="color: #00c06f;">"12,4,12"</span>
+                               <span style="color: #00c06f;">"5,2,9"</span>
+                               <span style="color: #00c06f;">"3,8,11"</span>
+                               <span style="color: #00c06f;">"16,2,9"</span>
+                               <span style="color: #00c06f;">"13,4,15"</span>
+                               <span style="color: #00c06f;">"5,16,7"</span>
+                               <span style="color: #00c06f;">"18,9,10"</span>
+                               <span style="color: #00c06f;">"100,100,100"</span><span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Another perverse example from the fertile mind of Paul Holder Part 1 is the three circuit sizes 7, 2, 2 so the answer is 28, and part 2 is 18, 100 so the answer is 1800"</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<p>
+As usual, the first task is to think about how to represent the data. I think
+I&rsquo;ll make a junction box struct with x y and z. Nothing in this first part seems
+to want CLOS so I don&rsquo;t need to use defclass but I&rsquo;ll keep that in mind for
+part 2. I use short conc-names (j-x j-y and j-z for conciseness). I&rsquo;m also using
+an abbreviated make function name: make-junc.
+</p>
+</div>
+</div>
+<div id="outline-container-orge81e4fb" class="outline-3">
+<h3 id="orge81e4fb"><span class="section-number-3">3.3.</span> defstruct junction</h3>
+<div class="outline-text-3" id="text-3-3">
+<div class="org-src-container">
+<pre class="src src-lisp" id="orgc5b7000"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defstruct</span> <span style="color: #6c6;">(</span><span style="color: #b6a0ff; font-weight: bold;">junction</span>
+            <span style="color: #69f;">(</span><span style="color: #feacd0; font-weight: bold;">:conc-name</span> j-<span style="color: #69f;">)</span>             <span style="color: #d0a070; font-style: italic;">; short name is j-x, j-y. j-z
+</span>            <span style="color: #69f;">(</span><span style="color: #feacd0; font-weight: bold;">:constructor</span> make-junc <span style="color: #cc6;">(</span>x y z<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span>x 0 <span style="color: #feacd0; font-weight: bold;">:type</span> integer<span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span>y 0 <span style="color: #feacd0; font-weight: bold;">:type</span> integer<span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span>z 0 <span style="color: #feacd0; font-weight: bold;">:type</span> integer<span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span>format t <span style="color: #00c06f;">"Print representation: ~a~%"</span><span style="color: #6c6;">(</span>make-junc 1 2 3<span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+Print representation: #S(JUNCTION :X 1 :Y 2 :Z 3)
+</pre>
+</div>
+</div>
+<div id="outline-container-org7ddfd59" class="outline-3">
+<h3 id="org7ddfd59"><span class="section-number-3">3.4.</span> parse-input()</h3>
+<div class="outline-text-3" id="text-3-4">
+<p>
+And now let&rsquo;s turn the provided list of strings into a list(?). If it&rsquo;s a list I
+can represent circuits as lists within the list. Never mind. Let&rsquo;s make it a
+vector for speed. The sorting will occur later, to the distances, anyway..
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org6df0ab1"><code><span style="color: #c66;">(</span>sr:-&gt; parse-input <span style="color: #6c6;">(</span>list<span style="color: #6c6;">)</span> vector<span style="color: #c66;">)</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">parse-input</span> <span style="color: #6c6;">(</span>input<span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> box in input<span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>collect
+        <span style="color: #cc6;">(</span>apply #'make-junc <span style="color: #6cc;">(</span>mapcar #'parse-integer <span style="color: #c6c;">(</span>sr:words box<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+      result-type vector<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span>format t <span style="color: #00c06f;">"~%~a"</span> <span style="color: #6c6;">(</span>parse-input *example*<span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example" id="orgb337bc7">
+
+#(#S(JUNCTION :X 162 :Y 817 :Z 812) #S(JUNCTION :X 57 :Y 618 :Z 57)
+  #S(JUNCTION :X 906 :Y 360 :Z 560) #S(JUNCTION :X 592 :Y 479 :Z 940)
+  #S(JUNCTION :X 352 :Y 342 :Z 300) #S(JUNCTION :X 466 :Y 668 :Z 158)
+  #S(JUNCTION :X 542 :Y 29 :Z 236) #S(JUNCTION :X 431 :Y 825 :Z 988)
+  #S(JUNCTION :X 739 :Y 650 :Z 466) #S(JUNCTION :X 52 :Y 470 :Z 668)
+  #S(JUNCTION :X 216 :Y 146 :Z 977) #S(JUNCTION :X 819 :Y 987 :Z 18)
+  #S(JUNCTION :X 117 :Y 168 :Z 530) #S(JUNCTION :X 805 :Y 96 :Z 715)
+  #S(JUNCTION :X 346 :Y 949 :Z 466) #S(JUNCTION :X 970 :Y 615 :Z 88)
+  #S(JUNCTION :X 941 :Y 993 :Z 340) #S(JUNCTION :X 862 :Y 61 :Z 35)
+  #S(JUNCTION :X 984 :Y 92 :Z 344) #S(JUNCTION :X 425 :Y 690 :Z 689))
+</pre>
+</div>
+</div>
+<div id="outline-container-org3696d55" class="outline-3">
+<h3 id="org3696d55"><span class="section-number-3">3.5.</span> dist()</h3>
+<div class="outline-text-3" id="text-3-5">
+<p>
+So the next thing I need to do is write a Euclidean distance function. Except
+the last part of the Euclidean formula, the square root, adds considerable
+calculation time. Using ISQRT - integer square root - is fast, if offering lower resolution.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org7de5ad4"><code><span style="color: #c66;">(</span>sr:-&gt; dist <span style="color: #6c6;">(</span>junction junction<span style="color: #6c6;">)</span> fixnum<span style="color: #c66;">)</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">dist</span> <span style="color: #6c6;">(</span>j1 j2<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"given two JUNCTIONS j1 and j2 return the euclidean distance rounded to the nearest integer between the two"</span>
+  <span style="color: #6c6;">(</span>isqrt <span style="color: #69f;">(</span>+ <span style="color: #cc6;">(</span>expt <span style="color: #6cc;">(</span>- <span style="color: #c6c;">(</span>j-x j1<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>j-x j2<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span> 2<span style="color: #cc6;">)</span>
+            <span style="color: #cc6;">(</span>expt <span style="color: #6cc;">(</span>- <span style="color: #c6c;">(</span>j-y j1<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>j-y j2<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span> 2<span style="color: #cc6;">)</span>
+            <span style="color: #cc6;">(</span>expt <span style="color: #6cc;">(</span>- <span style="color: #c6c;">(</span>j-z j1<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>j-z j2<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span> 2<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span>5a:test dist-test
+  <span style="color: #6c6;">(</span>5a:is <span style="color: #69f;">(</span>= <span style="color: #cc6;">(</span>dist <span style="color: #6cc;">(</span>make-junc 1 2 3<span style="color: #6cc;">)</span> <span style="color: #6cc;">(</span>make-junc 4 5 6<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span> 5<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+
+Running test DIST-TEST .
+ Did 1 check.
+    Pass: 1 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgb5d87d5" class="outline-3">
+<h3 id="orgb5d87d5"><span class="section-number-3">3.6.</span> get-dists()</h3>
+<div class="outline-text-3" id="text-3-6">
+<p>
+Now I need to think about how I&rsquo;ll keep track of circuits. I&rsquo;ll worry about the
+circuit connections in a bit. My biggest concern is whether I have to calculate
+the distances between all points. That&rsquo;s a million calculations for the 1000
+junction boxes in the input so I&rsquo;ll use a design pattern I see a lot: a loop
+that matches the first element in the list with the succeeding elements, then he
+next with the rest and so on. This eliminates two cases we don&rsquo;t care about, the
+identity case (dist j1 j1) and the mirror case (dist j1 j2) (dist j2 j1).
+</p>
+
+<p>
+I&rsquo;ll make a hash-table of the results - the key will be the distance, the value will be the two junction boxes that make that distance. This will make it easy to create a sorted list of junction box pair distances in the next step.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org4ccb8a2"><code><span style="color: #c66;">(</span>sr:-&gt; get-dists <span style="color: #6c6;">(</span>vector<span style="color: #6c6;">)</span> hash-table<span style="color: #c66;">)</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">get-dists</span> <span style="color: #6c6;">(</span>junctions<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"given a vector of JUNCTION structs, return a hash-table of the distances
+ between any two pairs of junctions. The key will be the distance, the value the
+ pair of junctions that are that far apart"</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>len <span style="color: #6cc;">(</span>length junctions<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>distances <span style="color: #6cc;">(</span>make-hash-table <span style="color: #feacd0; font-weight: bold;">:size</span> len<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> i below len<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j1 = <span style="color: #6cc;">(</span>aref junctions i<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #6cc;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j from <span style="color: #c6c;">(</span>1+ i<span style="color: #c6c;">)</span> below len<span style="color: #6cc;">)</span>
+        <span style="color: #6cc;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j2 = <span style="color: #c6c;">(</span>aref junctions j<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span>
+
+        <span style="color: #6cc;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #c6c;">(</span><span style="color: #ccc;">(</span>d <span style="color: #999;">(</span>dist j1 j2<span style="color: #999;">)</span><span style="color: #ccc;">)</span><span style="color: #c6c;">)</span>
+          <span style="color: #c6c;">(</span>setf <span style="color: #ccc;">(</span>gethash d distances<span style="color: #ccc;">)</span>
+                <span style="color: #ccc;">(</span>append <span style="color: #999;">(</span>list j1 j2<span style="color: #999;">)</span>
+                        <span style="color: #999;">(</span>gethash d distances<span style="color: #999;">)</span><span style="color: #ccc;">)</span><span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+
+    distances<span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<p>
+I better profile this to make sure it doesn&rsquo;t take too long. It&rsquo;s a lot of points!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="orgb9fa031"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #6c6;">(</span><span style="color: #69f;">(</span>*trace-output* *standard-output*<span style="color: #69f;">)</span><span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span>time <span style="color: #69f;">(</span>get-dists <span style="color: #cc6;">(</span>parse-input <span style="color: #6cc;">(</span>uiop:read-file-lines *data-file*<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+Evaluation took:
+  0.084 seconds of real time
+  0.084937 seconds of total run time (0.084937 user, 0.000000 system)
+  [ Run times consist of 0.040 seconds GC time, and 0.045 seconds non-GC time. ]
+  101.19% CPU
+  278,882,776 processor cycles
+  42,145,392 bytes consed
+  
+</pre>
+
+<p>
+Now I can sort the hash-table keys (the distances) to get the shortest distances.
+</p>
+
+<p>
+This is what the 10 closest pairs of junction boxes look like&hellip;
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org5a555a9"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #6c6;">(</span><span style="color: #69f;">(</span>junctions <span style="color: #cc6;">(</span>parse-input *example*<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+       <span style="color: #69f;">(</span>distances <span style="color: #cc6;">(</span>get-dists junctions<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+       <span style="color: #69f;">(</span>keys <span style="color: #cc6;">(</span>sort <span style="color: #6cc;">(</span>hash-table-keys distances<span style="color: #6cc;">)</span> #'&lt;<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> i below 10<span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>format t <span style="color: #00c06f;">"~&amp;~a -&gt; ~a"</span> <span style="color: #cc6;">(</span>gethash <span style="color: #6cc;">(</span>nth i keys<span style="color: #6cc;">)</span> distances<span style="color: #cc6;">)</span> <span style="color: #cc6;">(</span>nth i keys<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example" id="orgf56f84e">
+(#S(JUNCTION :X 162 :Y 817 :Z 812) #S(JUNCTION :X 425 :Y 690 :Z 689)) -&gt; 316
+(#S(JUNCTION :X 162 :Y 817 :Z 812) #S(JUNCTION :X 431 :Y 825 :Z 988)) -&gt; 321
+(#S(JUNCTION :X 906 :Y 360 :Z 560) #S(JUNCTION :X 805 :Y 96 :Z 715)) -&gt; 322
+(#S(JUNCTION :X 431 :Y 825 :Z 988) #S(JUNCTION :X 425 :Y 690 :Z 689)) -&gt; 328
+(#S(JUNCTION :X 862 :Y 61 :Z 35) #S(JUNCTION :X 984 :Y 92 :Z 344)) -&gt; 333
+(#S(JUNCTION :X 52 :Y 470 :Z 668) #S(JUNCTION :X 117 :Y 168 :Z 530)) -&gt; 338
+(#S(JUNCTION :X 819 :Y 987 :Z 18) #S(JUNCTION :X 941 :Y 993 :Z 340)) -&gt; 344
+(#S(JUNCTION :X 906 :Y 360 :Z 560) #S(JUNCTION :X 739 :Y 650 :Z 466)) -&gt; 347
+(#S(JUNCTION :X 346 :Y 949 :Z 466) #S(JUNCTION :X 425 :Y 690 :Z 689)) -&gt; 350
+(#S(JUNCTION :X 906 :Y 360 :Z 560) #S(JUNCTION :X 984 :Y 92 :Z 344)) -&gt; 352
+</pre>
+</div>
+</div>
+<div id="outline-container-orge2d5b4e" class="outline-3">
+<h3 id="orge2d5b4e"><span class="section-number-3">3.7.</span> sort-pairs-by-distance()</h3>
+<div class="outline-text-3" id="text-3-7">
+<p>
+I&rsquo;m going to do this a lot, so let&rsquo;s make a function that takes the input and
+returns a list of junction box pairs sorted ascending by distance. This is
+really an extension of the parse function. I could put this in PARSE-INPUT but
+I&rsquo;ll factor it out for clarity.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org145ed82"><code><span style="color: #c66;">(</span>sr:-&gt; sort-pairs-by-distance <span style="color: #6c6;">(</span>list<span style="color: #6c6;">)</span> list<span style="color: #c66;">)</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">sort-pairs-by-distance</span> <span style="color: #6c6;">(</span>input<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"given a list of strings representing a list of JUNCTIONS, return a list of
+ JUNCTION pairs sorted ascending by the distance between the pair"</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>distances <span style="color: #6cc;">(</span>get-dists <span style="color: #c6c;">(</span>parse-input input<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span> <span style="color: #d0a070; font-style: italic;">; hash of dists-&gt;juncs
+</span>         <span style="color: #cc6;">(</span>keys <span style="color: #6cc;">(</span>sort <span style="color: #c6c;">(</span>hash-table-keys distances<span style="color: #c6c;">)</span> #'&lt;<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span> <span style="color: #d0a070; font-style: italic;">; list of sorted dists
+</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> k in keys<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>collect <span style="color: #6cc;">(</span>gethash k distances<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<p>
+And just to reassure me that this doesn&rsquo;t take too long with the full problem set
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org717bb54"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #6c6;">(</span><span style="color: #69f;">(</span>*trace-output* *standard-output*<span style="color: #69f;">)</span><span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span>time <span style="color: #69f;">(</span>sort-pairs-by-distance <span style="color: #cc6;">(</span>uiop:read-file-lines *data-file*<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+Evaluation took:
+  0.098 seconds of real time
+  0.098677 seconds of total run time (0.085666 user, 0.013011 system)
+  [ Run times consist of 0.036 seconds GC time, and 0.063 seconds non-GC time. ]
+  101.02% CPU
+  325,623,968 processor cycles
+  45,632,752 bytes consed
+  
+</pre>
+
+<p>
+OK fast enough. But does it work? Let&rsquo;s compare the four closest junction boxes to the example provided in AoC:
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="orgdfa6636"><code>
+<span style="color: #c66;">(</span>5a:test sort-pairs-by-distance-test
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>closest <span style="color: #6cc;">(</span>subseq <span style="color: #c6c;">(</span>sort-pairs-by-distance *example*<span style="color: #c6c;">)</span> 0 4<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>equalp <span style="color: #6cc;">(</span>first closest<span style="color: #6cc;">)</span>
+                   <span style="color: #6cc;">(</span>list <span style="color: #c6c;">(</span>make-junc 162 817 812<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>make-junc 425 690 689<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>equalp <span style="color: #6cc;">(</span>second closest<span style="color: #6cc;">)</span>
+                   <span style="color: #6cc;">(</span>list <span style="color: #c6c;">(</span>make-junc 162 817 812<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>make-junc 431 825 988<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>equalp <span style="color: #6cc;">(</span>third closest<span style="color: #6cc;">)</span>
+                   <span style="color: #6cc;">(</span>list <span style="color: #c6c;">(</span>make-junc 906 360 560<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>make-junc 805 96 715<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>equalp <span style="color: #6cc;">(</span>fourth closest<span style="color: #6cc;">)</span>
+                   <span style="color: #6cc;">(</span>list <span style="color: #c6c;">(</span>make-junc 431 825 988<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>make-junc 425 690 689<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+
+Running test SORT-PAIRS-BY-DISTANCE-TEST ....
+ Did 4 checks.
+    Pass: 4 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+</pre>
+</div>
+</div>
+<div id="outline-container-org303d083" class="outline-3">
+<h3 id="org303d083"><span class="section-number-3">3.8.</span> Pause to study up on trees</h3>
+<div class="outline-text-3" id="text-3-8">
+<p>
+I think I have all the pieces I need. Now I can write the function that builds
+the paths according to the rules in part 1. But wait - I think I&rsquo;m building a
+&ldquo;minimum spanning tree&rdquo; that is, the shortest path from start to end.
+</p>
+
+<p>
+OK I didn&rsquo;t know that until I got some hints from Reddit but I&rsquo;m glad I did. I
+went down the tree rabbit hole (to mix metaphors), which is something I&rsquo;ve been
+wanting to do for some time. There are two things that Lispers agree are
+important for solving a wide variety of problems: <b>recursion</b> which I&rsquo;ve got a
+pretty good handle on, and <b>tree</b> data structures and the wide variety of ways
+they can be used. <b>This</b> is why I do AoC. I&rsquo;m not trying to be the fastest, I know
+I&rsquo;m a duffer programmer. I&rsquo;m in it for the learnings (and it&rsquo;s a really fun way
+to learn). I didn&rsquo;t study computer science in school. These problems provide a
+fun way for me to learn algorithms, and, incidentally, Common Lisp, Emacs,
+org-mode, and Literate Programming. So&hellip;
+</p>
+
+<p>
+Excuse me while I read up on these in Steve Skiena&rsquo;s <a href="https://www.algorist.com/">Algorithm Design Manual</a> and
+Domkin&rsquo;s <a href="https://link.springer.com/book/10.1007/978-1-4842-6428-7">Programming Algorithms in Lisp</a> - which I&rsquo;ve owned for some time. And I
+watched some videos on YouTube, in particular MIT&rsquo;s Introduction to Algorithms
+course, CS 6.006 <a href="https://youtu.be/76dhtgZt38A?si=UmrVpmgMlrSoYov2">videos 6 and 7</a>. I&rsquo;ll be back in a minute.
+</p>
+</div>
+</div>
+<div id="outline-container-orgf5a1f6e" class="outline-3">
+<h3 id="orgf5a1f6e"><span class="section-number-3">3.9.</span> Kruskal&rsquo;s Algorithm to the rescue</h3>
+<div class="outline-text-3" id="text-3-9">
+<p>
+Let me paraphrase the instructions. This helps me understand what I need to
+do. For part 1 I need to start with the two junction boxes that are closest
+together. Put them in a circuit. Check the next closest pair. If the pair shares
+a junction box with the first circuit, add it to the circuit, otherwise create a
+new circuit. Take the next closest pair. Check to see if any of its points fit
+into an existing circuit without creating a loop. (It&rsquo;s a loop if <i>both</i> points in
+the junction box pair already exist in the circuit.) Only add a pair to an
+existing circuit if exactly <i>one</i> of the two points exists in the circuit. Proceed
+until all the junction boxes are in a circuit, even if it&rsquo;s only a circuit of
+one. Multiply the sizes of the three largest circuits together to get the
+answer.
+</p>
+
+<p>
+From now on I&rsquo;ll call a junction box a <b>node</b> and the distance between two nodes
+an <b>edge</b>. The circuit I&rsquo;ll call a <b>path</b>. So this is a tree. And a path is
+really just a <b>set</b> of nodes, so I can add a node to a path using UNION to avoid
+multiple points. And I can check if a node is already in a circuit using MEMBER.
+</p>
+
+<p>
+This is the fundamental process for the whole problem. It turns out that this
+is an example of <a href="https://en.wikipedia.org/wiki/Kruskal%27s_algorithm">Kruskal&rsquo;s Algorithm</a> (or Prim&rsquo;s algorithm which is similar). It
+delivers the &ldquo;minimum spanning tree of an undirected edge weight graph.&rdquo; In
+other words, the shortest string of lights that can connect all the junction
+boxes.
+</p>
+
+<p>
+In this case the weights are the distances between points, and the minimum tree
+is the shortest length of Christmas lights. So this describes the problem
+exactly.
+</p>
+
+<p>
+We already have the first two steps done (from Wikipedia):
+</p>
+</div>
+<div id="outline-container-org36949b7" class="outline-4">
+<h4 id="org36949b7"><span class="section-number-4">3.9.1.</span> Create a forest (a set of trees) initially consisting of a separate single-vertex tree for each vertex in the input graph. (DONE)</h4>
+</div>
+
+<div id="outline-container-org6291f98" class="outline-4">
+<h4 id="org6291f98"><span class="section-number-4">3.9.2.</span> Sort the graph edges by weight. (DONE)</h4>
+<div class="outline-text-4" id="text-3-9-2">
+<p>
+Now&hellip;
+</p>
+</div>
+</div>
+<div id="outline-container-orgb2d3125" class="outline-4">
+<h4 id="orgb2d3125"><span class="section-number-4">3.9.3.</span> Loop through the edges of the graph, in ascending sorted order by their weight.</h4>
+<div class="outline-text-4" id="text-3-9-3">
+</div>
+<ol class="org-ol">
+<li><a id="orgbf6aa05"></a>For each edge:<br />
+<ol class="org-ol">
+<li><a id="org07e8fde"></a>Test whether adding the edge to the current forest would create a cycle.<br /></li>
+<li><a id="orged4f832"></a>If not, add the edge to the forest, combining two trees into a single tree.<br />
+<div class="outline-text-6" id="text-3-9-3-1-2">
+<p>
+At the termination of the algorithm, the forest forms a minimum spanning forest of the graph. If the graph is connected, the forest has a single component and forms a minimum spanning tree. Ta da!
+</p>
+
+<p>
+So I need a function that checks whether adding the next pair to the current
+forest would create a cycle and then, if there are shared points in nodes,
+returns a new joined circuit.
+</p>
+</div>
+</li>
+</ol>
+</li>
+</ol>
+</div>
+</div>
+<div id="outline-container-org9fecde6" class="outline-3">
+<h3 id="org9fecde6"><span class="section-number-3">3.10.</span> A Fresh Start with Union-Find</h3>
+<div class="outline-text-3" id="text-3-10">
+<p>
+OK here&rsquo;s where things get interesting. My first attempt at this problem (the
+ADD-PAIR-TO-PATH? and BUILD-PATHS functions I wrote earlier, now abandoned)
+tried to track circuits using lists and set operations. It worked&hellip; sort of.
+But it had a fatal flaw: when I tried to merge two circuits together, I wasn&rsquo;t
+doing it correctly. The order of connections mattered, and I was losing track of
+which nodes belonged to which circuit.
+</p>
+
+<p>
+After banging my head against this for a while, I went back to the algorithm
+textbooks. It turns out there&rsquo;s a classic data structure designed <i>exactly</i> for
+this problem: <b>Union-Find</b> (also called &ldquo;Disjoint Set Union&rdquo; or DSU). It&rsquo;s one of
+those beautiful computer science inventions that makes a hard problem easy.
+</p>
+
+<p>
+The idea is simple: imagine each junction box starts in its own little circuit
+(a &ldquo;component&rdquo;). When we connect two junction boxes with a wire, their circuits
+merge.  Union-Find lets us do two things very fast:
+</p>
+
+<ul class="org-ul">
+<li><b>FIND</b>: &ldquo;Which circuit does this junction box belong to?&rdquo; (Find the &ldquo;root&rdquo; or representative of its component)</li>
+<li><b>UNION</b>: &ldquo;Merge these two circuits into one.&rdquo; (Connect two components)</li>
+</ul>
+
+<p>
+The magic is in two optimizations:
+</p>
+
+<ol class="org-ol">
+<li><b>Path compression</b>: When we look up which circuit a node belongs to, we update
+its pointer to go directly to the root. This flattens the tree over time.</li>
+
+<li><b>Union by rank</b>: When merging circuits, we attach the shorter tree under the
+taller one, keeping things balanced.</li>
+</ol>
+
+<p>
+With both optimizations, these operations run in nearly O(1) time - actually
+O(α(n)) where α is the inverse Ackermann function, which is essentially constant
+for any practical input size. Pretty neat!
+</p>
+
+<p>
+I&rsquo;m using hash tables here instead of arrays because my junction boxes are
+structs, not simple integers. The <code>:test 'equalp</code> ensures struct equality works.
+</p>
+</div>
+<div id="outline-container-org624ef7c" class="outline-4">
+<h4 id="org624ef7c"><span class="section-number-4">3.10.1.</span> Union-Find Implementation</h4>
+<div class="outline-text-4" id="text-3-10-1">
+<div class="org-src-container">
+<pre class="src src-lisp" id="org7112009"><code><span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Union-Find data structure using hash tables (for struct keys)
+</span><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">make-union-find</span> <span style="color: #6c6;">()</span>
+  <span style="color: #bfebe0; font-style: italic;">"Create a new union-find structure. Returns (parent . rank) hash tables."</span>
+  <span style="color: #6c6;">(</span>cons <span style="color: #69f;">(</span>make-hash-table <span style="color: #feacd0; font-weight: bold;">:test</span> 'equalp<span style="color: #69f;">)</span>   <span style="color: #d0a070; font-style: italic;">; parent
+</span>        <span style="color: #69f;">(</span>make-hash-table <span style="color: #feacd0; font-weight: bold;">:test</span> 'equalp<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span> <span style="color: #d0a070; font-style: italic;">; rank
+</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">uf-find</span> <span style="color: #6c6;">(</span>uf node<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Find the root of NODE with path compression."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>parent <span style="color: #6cc;">(</span>car uf<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Initialize node if not seen
+</span>    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">unless</span> <span style="color: #cc6;">(</span>gethash node parent<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>setf <span style="color: #6cc;">(</span>gethash node parent<span style="color: #6cc;">)</span> node<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Find root with path compression
+</span>    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">if</span> <span style="color: #cc6;">(</span>equalp <span style="color: #6cc;">(</span>gethash node parent<span style="color: #6cc;">)</span> node<span style="color: #cc6;">)</span>
+        node
+        <span style="color: #cc6;">(</span>setf <span style="color: #6cc;">(</span>gethash node parent<span style="color: #6cc;">)</span>
+              <span style="color: #6cc;">(</span>uf-find uf <span style="color: #c6c;">(</span>gethash node parent<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">uf-union</span> <span style="color: #6c6;">(</span>uf node1 node2<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Union the sets containing NODE1 and NODE2. Returns T if they were separate."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>parent <span style="color: #6cc;">(</span>car uf<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>rank <span style="color: #6cc;">(</span>cdr uf<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>root1 <span style="color: #6cc;">(</span>uf-find uf node1<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>root2 <span style="color: #6cc;">(</span>uf-find uf node2<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">unless</span> <span style="color: #cc6;">(</span>gethash root1 rank<span style="color: #cc6;">)</span> <span style="color: #cc6;">(</span>setf <span style="color: #6cc;">(</span>gethash root1 rank<span style="color: #6cc;">)</span> 0<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">unless</span> <span style="color: #cc6;">(</span>gethash root2 rank<span style="color: #cc6;">)</span> <span style="color: #cc6;">(</span>setf <span style="color: #6cc;">(</span>gethash root2 rank<span style="color: #6cc;">)</span> 0<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">cond</span>
+      <span style="color: #cc6;">(</span><span style="color: #6cc;">(</span>equalp root1 root2<span style="color: #6cc;">)</span> nil<span style="color: #cc6;">)</span>  <span style="color: #d0a070; font-style: italic;">; already in same set
+</span>      <span style="color: #cc6;">(</span><span style="color: #6cc;">(</span>&lt; <span style="color: #c6c;">(</span>gethash root1 rank<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>gethash root2 rank<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span>
+       <span style="color: #6cc;">(</span>setf <span style="color: #c6c;">(</span>gethash root1 parent<span style="color: #c6c;">)</span> root2<span style="color: #6cc;">)</span>
+       t<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #6cc;">(</span>&gt; <span style="color: #c6c;">(</span>gethash root1 rank<span style="color: #c6c;">)</span> <span style="color: #c6c;">(</span>gethash root2 rank<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span>
+       <span style="color: #6cc;">(</span>setf <span style="color: #c6c;">(</span>gethash root2 parent<span style="color: #c6c;">)</span> root1<span style="color: #6cc;">)</span>
+       t<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>t
+       <span style="color: #6cc;">(</span>setf <span style="color: #c6c;">(</span>gethash root2 parent<span style="color: #c6c;">)</span> root1<span style="color: #6cc;">)</span>
+       <span style="color: #6cc;">(</span>incf <span style="color: #c6c;">(</span>gethash root1 rank<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span>
+       t<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">uf-component-sizes</span> <span style="color: #6c6;">(</span>uf nodes<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Return a list of component sizes for all NODES in union-find UF."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>size-map <span style="color: #6cc;">(</span>make-hash-table <span style="color: #feacd0; font-weight: bold;">:test</span> 'equalp<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> node in nodes<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #6cc;">(</span><span style="color: #c6c;">(</span>root <span style="color: #ccc;">(</span>uf-find uf node<span style="color: #ccc;">)</span><span style="color: #c6c;">)</span><span style="color: #6cc;">)</span>
+        <span style="color: #6cc;">(</span>incf <span style="color: #c6c;">(</span>gethash root size-map 0<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>hash-table-values size-map<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+
+<span style="color: #c66;">(</span>5a:test union-find-test
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>uf <span style="color: #6cc;">(</span>make-union-find<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Initially separate
+</span>    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>uf-union uf 'a 'b<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>  <span style="color: #d0a070; font-style: italic;">; returns T, now connected
+</span>    <span style="color: #69f;">(</span>5a:is-false <span style="color: #cc6;">(</span>uf-union uf 'a 'b<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>  <span style="color: #d0a070; font-style: italic;">; returns NIL, already connected
+</span>    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>uf-union uf 'c 'd<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>uf-union uf 'b 'c<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>  <span style="color: #d0a070; font-style: italic;">; connects {a,b} with {c,d}
+</span>    <span style="color: #69f;">(</span>5a:is-false <span style="color: #cc6;">(</span>uf-union uf 'a 'd<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>  <span style="color: #d0a070; font-style: italic;">; all in same component now
+</span>    <span style="color: #69f;">(</span>5a:is <span style="color: #cc6;">(</span>equal <span style="color: #6cc;">(</span>list 4<span style="color: #6cc;">)</span> <span style="color: #6cc;">(</span>uf-component-sizes uf '<span style="color: #c6c;">(</span>a b c d<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+
+Running test UNION-FIND-TEST ......
+ Did 6 checks.
+    Pass: 6 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgccbf431" class="outline-4">
+<h4 id="orgccbf431"><span class="section-number-4">3.10.2.</span> get-all-edges()</h4>
+<div class="outline-text-4" id="text-3-10-2">
+<p>
+Now I need to rethink how I&rsquo;m generating the edges. My earlier GET-DISTS
+function stored edges in a hash table keyed by distance, but that&rsquo;s awkward for
+Kruskal&rsquo;s algorithm which wants a simple sorted list of edges.
+</p>
+
+<p>
+So I&rsquo;m rewriting this to return a list of <code>(distance j1 j2)</code> tuples, sorted by
+distance. This is the format Kruskal wants: &ldquo;give me all the edges from shortest
+to longest, and I&rsquo;ll process them in order.&rdquo;
+</p>
+
+<p>
+The nested loop pattern is the same as before - for each junction box, I pair it
+with every junction box that comes <i>after</i> it in the vector. This avoids both
+the identity case (distance from a point to itself) and duplicates (we don&rsquo;t
+need both A→B and B→A).
+</p>
+
+<p>
+One nice thing about having the distance as the first element of each tuple: I
+can sort the whole list with <code>#'&lt; :key #'first</code> and it just works.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="org5bc8680"><code><span style="color: #c66;">(</span>sr:-&gt; get-all-edges <span style="color: #6c6;">(</span>vector<span style="color: #6c6;">)</span> list<span style="color: #c66;">)</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">get-all-edges</span> <span style="color: #6c6;">(</span>junctions<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Return a list of (distance j1 j2) for all pairs, sorted by distance."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>len <span style="color: #6cc;">(</span>length junctions<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>edges nil<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> i below len<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j1 = <span style="color: #6cc;">(</span>aref junctions i<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #6cc;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j from <span style="color: #c6c;">(</span>1+ i<span style="color: #c6c;">)</span> below len<span style="color: #6cc;">)</span>
+        <span style="color: #6cc;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j2 = <span style="color: #c6c;">(</span>aref junctions j<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span>
+        <span style="color: #6cc;">(</span>push <span style="color: #c6c;">(</span>list <span style="color: #ccc;">(</span>dist j1 j2<span style="color: #ccc;">)</span> j1 j2<span style="color: #c6c;">)</span> edges<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>sort edges #'&lt; <span style="color: #feacd0; font-weight: bold;">:key</span> #'first<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orgef86212" class="outline-4">
+<h4 id="orgef86212"><span class="section-number-4">3.10.3.</span> kruskal()</h4>
+<div class="outline-text-4" id="text-3-10-3">
+<p>
+Now for the main event! This is Kruskal&rsquo;s algorithm, and it&rsquo;s surprisingly
+simple once you have Union-Find doing the heavy lifting.
+</p>
+
+<p>
+The algorithm works like this:
+</p>
+<ol class="org-ol">
+<li>Start with each junction box in its own component (this happens automatically
+when we first call UF-FIND on a node)</li>
+<li>Process edges in order from shortest to longest</li>
+<li>For each edge, try to union the two junction boxes</li>
+<li>If they were already in the same component, UF-UNION returns NIL (we&rsquo;d create
+a cycle, so skip this edge)</li>
+<li>If they were in different components, UF-UNION returns T (we just merged
+them!)</li>
+<li>Stop after processing MAX-EDGES edges</li>
+</ol>
+
+<p>
+For Part 1, we process exactly 1000 edges (or 10 for the example), then count
+how many junction boxes ended up in each component. The answer is the product of
+the three largest component sizes.
+</p>
+
+<p>
+I&rsquo;m also tracking the last edge processed, which will be useful for Part 2. And
+I keep a list of all nodes we&rsquo;ve seen so I can calculate component sizes at the
+end.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="orgd0864a6"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">kruskal</span> <span style="color: #6c6;">(</span>edges max-edges<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Process up to MAX-EDGES edges using Kruskal's algorithm.
+   Returns (component-sizes last-j1 last-j2)."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>uf <span style="color: #6cc;">(</span>make-union-find<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+        <span style="color: #cc6;">(</span>nodes nil<span style="color: #cc6;">)</span>
+        <span style="color: #cc6;">(</span>last-j1 nil<span style="color: #cc6;">)</span>
+        <span style="color: #cc6;">(</span>last-j2 nil<span style="color: #cc6;">)</span>
+        <span style="color: #cc6;">(</span>edges-processed 0<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> <span style="color: #6cc;">(</span>dist j1 j2<span style="color: #6cc;">)</span> in edges<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">while</span> <span style="color: #6cc;">(</span>&lt; edges-processed max-edges<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+      <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Track all nodes we've seen
+</span>      <span style="color: #cc6;">(</span>pushnew j1 nodes <span style="color: #feacd0; font-weight: bold;">:test</span> 'equalp<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>pushnew j2 nodes <span style="color: #feacd0; font-weight: bold;">:test</span> 'equalp<span style="color: #cc6;">)</span>
+      <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Union the nodes
+</span>      <span style="color: #cc6;">(</span>uf-union uf j1 j2<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>setf last-j1 j1 last-j2 j2<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>incf edges-processed<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>values <span style="color: #cc6;">(</span>uf-component-sizes uf nodes<span style="color: #cc6;">)</span> last-j1 last-j2<span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orge93d71c" class="outline-4">
+<h4 id="orge93d71c"><span class="section-number-4">3.10.4.</span> Solution</h4>
+<div class="outline-text-4" id="text-3-10-4">
+<p>
+With all the pieces in place, DAY08-1 becomes almost trivial. Parse the input,
+generate all edges sorted by distance, run Kruskal for the specified number of
+edges, sort the resulting component sizes in descending order, take the top
+three, and multiply them together.
+</p>
+
+<p>
+I&rsquo;m using Serapeum&rsquo;s threading macro <code>~&gt;</code> here because I find it reads nicely:
+&ldquo;take sizes, sort descending, take first 3, multiply them.&rdquo; The underscore <code>_</code>
+is where the result of each step gets plugged into the next.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="orgd332d71"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">day08-1</span> <span style="color: #6c6;">(</span>input max-edges<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Given a list of junction boxes, INPUT, return the result of multiplying
+ together the three largest possible circuits that can be built by connecting
+ the MAX-EDGES closest pairs. Uses Kruskal's algorithm with Union-Find."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>junctions <span style="color: #6cc;">(</span>parse-input input<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>edges <span style="color: #6cc;">(</span>get-all-edges junctions<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>sizes <span style="color: #6cc;">(</span>kruskal edges max-edges<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+    <span style="color: #69f;">(</span>sr:~&gt; sizes
+           <span style="color: #cc6;">(</span>sort _ #'&gt;<span style="color: #cc6;">)</span>
+           <span style="color: #cc6;">(</span>subseq _ 0 <span style="color: #6cc;">(</span>min 3 <span style="color: #c6c;">(</span>length _<span style="color: #c6c;">)</span><span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+           <span style="color: #cc6;">(</span>apply #'* _<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-org8af8e54" class="outline-4">
+<h4 id="org8af8e54"><span class="section-number-4">3.10.5.</span> Test</h4>
+<div class="outline-text-4" id="text-3-10-5">
+<div class="org-src-container">
+<pre class="src src-lisp"><code><span style="color: #c66;">(</span>5a:test day08-1-test
+  <span style="color: #6c6;">(</span>5a:is <span style="color: #69f;">(</span>= 40 <span style="color: #cc6;">(</span>day08-1 *example* 10<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+
+Running test DAY08-1-TEST .
+ Did 1 check.
+    Pass: 1 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+</pre>
+</div>
+</div>
+<div id="outline-container-org1a87d7e" class="outline-4">
+<h4 id="org1a87d7e"><span class="section-number-4">3.10.6.</span> Part one finished: Sat Dec 13 16:00:55 2025</h4>
+</div>
+</div>
+</div>
+<div id="outline-container-org4969b31" class="outline-2">
+<h2 id="org4969b31"><span class="section-number-2">4.</span> Part Two</h2>
+<div class="outline-text-2" id="text-4">
+</div>
+<div id="outline-container-orge19b607" class="outline-3">
+<h3 id="orge19b607"><span class="section-number-3">4.1.</span> Notes</h3>
+<div class="outline-text-3" id="text-4-1">
+<p>
+Part 2 threw me for a loop at first. The problem says: find the
+pair of junction boxes that, when connected, completes a single circuit
+containing <i>all</i> the junction boxes. Then multiply their X coordinates.
+</p>
+
+<p>
+My first instinct was wrong. I thought &ldquo;just keep connecting until everything is
+connected and remember the last pair.&rdquo; But my old BUILD-PATHS function was
+merging circuits in a haphazard way - it wasn&rsquo;t properly tracking which edge
+actually <i>caused</i> the final merge.
+</p>
+
+<p>
+Here&rsquo;s the key insight that made it click: we&rsquo;re building a <b>Minimum Spanning
+Tree</b>. To connect n nodes into a single tree, we need exactly n-1 edges. Each
+edge we add (that actually merges two components) reduces our component count by
+one. We start with n components (each junction box alone) and we need to get
+down to 1 component (everything connected).
+</p>
+
+<p>
+So the algorithm is:
+</p>
+<ol class="org-ol">
+<li>Start with n components (one per junction box)</li>
+<li>Process edges shortest-to-longest (same as Part 1)</li>
+<li>Each time UF-UNION returns T, we successfully merged two components -
+decrement our component counter and remember this edge</li>
+<li>Stop when components = 1 (everything is connected)</li>
+<li>The last edge that returned T is our answer!</li>
+</ol>
+
+<p>
+The beauty of Union-Find is that UF-UNION tells us <i>exactly</i> what we need to
+know: did this edge actually connect two separate components (T) or were they
+already connected (NIL)?
+</p>
+</div>
+</div>
+<div id="outline-container-org38ff962" class="outline-3">
+<h3 id="org38ff962"><span class="section-number-3">4.2.</span> Solution</h3>
+<div class="outline-text-3" id="text-4-2">
+<p>
+The code is almost the same as KRUSKAL, but instead of processing a fixed number
+of edges, we process until there&rsquo;s only one component left. We track the
+component count explicitly and decrement it each time we successfully merge.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp" id="orga9915a2"><code><span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">defun</span> <span style="color: #f78fe7;">day08-2</span> <span style="color: #6c6;">(</span>input<span style="color: #6c6;">)</span>
+  <span style="color: #bfebe0; font-style: italic;">"Find the pair that connects all junction boxes into a single circuit.
+   Return the product of the X coordinates of that pair."</span>
+  <span style="color: #6c6;">(</span><span style="color: #00d3d0; font-weight: bold;">let*</span> <span style="color: #69f;">(</span><span style="color: #cc6;">(</span>junctions <span style="color: #6cc;">(</span>parse-input input<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>edges <span style="color: #6cc;">(</span>get-all-edges junctions<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>uf <span style="color: #6cc;">(</span>make-union-find<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>n <span style="color: #6cc;">(</span>length junctions<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>components n<span style="color: #cc6;">)</span>  <span style="color: #d0a070; font-style: italic;">; start with n separate components
+</span>         <span style="color: #cc6;">(</span>last-j1 nil<span style="color: #cc6;">)</span>
+         <span style="color: #cc6;">(</span>last-j2 nil<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+
+    <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Initialize all nodes in union-find
+</span>    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> j in-vector junctions<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span>uf-find uf j<span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+
+    <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">Process edges until we have 1 component (all connected)
+</span>    <span style="color: #69f;">(</span><span style="color: #00d3d0; font-weight: bold;">iter</span> <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">for</span> <span style="color: #6cc;">(</span>dist j1 j2<span style="color: #6cc;">)</span> in edges<span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">while</span> <span style="color: #6cc;">(</span>&gt; components 1<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span>
+      <span style="color: #cc6;">(</span><span style="color: #00d3d0; font-weight: bold;">when</span> <span style="color: #6cc;">(</span>uf-union uf j1 j2<span style="color: #6cc;">)</span>
+        <span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">This edge merged two separate components
+</span>        <span style="color: #6cc;">(</span>decf components<span style="color: #6cc;">)</span>
+        <span style="color: #6cc;">(</span>setf last-j1 j1 last-j2 j2<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span>
+
+    <span style="color: #69f;">(</span>* <span style="color: #cc6;">(</span>j-x last-j1<span style="color: #cc6;">)</span> <span style="color: #cc6;">(</span>j-x last-j2<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+</div>
+</div>
+<div id="outline-container-orga642042" class="outline-3">
+<h3 id="orga642042"><span class="section-number-3">4.3.</span> Test</h3>
+<div class="outline-text-3" id="text-4-3">
+<p>
+Let me verify this works with the example. For the 20 junction boxes in
+<code>*example*</code>, we need 19 edges to connect them all. The last edge that merges two
+components into one connects the junction boxes at (216, 146, 977) and (117,
+168, 530). Their X coordinates are 216 and 117, so the answer is 216 × 117 =
+</p>
+<ol class="org-ol">
+<li></li>
+</ol>
+
+<div class="org-src-container">
+<pre class="src src-lisp"><code><span style="color: #c66;">(</span>5a:test day08-2-test
+  <span style="color: #6c6;">(</span>5a:is <span style="color: #69f;">(</span>= 25272 <span style="color: #cc6;">(</span>day08-2 *example*<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example">
+
+Running test DAY08-2-TEST .
+ Did 1 check.
+    Pass: 1 (100%)
+    Skip: 0 ( 0%)
+    Fail: 0 ( 0%)
+</pre>
+</div>
+</div>
+<div id="outline-container-orgf7727ec" class="outline-3">
+<h3 id="orgf7727ec"><span class="section-number-3">4.4.</span> Part two finished: Fri 19 Dec 2025 08:55:40 PM PST</h3>
+</div>
+
+<div id="outline-container-orgac55621" class="outline-3">
+<h3 id="orgac55621"><span class="section-number-3">4.5.</span> Reflections</h3>
+<div class="outline-text-3" id="text-4-5">
+<p>
+This was a great learning experience! I went into this problem thinking &ldquo;I&rsquo;ll
+just track circuits with lists&rdquo; and came out understanding why Union-Find is
+such a fundamental data structure. It&rsquo;s now in my toolbox for any problem
+involving connected components, cycle detection, or graph connectivity.
+</p>
+
+<p>
+The key lessons:
+</p>
+<ul class="org-ul">
+<li>When you need to track &ldquo;which group does this thing belong to?&rdquo; and merge
+groups, reach for Union-Find</li>
+<li>Kruskal&rsquo;s algorithm + Union-Find is a powerful combination for MST problems</li>
+<li>Sometimes the &ldquo;simple&rdquo; approach (lists and set operations) isn&rsquo;t enough -
+you need the right data structure</li>
+<li>Reading the algorithm textbooks pays off!</li>
+</ul>
+</div>
+</div>
+</div>
+<div id="outline-container-orgd756367" class="outline-2">
+<h2 id="orgd756367"><span class="section-number-2">5.</span> Run Solutions and Timings</h2>
+<div class="outline-text-2" id="text-5">
+<p>
+Timings with SBCL on a Thinkpad X1 Carbon with Intel Core Ultra 7 and 32GB RAM running pop-os 24.04. Literate document created in Emacs 29.3 with org-babel. Solution created with help from Claude Code running Opus 4.5.
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lisp"><code><span style="color: #d0a070; font-style: italic;">;; </span><span style="color: #d0a070; font-style: italic;">now solve the puzzle!
+</span>
+<span style="color: #c66;">(</span><span style="color: #00d3d0; font-weight: bold;">let</span> <span style="color: #6c6;">(</span><span style="color: #69f;">(</span>*trace-output* *standard-output*<span style="color: #69f;">)</span><span style="color: #6c6;">)</span>
+  <span style="color: #6c6;">(</span>time <span style="color: #69f;">(</span>format t <span style="color: #00c06f;">"The answer to AOC 2025 Day 8 Part 1 is ~a"</span>
+                <span style="color: #cc6;">(</span>day08-1 <span style="color: #6cc;">(</span>uiop:read-file-lines *data-file*<span style="color: #6cc;">)</span> 1000<span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span>
+
+<span style="color: #6c6;">(</span>time <span style="color: #69f;">(</span>format t <span style="color: #00c06f;">"The answer to AOC 2025 Day 8 Part 2 is ~a"</span>
+              <span style="color: #cc6;">(</span>day08-2 <span style="color: #6cc;">(</span>uiop:read-file-lines *data-file*<span style="color: #6cc;">)</span><span style="color: #cc6;">)</span><span style="color: #69f;">)</span><span style="color: #6c6;">)</span><span style="color: #c66;">)</span>
+</code></pre>
+</div>
+
+<pre class="example" id="org6a5f97f">
+The answer to AOC 2025 Day 8 Part 1 is 105952
+Evaluation took:
+  0.198 seconds of real time
+  0.198902 seconds of total run time (0.192937 user, 0.005965 system)
+  [ Run times consist of 0.039 seconds GC time, and 0.160 seconds non-GC time. ]
+  100.51% CPU
+  656,562,205 processor cycles
+  32,668,144 bytes consed
+  
+The answer to AOC 2025 Day 8 Part 2 is 975931446
+Evaluation took:
+  0.144 seconds of real time
+  0.144860 seconds of total run time (0.144860 user, 0.000000 system)
+  100.69% CPU
+  478,478,714 processor cycles
+  32,657,760 bytes consed
+  
+</pre>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="date">Date: 11 December 2025</p>
+<p class="author">Author: Leo Laporte</p>
+<p class="date">Created: 2025-12-19 Fri 21:59</p>
+</div>
+</body>
+</html>
