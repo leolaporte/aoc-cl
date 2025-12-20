@@ -125,7 +125,7 @@ rolls"
 ;;                              --- Part Two --
 ;;
 ;; LEO'S NOTES: Now we iterate removing rolls until no more can be removed and
-;; return the number of rolls removed.
+;; return the number of rolls removed. First get the removables, then remove them.
 ;;
 ;; ----------------------------------------------------------------------------
 
