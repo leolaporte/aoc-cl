@@ -144,7 +144,7 @@ nearest integer between the two"
 ;; even if it's only a circuit of one. Multiply the sizes of the three largest
 ;; circuits together to get the answer.
 ;;
-;; To make it clear we're using a tree data structure, I'll call a junction box
+;; To make it clear we're using a graph data structure, I'll call a junction box
 ;; a *node* and the distance between two nodes an *edge*. The circuit I'll call
 ;; a *path*. A path is really just a *set* of nodes, so I can add a node to a
 ;; path using UF-UNION? to check if a node is already in a circuit avoiding
@@ -156,7 +156,9 @@ nearest integer between the two"
 ;; graph." In other words, the shortest string of lights that can connect all
 ;; the junction boxes. Eric basically handed this to us - if I had studied
 ;; computer science I'm sure I would have sussed that straight off. As it is I
-;; needed the hint from Reddit.
+;; needed the hint from Reddit. And Chapters 7 and 8 of Steven S. Skiena's
+;; excellent "Algorithm Design Manual - Third Edition" Springer 2020 -
+;; understanding graphs probably solves 80% of AoC problems.
 ;;
 ;; In this case the weights are the distances between points, and the minimum
 ;; tree is the shortest length of Christmas lights. So this describes the
@@ -243,12 +245,12 @@ to solve part 1"
 (5a:test union-find-test
   (let ((uf (make-union-find)))
     ;; Initially separate
-    (5a:is (uf-union uf 'a 'b))  ; returns T, now connected
+    (5a:is-true (uf-union uf 'a 'b))  ; returns T, now connected
     (5a:is-false (uf-union uf 'a 'b))  ; returns NIL, already connected
-    (5a:is (uf-union uf 'c 'd))
-    (5a:is (uf-union uf 'b 'c))  ; connects {a,b} with {c,d}
+    (5a:is-true (uf-union uf 'c 'd))
+    (5a:is-true (uf-union uf 'b 'c))  ; connects {a,b} with {c,d}
     (5a:is-false (uf-union uf 'a 'd))  ; all in same component now
-    (5a:is (equal (list 4) (uf-component-sizes uf '(a b c d))))))
+    (5a:is-true (equal (list 4) (uf-component-sizes uf '(a b c d))))))
 
 ;;  OK now I have all the pieces in place. KRUSKAL does all the work of solving
 ;;  part one - using the algotithm described above.
