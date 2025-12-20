@@ -31,10 +31,10 @@
 ;;                       --- Day 1: Secret Entrance ---
 ;;                              --- Part One ---
 ;;
-;; LEO'S NOTES: I'm counting the number of times the position = 0. I'll
-;; parse the input to replace R and L with + and - and just convert the
-;; instructions into positive and negative addends. Then use MOD to wrap
-;; around.
+;; LEO'S NOTES: So now we're safe cracking! I'm counting the number of times the
+;; position = 0. I'll parse the input to replace R and L with + and - and just
+;; convert the instructions into positive and negative addends. Then use MOD to
+;; wrap around.
 ;;
 ;; ---------------------------------------------------------------------------
 
