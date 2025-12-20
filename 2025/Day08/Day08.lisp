@@ -120,7 +120,7 @@ nearest integer between the two"
         (push (list (dist j1 j2) j1 j2) edges)))
     (sort edges #'< :key #'first)))
 
-;; Now this is the part that took me the longest. I tired two different (naive)
+;; Now this is the part that took me the longest. I tried two different (naive)
 ;; methods of combining JUNCTION pairs into circuits, and they worked for part 1
 ;; but failed miserably for part 2 because I wasn't going in the proper
 ;; order. Part 2 wants the points in the circuit connection that, finally,
@@ -187,6 +187,12 @@ nearest integer between the two"
 ;; I asked Claude to work up a UNION-FIND with Kruskal and then re-worked it for
 ;; the problem. Mostly today for me was devoted to understanding this new data
 ;; structure and algorithm.
+;;
+;; Unfortunately Claude relied on the fact that hash-tables in Common Lisp are
+;; passed by reference, and some of the functions below mutate UF as a side
+;; effect instead of explicitly passing the structure around. I don't like doing
+;; it this way - and I'll probably rework it when I get a chance. But until
+;; then, consider yourself warned.
 
 (sr:-> make-union-find () cons)
 (defun make-union-find ()
@@ -198,22 +204,22 @@ parent -> value =rank"
 (sr:-> find-root (cons atom) atom)
 (defun find-root (uf node)
   "find the root of NODE with path compression. Recurses up the tree until it finds
-the root"
+the root - WARNING: UF is passed by reference and so is modified as a side-effect"
   (let ((parent (car uf)))
     ;; Initialize node if not seen
     (unless (gethash node parent)
-      (setf (gethash node parent) node))
+      (setf (gethash node parent) node)) ; mutates UF!
     ;; Find root with path compression
     (if (equalp (gethash node parent) node)
         node
-        (setf (gethash node parent)
+        (setf (gethash node parent)     ; mutates UF!
               (find-root uf (gethash node parent))))))
 
 (sr:-> uf-union? (cons atom atom) boolean)
 (defun uf-union? (uf node1 node2)
   "union the sets containing NODE1 and NODE2 - if they can be combined without
-creating a cycle update UF and return t, otherwise return nil - this has the
-side-effect of updating the UF structure - ideally this would be factored out"
+creating a cycle update UF and return t, otherwise return nil - WARNING: UF is
+passed by reference and so is modified as a side-effect"
   (let* ((parent (car uf))
          (rank (cdr uf))
          (root1 (find-root uf node1))
@@ -223,13 +229,13 @@ side-effect of updating the UF structure - ideally this would be factored out"
     (cond
       ((equalp root1 root2) nil)        ; already in same set
       ((< (gethash root1 rank) (gethash root2 rank))
-       (setf (gethash root1 parent) root2)
+       (setf (gethash root1 parent) root2) ; mutates UF
        t)
       ((> (gethash root1 rank) (gethash root2 rank))
-       (setf (gethash root2 parent) root1)
+       (setf (gethash root2 parent) root1) ; mutates UF
        t)
       (t
-       (setf (gethash root2 parent) root1)
+       (setf (gethash root2 parent) root1) ; mutates UF
        (incf (gethash root1 rank))
        t))))
 
