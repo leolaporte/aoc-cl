@@ -73,9 +73,25 @@
                               "984,92,344"
                               "425,690,689"))
 
+(defparameter *example2* (list "1,1,2"
+                               "2,14,4"
+                               "2,5,6"
+                               "3,4,11"
+                               "5,8,10"
+                               "1,2,7"
+                               "12,4,12"
+                               "5,2,9"
+                               "3,8,11"
+                               "16,2,9 "
+                               "13,4,15"
+                               "5,16,7"
+                               "18,9,10"
+                               "100,100,100")
+  "Paul Holder's additional example - which works in Part 2 but not for Part 1 for some reason")
+
 ;; structure to represent the junction box coordinates, x y and z
 (defstruct (junction
-            (:conc-name j-)             ; short name is j-x, j-y. j-z
+            (:conc-name j-)                   ; short name is j-x, j-y. j-z
             (:constructor make-junc (x y z))) ; short constructor too
   (x 0 :type integer)
   (y 0 :type integer)
