@@ -1,6 +1,6 @@
 ;;;; Day05.lisp
 ;;;; 2025 AOC Day 5 solution
-;;;; Common Lisp solutions by Leo Laporte (with lots of help)
+;;;; Common Lisp solutions by Leo Laporte
 ;;;; Started: 04 Dec 2025 at 21:00
 ;;;; Finished: 05 Dec 2025 at 09:45
 
