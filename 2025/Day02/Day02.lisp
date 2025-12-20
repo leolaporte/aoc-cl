@@ -112,7 +112,7 @@ IDs within the range"
 ;;                              --- Part Two --
 ;;
 ;; LEO'S NOTES: This one's easy. Just change the regex to
-;; "^(\\d+)\\1+$ (adding the plus after the 1 to mean the group can be
+;; "^(\\d+?)\\1+$ (adding the plus after the 1 to mean the group can be
 ;; repeated one or more times) - I'll refactor part one to allow
 ;; plug-in regexes and we're done. (cl-ppcre's CREATE-SCANNER compiles
 ;; the regex string into a function which makes it somewhat faster).
