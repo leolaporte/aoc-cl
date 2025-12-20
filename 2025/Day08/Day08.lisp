@@ -1,16 +1,19 @@
-;; [[file:Day08.org::setup][setup]]
 ;;;; Day08.lisp
 ;;;; 2025 AOC Day 8 solution
 ;;;; Common Lisp solutions by Leo Laporte (with lots of help)
 ;;;; Started: Thu Dec 11 15:51:26 2025
 ;;;; Finished: Fri 19 Dec 2025 08:55:40 PM PST
 
+;; ----------------------------------------------------------------------------
+;; Prologue code for setup - same every day
+;; ----------------------------------------------------------------------------
+
 (defpackage :aoc.2025.day08
-  (:use :cl :alexandria :iterate)      ; no prefix for these libraries
-  (:local-nicknames                    ; short prefixes for these
-   (:re :cl-ppcre)                     ; regex
-   (:5a :fiveam)                       ; test framework
-   (:sr :serapeum)                     ; CL extensions
+  (:use :cl :alexandria :iterate)       ; no prefix for these libraries
+  (:local-nicknames                     ; short prefixes for these
+   (:re :cl-ppcre)                      ; regex
+   (:5a :fiveam)                        ; test framework
+   (:sr :serapeum)                      ; CL extensions
    (:tr :trivia)))                     ; pattern matching
 
 (in-package :aoc.2025.day08)
@@ -23,14 +26,37 @@
 
 (defparameter *data-file* "~/cl/AOC/2025/Day08/input.txt"
   "Downloaded from the AoC problem set")
-;; setup ends here
 
-;; [[file:Day08.org::*Example Data][Example Data:1]]
+;; ----------------------------------------------------------------------------
+;;                        --- Day 8: Playground  ---
+;;                              --- Part One ---
+;;
+;; ----------------------------------------------------------------------------
+;;
+;; These numbers represent "junction boxes" with X Y Z coordinates in a 3D
+;; space. We (well the elves) want to connect the junction boxes that are
+;; closest together in a straight line (i.e. Euclidean distance). So (dist p q)
+;; = (sqrt (+ (expt (- xp xq) 2) (expt (- yp yq) 2) (expt (- zp zq) 2)
+;;
+;; Once we connect the two closest junction boxes to form a circuit, we look for
+;; the next two. If any are already in a circuit the new junction points are
+;; added to that circuit. And continue until we've connected all the points up
+;; to the limit (10 for the example, 1000 for the input).
+;;
+;; Then multiply the largest 3 circuits (by the number of junction boxes in the
+;; circuit) to get the answer. In the example it's (5x4x2) or 40.
+;;
+;; The problem asks us to "connect together the 1000 pairs of junction boxes
+;; which are closest together. Afterward, what do you get if you multiply
+;; together the sizes of the three largest circuits?"
+;;
+;; -----------------------------------------------------------------------------
+
 (defparameter *example* (list "162,817,812"
                               "57,618,57"
                               "906,360,560"
                               "592,479,940"
-                               "352,342,300"
+                              "352,342,300"
                               "466,668,158"
                               "542,29,236"
                               "431,825,988"
@@ -47,131 +73,130 @@
                               "984,92,344"
                               "425,690,689"))
 
-(defparameter *example2* (list "1,1,2"
-                               "2,14,4"
-                               "2,5,6"
-                               "3,4,11"
-                               "5,8,10"
-                               "1,2,7"
-                               "12,4,12"
-                               "5,2,9"
-                               "3,8,11"
-                               "16,2,9"
-                               "13,4,15"
-                               "5,16,7"
-                               "18,9,10"
-                               "100,100,100")
-  "Another perverse example from the fertile mind of Paul Holder Part 1 is the three circuit sizes 7, 2, 2 so the answer is 28, and part 2 is 18, 100 so the answer is 1800")
-;; Example Data:1 ends here
-
-;; [[file:Day08.org::struct-junction][struct-junction]]
+;; structure to represent the junction box coordinates, x y and z
 (defstruct (junction
             (:conc-name j-)             ; short name is j-x, j-y. j-z
-            (:constructor make-junc (x y z)))
+            (:constructor make-junc (x y z))) ; short constructor too
   (x 0 :type integer)
   (y 0 :type integer)
   (z 0 :type integer))
 
-(format t "Print representation: ~a~%"(make-junc 1 2 3))
-;; struct-junction ends here
-
-;; [[file:Day08.org::parse-input][parse-input]]
 (sr:-> parse-input (list) vector)
 (defun parse-input (input)
+  "given a list of strings representing junction box coordinates, x, y, and z,
+return a vector containing JUNCTION structs for each"
   (iter (for box in input)
     (collect
         (apply #'make-junc (mapcar #'parse-integer (sr:words box)))
       result-type vector)))
 
-(format t "~%~a" (parse-input *example*))
-;; parse-input ends here
-
-;; [[file:Day08.org::dist][dist]]
+;; I'll need a distance calculation. The problem says it's 'straight line
+;; distance' and provides a link to a calculation for Euclidean distance, but I
+;; don't need the precise distance so I'll round the result to an integer using
+;; ISQRT instead of SQRT - it's much faster""
 (sr:-> dist (junction junction) fixnum)
 (defun dist (j1 j2)
-  "given two JUNCTIONS j1 and j2 return the euclidean distance rounded to the nearest integer between the two"
+  "given two JUNCTIONS j1 and j2 return the euclidean distance rounded to the
+nearest integer between the two"
   (isqrt (+ (expt (- (j-x j1) (j-x j2)) 2)
             (expt (- (j-y j1) (j-y j2)) 2)
             (expt (- (j-z j1) (j-z j2)) 2))))
 
 (5a:test dist-test
   (5a:is (= (dist (make-junc 1 2 3) (make-junc 4 5 6)) 5)))
-;; dist ends here
 
-;; [[file:Day08.org::get-dists][get-dists]]
-(sr:-> get-dists (vector) hash-table)
-(defun get-dists (junctions)
-  "given a vector of JUNCTION structs, return a hash-table of the distances
- between any two pairs of junctions. The key will be the distance, the value the
- pair of junctions that are that far apart"
+;; Originally I stored the JUNCTION pairs and their distances as a hash table,
+;; but I'm going to use a tuple instead of (dist x y z) - it's simpler and
+;; easier to sort.
+(sr:-> get-all-edges (vector) list)
+(defun get-all-edges (junctions)
+  "Return a list of (distance j1 j2) for all pairs, sorted by distance."
   (let* ((len (length junctions))
-         (distances (make-hash-table :size len)))
-
+         (edges nil))
     (iter (for i below len)
       (for j1 = (aref junctions i))
       (iter (for j from (1+ i) below len)
         (for j2 = (aref junctions j))
+        (push (list (dist j1 j2) j1 j2) edges)))
+    (sort edges #'< :key #'first)))
 
-        (let ((d (dist j1 j2)))
-          (setf (gethash d distances)
-                (append (list j1 j2)
-                        (gethash d distances))))))
+;; Now this is the part that took me the longest. I tired two different (naive)
+;; methods of combining JUNCTION pairs into circuits, and they worked for part 1
+;; but failed miserably for part 2 because I wasn't going in the proper
+;; order. Part 2 wants the points in the circuit connection that, finally,
+;; completes the circuit. I couldn't get that working even though I could
+;; connect all the circuits. Hmmm.
+;;
+;; Then after checking Reddit I realized this is a "minimum spanning tree" or
+;; MST problem: find the shortest path through the JUNCTION boxes (aka nodes) to
+;; minimize the amount of light strings. Turns out there's a lot of computer
+;; science behind these problems. And the key is the UNION-FIND data structure.
+;;
+;; Let me paraphrase the instructions. This helps me understand what I need to
+;; do. For part 1 I need to start with the two junction boxes that are closest
+;; together. Put them in a circuit. Check the next closest pair. If the pair
+;; shares a junction box with the first circuit, add it to the circuit,
+;; otherwise create a new circuit. Take the next closest pair. Check to see if
+;; any of its points fit into an existing circuit without creating a loop. (It's
+;; a loop if both points in the junction box pair already exist in the circuit.)
+;; Only add a pair to an existing circuit if exactly one of the two points
+;; exists in the circuit. Proceed until all the junction boxes are in a circuit,
+;; even if it's only a circuit of one. Multiply the sizes of the three largest
+;; circuits together to get the answer.
+;;
+;; To make it clear we're using a tree data structure, I'll call a junction box
+;; a *node* and the distance between two nodes an *edge*. The circuit I'll call
+;; a *path*. A path is really just a *set* of nodes, so I can add a node to a
+;; path using UF-UNION? to check if a node is already in a circuit avoiding
+;; loops.
+;;
+;; This is the fundamental process for the whole problem. It turns out that this
+;; is an example of Kruskal's Algorithm (or Prim's algorithm which is
+;; similar). It delivers the "minimum spanning tree of an undirected edge weight
+;; graph." In other words, the shortest string of lights that can connect all
+;; the junction boxes. Eric basically handed this to us - if I had studied
+;; computer science I'm sure I would have sussed that straight off. As it is I
+;; needed the hint from Reddit.
+;;
+;; In this case the weights are the distances between points, and the minimum
+;; tree is the shortest length of Christmas lights. So this describes the
+;; problem exactly.
+;;
+;; We already have the first two steps done (from Wikipedia):
+;;
+;; 1. Create a forest (a set of trees) initially consisting of a separate
+;; single-vertex tree for each vertex in the input graph. (DONE)
+;;
+;; 2. Sort the graph edges by weight. (DONE)
+;;
+;; Now...
+;;
+;; 3. Loop through the edges of the graph, in ascending sorted order by their
+;; weight.
+;;
+;; 3.1 For each edge:
+;;  - Test whether adding the edge to the current forest would create a cycle.
+;;  -If not, add the edge to the forest, combining two trees into a single tree.
+;;
+;; At the termination of the algorithm, the forest forms a minimum spanning
+;; forest of the graph. If the graph is connected, the forest has a single
+;; component and forms a minimum spanning tree. Ta da!
+;;
+;; I asked Claude to work up a UNION-FIND with Kruskal and then re-worked it for
+;; the problem. Mostly today for me was devoted to understanding this new data
+;; structure and algorithm.
 
-    distances))
-;; get-dists ends here
-
-;; [[file:Day08.org::get-dists-test][get-dists-test]]
-(let ((*trace-output* *standard-output*))
-  (time (get-dists (parse-input (uiop:read-file-lines *data-file*)))))
-;; get-dists-test ends here
-
-;; [[file:Day08.org::10-junctions][10-junctions]]
-(let* ((junctions (parse-input *example*))
-       (distances (get-dists junctions))
-       (keys (sort (hash-table-keys distances) #'<)))
-  (iter (for i below 10)
-    (format t "~&~a -> ~a" (gethash (nth i keys) distances) (nth i keys))))
-;; 10-junctions ends here
-
-;; [[file:Day08.org::sort-pairs-by-distance][sort-pairs-by-distance]]
-(sr:-> sort-pairs-by-distance (list) list)
-(defun sort-pairs-by-distance (input)
-  "given a list of strings representing a list of JUNCTIONS, return a list of
- JUNCTION pairs sorted ascending by the distance between the pair"
-  (let* ((distances (get-dists (parse-input input))) ; hash of dists->juncs
-         (keys (sort (hash-table-keys distances) #'<))) ; list of sorted dists
-
-    (iter (for k in keys)
-      (collect (gethash k distances)))))
-;; sort-pairs-by-distance ends here
-
-;; [[file:Day08.org::sort-pairs-by-distance-profile][sort-pairs-by-distance-profile]]
-(let ((*trace-output* *standard-output*))
-  (time (sort-pairs-by-distance (uiop:read-file-lines *data-file*))))
-;; sort-pairs-by-distance-profile ends here
-
-;; [[file:Day08.org::sort-pairs-by-distance-test][sort-pairs-by-distance-test]]
-(5a:test sort-pairs-by-distance-test
-  (let ((closest (subseq (sort-pairs-by-distance *example*) 0 4)))
-    (5a:is (equalp (first closest)
-                   (list (make-junc 162 817 812) (make-junc 425 690 689))))
-    (5a:is (equalp (second closest)
-                   (list (make-junc 162 817 812) (make-junc 431 825 988))))
-    (5a:is (equalp (third closest)
-                   (list (make-junc 906 360 560) (make-junc 805 96 715))))
-    (5a:is (equalp (fourth closest)
-                   (list (make-junc 431 825 988) (make-junc 425 690 689))))))
-;; sort-pairs-by-distance-test ends here
-
-;; [[file:Day08.org::union-find][union-find]]
-;; Union-Find data structure using hash tables (for struct keys)
+(sr:-> make-union-find () cons)
 (defun make-union-find ()
-  "Create a new union-find structure. Returns (parent . rank) hash tables."
-  (cons (make-hash-table :test 'equalp)   ; parent
+  "Create a new union-find structure, a CONS of two hash-tables with the key =
+parent -> value =rank"
+  (cons (make-hash-table :test 'equalp) ; parent
         (make-hash-table :test 'equalp))) ; rank
 
-(defun uf-find (uf node)
-  "Find the root of NODE with path compression."
+(sr:-> find-root (cons atom) atom)
+(defun find-root (uf node)
+  "Find the root of NODE with path compression. Recurses up the tree until it finds
+the root."
   (let ((parent (car uf)))
     ;; Initialize node if not seen
     (unless (gethash node parent)
@@ -180,18 +205,20 @@
     (if (equalp (gethash node parent) node)
         node
         (setf (gethash node parent)
-              (uf-find uf (gethash node parent))))))
+              (find-root uf (gethash node parent))))))
 
-(defun uf-union (uf node1 node2)
-  "Union the sets containing NODE1 and NODE2. Returns T if they were separate."
+(sr:-> uf-union? (cons atom atom) boolean)
+(defun uf-union? (uf node1 node2)
+  "Union the sets containing NODE1 and NODE2 - if they can be combined without
+creating a cycle update UF and return t, otherwise return nil - this has the side-effect of updating the UF structure - ideally this would be factored out."
   (let* ((parent (car uf))
          (rank (cdr uf))
-         (root1 (uf-find uf node1))
-         (root2 (uf-find uf node2)))
+         (root1 (find-root uf node1))
+         (root2 (find-root uf node2)))
     (unless (gethash root1 rank) (setf (gethash root1 rank) 0))
     (unless (gethash root2 rank) (setf (gethash root2 rank) 0))
     (cond
-      ((equalp root1 root2) nil)  ; already in same set
+      ((equalp root1 root2) nil)        ; already in same set
       ((< (gethash root1 rank) (gethash root2 rank))
        (setf (gethash root1 parent) root2)
        t)
@@ -203,11 +230,13 @@
        (incf (gethash root1 rank))
        t))))
 
+(sr:-> uf-component-sizes (cons list) list)
 (defun uf-component-sizes (uf nodes)
-  "Return a list of component sizes for all NODES in union-find UF."
+  "Return a list of component sizes for all NODES in union-find UF - we need this
+to solve part 1"
   (let ((size-map (make-hash-table :test 'equalp)))
     (iter (for node in nodes)
-      (let ((root (uf-find uf node)))
+      (let ((root (find-root uf node)))
         (incf (gethash root size-map 0))))
     (hash-table-values size-map)))
 
@@ -220,23 +249,10 @@
     (5a:is (uf-union uf 'b 'c))  ; connects {a,b} with {c,d}
     (5a:is-false (uf-union uf 'a 'd))  ; all in same component now
     (5a:is (equal (list 4) (uf-component-sizes uf '(a b c d))))))
-;; union-find ends here
 
-;; [[file:Day08.org::get-all-edges][get-all-edges]]
-(sr:-> get-all-edges (vector) list)
-(defun get-all-edges (junctions)
-  "Return a list of (distance j1 j2) for all pairs, sorted by distance."
-  (let* ((len (length junctions))
-         (edges nil))
-    (iter (for i below len)
-      (for j1 = (aref junctions i))
-      (iter (for j from (1+ i) below len)
-        (for j2 = (aref junctions j))
-        (push (list (dist j1 j2) j1 j2) edges)))
-    (sort edges #'< :key #'first)))
-;; get-all-edges ends here
-
-;; [[file:Day08.org::kruskal][kruskal]]
+;;  OK now I have all the pieces in place. KRUSKAL does all the work of solving
+;;  part one - using the algotithm described above.
+(sr:-> kruskal (list fixnum) list)
 (defun kruskal (edges max-edges)
   "Process up to MAX-EDGES edges using Kruskal's algorithm.
    Returns (component-sizes last-j1 last-j2)."
@@ -245,19 +261,22 @@
         (last-j1 nil)
         (last-j2 nil)
         (edges-processed 0))
-    (iter (for (dist j1 j2) in edges)
-      (while (< edges-processed max-edges))
-      ;; Track all nodes we've seen
-      (pushnew j1 nodes :test 'equalp)
-      (pushnew j2 nodes :test 'equalp)
-      ;; Union the nodes
-      (uf-union uf j1 j2)
-      (setf last-j1 j1 last-j2 j2)
-      (incf edges-processed))
-    (values (uf-component-sizes uf nodes) last-j1 last-j2)))
-;; kruskal ends here
+    (iter (for edge in edges)
+      (let ((j1 (second edge))
+            (j2 (third edge)))
 
-;; [[file:Day08.org::day08-1][day08-1]]
+        ;; only do this for the MAX-EDGES
+        (while (< edges-processed max-edges))
+        ;; Track all nodes we've seen
+        (pushnew j1 nodes :test 'equalp)
+        (pushnew j2 nodes :test 'equalp)
+        ;; Union the nodes
+        (uf-union uf j1 j2)
+        (setf last-j1 j1 last-j2 j2)
+        (incf edges-processed)))
+    (values (uf-component-sizes uf nodes) last-j1 last-j2)))
+
+(sr:-> day08-1 (list fixnum) fixnum)
 (defun day08-1 (input max-edges)
   "Given a list of junction boxes, INPUT, return the result of multiplying
  together the three largest possible circuits that can be built by connecting
@@ -265,18 +284,47 @@
   (let* ((junctions (parse-input input))
          (edges (get-all-edges junctions))
          (sizes (kruskal edges max-edges)))
+
     (sr:~> sizes
            (sort _ #'>)
            (subseq _ 0 (min 3 (length _)))
            (apply #'* _))))
-;; day08-1 ends here
 
-;; [[file:Day08.org::*Test][Test:1]]
 (5a:test day08-1-test
   (5a:is (= 40 (day08-1 *example* 10))))
-;; Test:1 ends here
 
-;; [[file:Day08.org::day08-2][day08-2]]
+;; ----------------------------------------------------------------------------
+;;                           -- Part Two --
+;;
+;; Part 2 threw me for a loop at first. Now we want to connect all the JUNCTION
+;; pairs and, when connected, multiply the X coordinates of the pair that
+;; completes the circuit.
+;;
+;; My first instinct was wrong. I thought "just keep connecting until everything
+;; is connected and remember the last pair." But my old BUILD-PATHS function was
+;; merging circuits in a haphazard way - it wasn't properly tracking which edge
+;; actually caused the final merge.
+;;
+;; Once I understood that I'm building a *Minimum Spanning Tree* and found the
+;; UNION-FIMD data structure I was able to solve part two economically (and
+;; correctly!).
+;;
+;; To connect n nodes into a single tree, we need exactly n-1 edges. Each edge
+;; we add (that actually merges two components) reduces our component count by
+;; one. We start with n components (each junction box alone) and we need to get
+;; down to 1 component (everything connected).
+
+;; So the algorithm is:
+;; 1. Start with n components (one per junction box)
+;; 2. Process edges shortest-to-longest (same as Part 1)
+;; 3. Each time UF-UNION returns T, we successfully merged two components -
+;; decrement our component counter and remember this edge
+;; 4. Stop when components = 1 (everything is connected)
+;; 5. The last edge that returned T is our answer!
+;;
+;; ----------------------------------------------------------------------------
+
+(sr:-> day08-2 (list) fixnum)
 (defun day08-2 (input)
   "Find the pair that connects all junction boxes into a single circuit.
    Return the product of the X coordinates of that pair."
@@ -284,37 +332,55 @@
          (edges (get-all-edges junctions))
          (uf (make-union-find))
          (n (length junctions))
-         (components n)  ; start with n separate components
+         (components n)                 ; start with n separate components
          (last-j1 nil)
          (last-j2 nil))
 
     ;; Initialize all nodes in union-find
     (iter (for j in-vector junctions)
-      (uf-find uf j))
+      (find-root uf j))
 
     ;; Process edges until we have 1 component (all connected)
-    (iter (for (dist j1 j2) in edges)
-      (while (> components 1))
-      (when (uf-union uf j1 j2)
-        ;; This edge merged two separate components
-        (decf components)
-        (setf last-j1 j1 last-j2 j2)))
+    (iter (for edge in edges)
+      (let ((j1 (second edge))
+            (j2 (third edge)))
+        (while (> components 1))
+        (when (uf-union uf j1 j2)
+          ;; This edge merged two separate components
+          (decf components)
+          (setf last-j1 j1 last-j2 j2))))
 
     (* (j-x last-j1) (j-x last-j2))))
-;; day08-2 ends here
 
-;; [[file:Day08.org::*Test][Test:1]]
 (5a:test day08-2-test
   (5a:is (= 25272 (day08-2 *example*))))
-;; Test:1 ends here
 
-;; [[file:Day08.org::*Run Solutions and Timings][Run Solutions and Timings:1]]
-;; now solve the puzzle!
+;; ----------------------------------------------------------------------------
+;; Now solve the puzzle...
+;; ----------------------------------------------------------------------------
 
-(let ((*trace-output* *standard-output*))
-  (time (format t "The answer to AOC 2025 Day 8 Part 1 is ~a"
-                (day08-1 (uiop:read-file-lines *data-file*) 1000)))
+(time (format t "The answer to AOC 2025 Day 8 Part 1 is ~a"
+              (day08-1 (uiop:read-file-lines *data-file*) 1000)))
 
 (time (format t "The answer to AOC 2025 Day 8 Part 2 is ~a"
-              (day08-2 (uiop:read-file-lines *data-file*)))))
-;; Run Solutions and Timings:1 ends here
+              (day08-2 (uiop:read-file-lines *data-file*))))
+
+;; ----------------------------------------------------------------------------
+;; Timing with SBCL on a 2023 MacBook Pro M3 Max with 64GB RAM and Tahoe 26.1
+;; ----------------------------------------------------------------------------
+
+;; The answer to AOC 2025 Day 8 Part 1 is 105952
+;; Evaluation took:
+;; 0.200 seconds of real time
+;; 0.200346 seconds of total run time (0.198009 user, 0.002337 system)
+;; [ Real times consist of 0.011 seconds GC time, and 0.189 seconds non-GC time. ]
+;; [ Run times consist of 0.011 seconds GC time, and 0.190 seconds non-GC time. ]
+;; 100.00% CPU
+;; 32,675,616 bytes consed
+
+;; The answer to AOC 2025 Day 8 Part 2 is 975931446
+;; Evaluation took:
+;; 0.170 seconds of real time
+;; 0.170823 seconds of total run time (0.170458 user, 0.000365 system)
+;; 100.59% CPU
+;; 32,548,464 bytes consed
