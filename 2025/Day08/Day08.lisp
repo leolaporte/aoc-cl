@@ -91,7 +91,7 @@
                           "304,403,430"
                           "1600,1700,1800"
                           "1600,1702,1808")
-  "Paul Holder's additional example - which works in Part 2 but not for Part 1 for some reason")
+  "Paul Holder's additional example")
 
 (defparameter *example3* (list "10,10,10"
                                "11,11,11"
@@ -106,7 +106,8 @@
                                "60,60,60"
                                "66,61,61"
                                "70,70,70"
-                               "77,71,71"))
+                               "77,71,71")
+  "another Paul Holder example")
 
 ;; structure to represent the junction box coordinates, x y and z
 (defstruct (junction
