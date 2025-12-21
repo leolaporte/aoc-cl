@@ -73,21 +73,40 @@
                               "984,92,344"
                               "425,690,689"))
 
-(defparameter *example2* (list "1,1,2"
-                               "2,14,4"
-                               "2,5,6"
-                               "3,4,11"
-                               "5,8,10"
-                               "1,2,7"
-                               "12,4,12"
-                               "5,2,9"
-                               "3,8,11"
-                               "16,2,9 "
-                               "13,4,15"
-                               "5,16,7"
-                               "18,9,10"
-                               "100,100,100")
+(defparameter *example2* (list
+                          "58,38,710"
+                          "102,44,312"
+                          "95,22,99"
+                          "33,88,111"
+                          "166,72,29"
+                          "313,84,159"
+                          "55,516,27"
+                          "1,1,1"
+                          "2,2,9"
+                          "818,409,610"
+                          "1008,1008,1008"
+                          " 999,888,1111"
+                          " 888,777,666"
+                          "555,444,333"
+                          "304,403,430"
+                          "1600,1700,1800"
+                          "1600,1702,1808")
   "Paul Holder's additional example - which works in Part 2 but not for Part 1 for some reason")
+
+(defparameter *example3* (list "10,10,10"
+                               "11,11,11"
+                               "20,20,20"
+                               "22,21,21"
+                               "30,30,30"
+                               "33,31,31"
+                               "40,40,40"
+                               "44,41,42"
+                               "50,50,50"
+                               "55,51,51"
+                               "60,60,60"
+                               "66,61,61"
+                               "70,70,70"
+                               "77,71,71"))
 
 ;; structure to represent the junction box coordinates, x y and z
 (defstruct (junction
@@ -268,11 +287,11 @@ to solve part 1"
 (5a:test union-find-test
   (let ((uf (make-union-find)))
     ;; Initially separate
-    (5a:is-true (uf-union uf 'a 'b))    ; conected
-    (5a:is-false (uf-union uf 'a 'b))   ; loop
-    (5a:is-true (uf-union uf 'c 'd))    ; new junction
-    (5a:is-true (uf-union uf 'b 'c))    ; connects {a,b} with {c,d}
-    (5a:is-false (uf-union uf 'a 'd))   ; a and d are already in UF
+    (5a:is-true (uf-union? uf 'a 'b))    ; conected
+    (5a:is-false (uf-union? uf 'a 'b))   ; loop
+    (5a:is-true (uf-union? uf 'c 'd))    ; new junction
+    (5a:is-true (uf-union? uf 'b 'c))    ; connects {a,b} with {c,d}
+    (5a:is-false (uf-union? uf 'a 'd))   ; a and d are already in UF
     (5a:is-true (equal (list 4) (uf-component-sizes uf '(a b c d))))
     (sr:pretty-print-hash-table (car uf))
     (sr:pretty-print-hash-table (cdr uf))))
@@ -298,7 +317,7 @@ to solve part 1"
         (pushnew j1 nodes :test 'equalp)
         (pushnew j2 nodes :test 'equalp)
         ;; Union the nodes
-        (uf-union uf j1 j2)             ; modifies UF in place
+        (uf-union? uf j1 j2)             ; modifies UF in place
         (setf last-j1 j1 last-j2 j2)
         (incf edges-processed)))
     (values (uf-component-sizes uf nodes) last-j1 last-j2)))
@@ -318,7 +337,9 @@ to solve part 1"
            (apply #'* _))))
 
 (5a:test day08-1-test
-  (5a:is (= 40 (day08-1 *example* 10))))
+  (5a:is (= 40 (day08-1 *example* 10)))
+  (5a:is (= 20 (day08-1 *example2* 10)))
+  (5a:is (= 32 (day08-1 *example3* 10))))
 
 ;; ----------------------------------------------------------------------------
 ;;                           -- Part Two --
@@ -372,7 +393,7 @@ to solve part 1"
       (let ((j1 (second edge))
             (j2 (third edge)))
         (while (> components 1))
-        (when (uf-union uf j1 j2)
+        (when (uf-union? uf j1 j2)
           ;; edge merged j1 j2 - uf updated in place
           (decf components)
           (setf last-j1 j1 last-j2 j2))))
@@ -380,7 +401,9 @@ to solve part 1"
     (* (j-x last-j1) (j-x last-j2))))
 
 (5a:test day08-2-test
-  (5a:is (= 25272 (day08-2 *example*))))
+  (5a:is (= 25272 (day08-2 *example*)))
+  (5a:is (= 1612800 (day08-2 *example2*)))
+  (5a:is (= 220 (day08-2 *example3*))))
 
 ;; ----------------------------------------------------------------------------
 ;; Now solve the puzzle...
